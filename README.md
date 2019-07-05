@@ -1,4 +1,4 @@
-#  Super Encryption Password Manager
+#  Strong Encryption Password Manager
 
 Defend your passwords in depths with MyID
 
