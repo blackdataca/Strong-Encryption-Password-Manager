@@ -1,0 +1,13 @@
+﻿extensions: designer.cs generated.cs
+extensions: .cs .cpp .h
+// MIT License - Copyright (c) 2019 Black Data
+extensions: .aspx .ascx
+<%-- 
+Copyright (c) 2019 Black Data
+--%>
+extensions: .vb
+'Copyright (c) 2019 Black Data
+extensions:  .xml .config .xsd
+<!--
+Copyright (c) 2019 Black Data
+-->
