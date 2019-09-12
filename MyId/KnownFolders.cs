@@ -16,10 +16,13 @@ namespace MyId
         {
             get
             {
-                string p = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + Path.DirectorySeparatorChar + "MyId";
+                string d = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + Path.DirectorySeparatorChar + "MyId";
 
-                p = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", p);
-                return p;
+                string p = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", d);
+                if (string.IsNullOrEmpty(p))
+                    return d;
+                else
+                    return p;
             }
             set
             {
