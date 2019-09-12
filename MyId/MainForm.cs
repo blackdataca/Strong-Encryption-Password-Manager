@@ -322,6 +322,7 @@ namespace MyId
                     AddListItem(edit.AIdItem);
                     _idList.Add(edit.AIdItem);
                     SaveToDisk();
+                    ShowNumberOfItems();
                 }
             }
         }
@@ -504,10 +505,19 @@ namespace MyId
 #endif
             }
             if (tryKey == null)
-                uxItemCountStatus.Text = string.Format("{0} items", uxList.Items.Count);
+            {
+                ShowNumberOfItems();
+            }
             return success;
         }
 
+        private void ShowNumberOfItems()
+        {
+            if (uxList.Items.Count < 2)
+                uxItemCountStatus.Text = string.Format("{0} item", uxList.Items.Count);
+            else
+                uxItemCountStatus.Text = string.Format("{0} items", uxList.Items.Count);
+        }
 
         private string IdFile
         {
@@ -759,6 +769,7 @@ namespace MyId
                 {
                     SaveToDisk();
                     UxSearchBox_TextChanged();
+                    ShowNumberOfItems();
                     //LoadFromDisk();
                 }
 

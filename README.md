@@ -2,6 +2,8 @@
 
 Defend your passwords in depths with MyID
 
+![](https://github.com/blackdataca/myid/blob/master/mainscreen.PNG)
+
 ## Industry standard algorithm
 
 Simple password manager with absolutely verifiable security strength. 
