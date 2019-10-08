@@ -19,5 +19,15 @@ namespace MyId
         {
 
         }
+
+        private void uxCancel_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void uxNew_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

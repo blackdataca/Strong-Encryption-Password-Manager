@@ -33,6 +33,7 @@
             this.uxUnlock = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.uxPassword = new System.Windows.Forms.TextBox();
+            this.uxNew = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // uxCancel
@@ -45,6 +46,7 @@
             this.uxCancel.TabIndex = 3;
             this.uxCancel.Text = "&Cancel";
             this.uxCancel.UseVisualStyleBackColor = true;
+            this.uxCancel.Click += new System.EventHandler(this.uxCancel_Click);
             // 
             // uxUnlock
             // 
@@ -78,6 +80,18 @@
             this.uxPassword.UseSystemPasswordChar = true;
             this.uxPassword.TextChanged += new System.EventHandler(this.UxPassword_TextChanged);
             // 
+            // uxNew
+            // 
+            this.uxNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.uxNew.DialogResult = System.Windows.Forms.DialogResult.Ignore;
+            this.uxNew.Location = new System.Drawing.Point(30, 124);
+            this.uxNew.Name = "uxNew";
+            this.uxNew.Size = new System.Drawing.Size(96, 23);
+            this.uxNew.TabIndex = 4;
+            this.uxNew.Text = "&New Data File";
+            this.uxNew.UseVisualStyleBackColor = true;
+            this.uxNew.Click += new System.EventHandler(this.uxNew_Click);
+            // 
             // SignIn
             // 
             this.AcceptButton = this.uxUnlock;
@@ -85,6 +99,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.uxCancel;
             this.ClientSize = new System.Drawing.Size(417, 170);
+            this.Controls.Add(this.uxNew);
             this.Controls.Add(this.uxPassword);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.uxUnlock);
@@ -101,8 +116,9 @@
         #endregion
 
         private System.Windows.Forms.Button uxCancel;
-        private System.Windows.Forms.Label label1;
         public System.Windows.Forms.TextBox uxPassword;
         public System.Windows.Forms.Button uxUnlock;
+        private System.Windows.Forms.Button uxNew;
+        public System.Windows.Forms.Label label1;
     }
 }

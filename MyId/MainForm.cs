@@ -80,9 +80,9 @@ namespace MyId
 
                     //http://stackoverflow.com/questions/2659214/why-do-i-need-to-use-the-rfc2898derivebytes-class-in-net-instead-of-directly
                     //"What it does is repeatedly hash the user password along with the salt." High iteration counts.
-                    var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                    myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                    myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
+                    //var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
+                    myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                    myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
 
                     using (var fsCrypt = new FileStream(encFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
@@ -145,9 +145,9 @@ namespace MyId
 
                 //http://stackoverflow.com/questions/2659214/why-do-i-need-to-use-the-rfc2898derivebytes-class-in-net-instead-of-directly
                 //"What it does is repeatedly hash the user password along with the salt." High iteration counts.
-                var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
+                //var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
+                myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
 
                 using (var fsPlain = new FileStream(imageFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
@@ -366,18 +366,27 @@ namespace MyId
         }
 
 
-
         private void CreateNewFile()
         {
+            if (!Directory.Exists(Path.GetDirectoryName(IdFile)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(IdFile));
+            }
+            if (File.Exists(IdFile))
+            {
+                if (MessageBox.Show("Cannot create new data file in this location. Choose a new location?", "Data file already exists", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation) == DialogResult.Yes)
+                {
+
+                }
+                else
+                    Application.Exit();
+            }
             var si = new CreateNewMaster();
             if (si.ShowDialog() == DialogResult.OK)
             {
                 string masterPass = si.uxMasterPassword.Text;  
 
-                if (!Directory.Exists(Path.GetDirectoryName(IdFile)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(IdFile));
-                }
+
                 using (RijndaelManaged myRijndael = new RijndaelManaged())
                 {
                     //myRijndael.GenerateIV();
@@ -385,10 +394,21 @@ namespace MyId
 
                     //SaveKeyIv("IV", myRijndael.IV);
 
-                    SaveKeyIv("IV", GenerateRandomSalt());
+                    //SaveKeyIv("IV", GenerateRandomSalt());
                     SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPass));
 
+                    var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GenerateRandomSalt(), 50000);
+                    SaveKeyIv("RiKey", key.GetBytes(myRijndael.KeySize / 8));
+                    SaveKeyIv("RiIv", key.GetBytes(myRijndael.BlockSize / 8));
+
+                    //myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                    //myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+
                 }
+                
+                
+
+
                 SaveToDisk();
             }
             else
@@ -408,9 +428,12 @@ namespace MyId
                 //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                 myRijndael.Mode = CipherMode.CFB;
 
-                var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
+               // var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
+                //myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
+                //myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
+
+                myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
 
                 //myRijndael.Key = GetKeyIv("Key");
                 //myRijndael.IV = GetKeyIv("IV");
@@ -462,12 +485,30 @@ namespace MyId
                                 byte[] keyB = Encoding.Unicode.GetBytes(tryKey);
                                 keyBytes = mySHA256.ComputeHash(keyB);
                             }
+                            byte[] savedKey = GetKeyIv("Key");
+                            if (!keyBytes.SequenceEqual(savedKey))
+                            {
+                                MessageBox.Show("Invalid password!");
+                                return false;
+                            }
                         }
 
-                        var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                        myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                        myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
+                        if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                        {
+                            var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                            myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
+                            myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
 
+                            SaveKeyIv("RiKey", myRijndael.Key);
+                            SaveKeyIv("RiIv", myRijndael.IV);
+                            
+                        }
+                        else
+                        {
+                            //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                            myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                            myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+                        }
 
                         using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
                         {
@@ -542,7 +583,8 @@ namespace MyId
                 for (int i = 0; i < 3; i++)
                 {
                     SignIn si = new SignIn();
-                    if (si.ShowDialog() == DialogResult.OK)
+                    var result = si.ShowDialog();
+                    if (result == DialogResult.OK)
                     {
                         byte[] iv = GetKeyIv("IV");
                         if (iv == null)
@@ -562,16 +604,30 @@ namespace MyId
                         
                         //byte[] mp = GetKeyIv("MasterPass");
                         //if (Encoding.Unicode.GetString(mp) == si.uxPassword.Text)
-                        SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
-                        if (LoadFromDisk())
+                        //SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
+                        if (LoadFromDisk(si.uxPassword.Text))
                         {
                             //password match
                             success = true;
                             timer1.Enabled = true;
                             break;
                         }
+                        else
+                        {
+                            if (MessageBox.Show("Try importing private key?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                            {
+                                ImportPrivateKey();
+                            }
+                        }
                         //MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         
+                    }
+                    else if (result == DialogResult.Ignore)
+                    {
+ 
+                        CreateNewFile();
+                        success = true;
+                        break;
                     }
                     else
                     {
@@ -593,20 +649,28 @@ namespace MyId
 
         private byte[] GetKeyIv(string type)
         {
-    
-            byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
             switch (type)
             {
-                case "IV": //iv16
-                    //byte[] iv32 = (byte[]) Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", random);
-                    if (iv32 == null)
-                        return null;
-                    byte[] iv16 = new byte[16];
-                    Array.Copy(iv32, iv16, 16);
-                    return iv16;
+                case "IV": //16
+                    {
+                        byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                        if (iv32 == null)
+                            return null;
+                        byte[] iv16 = new byte[16];
+                        Array.Copy(iv32, iv16, 16);
+                        return iv16;
+                    }
+                case "RiKey": //32
+                case "RiIv": //16
+                    {
+                        byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
+                        if (data == null)
+                            return null;
+                        return data;
+                    }
                 case "Key":
                     {
-
+                        byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
                         byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
 
                         byte[] plaintext = ProtectedData.Unprotect(ciphertext, iv32, DataProtectionScope.CurrentUser);
@@ -633,6 +697,10 @@ namespace MyId
                     rng.GetBytes(random);
                     Array.Copy(value, random, 16);
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", random);
+                    break;
+                case "RiKey":
+                case "RiIv":
+                    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
                     break;
                 case "Key":
                     byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
@@ -940,16 +1008,21 @@ namespace MyId
             {
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ExportKeyPath", Path.GetDirectoryName(fd.FileName));
 
-                byte[] random = new byte[32];
+                byte[] buffer = new byte[2+16+32+16];
 
                 //RNGCryptoServiceProvider is an implementation of a random number generator.
-                RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                rng.GetBytes(random);
-                GetKeyIv("IV").CopyTo(random, 0);
+                //RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+                //rng.GetBytes(random);
+                buffer[0] = 0x01; //major version #
+                buffer[1] = 0x02; //minor version #
+
+                GetKeyIv("IV").CopyTo(buffer, 0);
+                GetKeyIv("RiKey").CopyTo(buffer, 16);
+                GetKeyIv("RiIv").CopyTo(buffer, 48);
                 //File.WriteAllBytes(fd.FileName, random);
                 try
                 {
-                    File.WriteAllText(fd.FileName, BitConverter.ToString(random).Replace("-", ","));
+                    File.WriteAllText(fd.FileName, BitConverter.ToString(buffer).Replace("-", ","));
                 }
                 catch (IOException ex)
                 {
@@ -961,6 +1034,9 @@ namespace MyId
 
         private void ImportPrivateKey()
         {
+
+            
+            
             string downloadsPath = KnownFolders.GetPath(KnownFolder.Downloads);
             downloadsPath = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportKeyPath", downloadsPath);
 
@@ -974,11 +1050,49 @@ namespace MyId
             };
             if (fd.ShowDialog() == DialogResult.OK)
             {
-                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportKeyPath", Path.GetDirectoryName(fd.FileName));
-                string ivS = File.ReadAllText(fd.FileName);
+                if (File.Exists(fd.FileName))
+                {
+                    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportKeyPath", Path.GetDirectoryName(fd.FileName));
+                    string bufferS = File.ReadAllText(fd.FileName);
 
-                byte[] iv = ToByteArray(ivS.Replace(",", "").Trim());
-                SaveKeyIv("IV", iv);
+                    byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
+
+                    if (buffer[0] == 0x01 && buffer[1] == 0x02)
+                    {
+                        SignIn si = new SignIn();
+
+                        si.Text = "Restore Private Key";
+                        si.label1.Text = "Enter new master password to encrypt restored private key:";
+
+                        if (si.ShowDialog() != DialogResult.OK)
+                            return;
+
+                        byte[] iv = new byte[16];
+                        Array.Copy(buffer, 2, iv, 0, 16);
+                        SaveKeyIv("IV", iv);
+
+                        byte[] riKey = new byte[32];
+                        Array.Copy(buffer, 2+16, riKey, 0, 32);
+                        SaveKeyIv("RiKey", riKey);
+
+                        byte[] riIv = new byte[16];
+                        Array.Copy(buffer, 2+48, riIv, 0, 16);
+                        SaveKeyIv("RiIv", riIv);
+
+                        SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
+
+                        MessageBox.Show("Private key imported");
+
+                        //Application.Exit();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Unknown key file!", "Failed to restore key file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    }
+                }
+                else
+                    MessageBox.Show("Key file not found: " + fd.FileName);
             }
         }
         private void ImportPrivateKeyToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1139,6 +1253,13 @@ namespace MyId
         {
             uxEdit.PerformClick();
         }
+
+        private void uxNewData_Click(object sender, EventArgs e)
+        {
+            CreateNewFile();
+        }
+
+
     }
 
     

@@ -44,13 +44,19 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.uxNewData = new System.Windows.Forms.ToolStripMenuItem();
             this.uxOpenData = new System.Windows.Forms.ToolStripMenuItem();
+            this.uxExplorer = new System.Windows.Forms.ToolStripMenuItem();
             this.uxImport = new System.Windows.Forms.ToolStripMenuItem();
             this.uxExport = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.uxExportPrivateKey = new System.Windows.Forms.ToolStripMenuItem();
+            this.importPrivateKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.uxChangeMasterPasswordToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.uxExit = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuEdit = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuDelete = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.uxAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
@@ -69,12 +75,6 @@
             this.uxTimeout = new System.Windows.Forms.ToolStripStatusLabel();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.uxExplorer = new System.Windows.Forms.ToolStripMenuItem();
-            this.uxChangeMasterPasswordToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.importPrivateKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuEdit = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuDelete = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
@@ -200,6 +200,7 @@
             this.uxNewData.Name = "uxNewData";
             this.uxNewData.Size = new System.Drawing.Size(246, 22);
             this.uxNewData.Text = "&New Data Folder";
+            this.uxNewData.Click += new System.EventHandler(this.uxNewData_Click);
             // 
             // uxOpenData
             // 
@@ -207,6 +208,13 @@
             this.uxOpenData.Size = new System.Drawing.Size(246, 22);
             this.uxOpenData.Text = "&Open Data Folder...";
             this.uxOpenData.Click += new System.EventHandler(this.UxOpenData_Click);
+            // 
+            // uxExplorer
+            // 
+            this.uxExplorer.Name = "uxExplorer";
+            this.uxExplorer.Size = new System.Drawing.Size(246, 22);
+            this.uxExplorer.Text = "Open Data Folder in File Explorer";
+            this.uxExplorer.Click += new System.EventHandler(this.UxExplorer_Click);
             // 
             // uxImport
             // 
@@ -223,12 +231,30 @@
             this.uxExport.Visible = false;
             this.uxExport.Click += new System.EventHandler(this.UxExport_Click);
             // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(243, 6);
+            // 
             // uxExportPrivateKey
             // 
             this.uxExportPrivateKey.Name = "uxExportPrivateKey";
             this.uxExportPrivateKey.Size = new System.Drawing.Size(246, 22);
             this.uxExportPrivateKey.Text = "Backup &Private Key...";
             this.uxExportPrivateKey.Click += new System.EventHandler(this.UxExportPrivateKey_Click);
+            // 
+            // importPrivateKeyToolStripMenuItem
+            // 
+            this.importPrivateKeyToolStripMenuItem.Name = "importPrivateKeyToolStripMenuItem";
+            this.importPrivateKeyToolStripMenuItem.Size = new System.Drawing.Size(246, 22);
+            this.importPrivateKeyToolStripMenuItem.Text = "Restore Private &Key...";
+            this.importPrivateKeyToolStripMenuItem.Click += new System.EventHandler(this.ImportPrivateKeyToolStripMenuItem_Click);
+            // 
+            // uxChangeMasterPasswordToolStripMenuItem
+            // 
+            this.uxChangeMasterPasswordToolStripMenuItem.Name = "uxChangeMasterPasswordToolStripMenuItem";
+            this.uxChangeMasterPasswordToolStripMenuItem.Size = new System.Drawing.Size(246, 22);
+            this.uxChangeMasterPasswordToolStripMenuItem.Text = "C&hange Master Password...";
             // 
             // toolStripMenuItem1
             // 
@@ -256,8 +282,24 @@
             // 
             this.newToolStripMenuItem.Image = global::MyId.Properties.Resources.small_new_32x32;
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.newToolStripMenuItem.Text = "&New...";
+            // 
+            // mnuEdit
+            // 
+            this.mnuEdit.Image = global::MyId.Properties.Resources.small_pencil_32x32;
+            this.mnuEdit.Name = "mnuEdit";
+            this.mnuEdit.Size = new System.Drawing.Size(107, 22);
+            this.mnuEdit.Text = "&Edit";
+            this.mnuEdit.Click += new System.EventHandler(this.MnuEdit_Click);
+            // 
+            // mnuDelete
+            // 
+            this.mnuDelete.Image = global::MyId.Properties.Resources.small_delete_32x32;
+            this.mnuDelete.Name = "mnuDelete";
+            this.mnuDelete.Size = new System.Drawing.Size(107, 22);
+            this.mnuDelete.Text = "&Delete";
+            this.mnuDelete.Click += new System.EventHandler(this.MnuDelete_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -270,7 +312,7 @@
             // uxAbout
             // 
             this.uxAbout.Name = "uxAbout";
-            this.uxAbout.Size = new System.Drawing.Size(180, 22);
+            this.uxAbout.Size = new System.Drawing.Size(107, 22);
             this.uxAbout.Text = "&About";
             this.uxAbout.Click += new System.EventHandler(this.UxAbout_Click);
             // 
@@ -401,46 +443,6 @@
             // 
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
-            // 
-            // uxExplorer
-            // 
-            this.uxExplorer.Name = "uxExplorer";
-            this.uxExplorer.Size = new System.Drawing.Size(246, 22);
-            this.uxExplorer.Text = "Open Data Folder in File Explorer";
-            this.uxExplorer.Click += new System.EventHandler(this.UxExplorer_Click);
-            // 
-            // uxChangeMasterPasswordToolStripMenuItem
-            // 
-            this.uxChangeMasterPasswordToolStripMenuItem.Name = "uxChangeMasterPasswordToolStripMenuItem";
-            this.uxChangeMasterPasswordToolStripMenuItem.Size = new System.Drawing.Size(246, 22);
-            this.uxChangeMasterPasswordToolStripMenuItem.Text = "C&hange Master Password...";
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(243, 6);
-            // 
-            // importPrivateKeyToolStripMenuItem
-            // 
-            this.importPrivateKeyToolStripMenuItem.Name = "importPrivateKeyToolStripMenuItem";
-            this.importPrivateKeyToolStripMenuItem.Size = new System.Drawing.Size(246, 22);
-            this.importPrivateKeyToolStripMenuItem.Text = "Restore Private &Key...";
-            // 
-            // mnuEdit
-            // 
-            this.mnuEdit.Image = global::MyId.Properties.Resources.small_pencil_32x32;
-            this.mnuEdit.Name = "mnuEdit";
-            this.mnuEdit.Size = new System.Drawing.Size(180, 22);
-            this.mnuEdit.Text = "&Edit";
-            this.mnuEdit.Click += new System.EventHandler(this.MnuEdit_Click);
-            // 
-            // mnuDelete
-            // 
-            this.mnuDelete.Image = global::MyId.Properties.Resources.small_delete_32x32;
-            this.mnuDelete.Name = "mnuDelete";
-            this.mnuDelete.Size = new System.Drawing.Size(180, 22);
-            this.mnuDelete.Text = "&Delete";
-            this.mnuDelete.Click += new System.EventHandler(this.MnuDelete_Click);
             // 
             // MainForm
             // 
