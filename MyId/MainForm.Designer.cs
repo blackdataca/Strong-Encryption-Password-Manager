@@ -255,6 +255,7 @@
             this.uxChangeMasterPasswordToolStripMenuItem.Name = "uxChangeMasterPasswordToolStripMenuItem";
             this.uxChangeMasterPasswordToolStripMenuItem.Size = new System.Drawing.Size(246, 22);
             this.uxChangeMasterPasswordToolStripMenuItem.Text = "C&hange Master Password...";
+            this.uxChangeMasterPasswordToolStripMenuItem.Click += new System.EventHandler(this.UxChangeMasterPasswordToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -282,14 +283,14 @@
             // 
             this.newToolStripMenuItem.Image = global::MyId.Properties.Resources.small_new_32x32;
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newToolStripMenuItem.Text = "&New...";
             // 
             // mnuEdit
             // 
             this.mnuEdit.Image = global::MyId.Properties.Resources.small_pencil_32x32;
             this.mnuEdit.Name = "mnuEdit";
-            this.mnuEdit.Size = new System.Drawing.Size(107, 22);
+            this.mnuEdit.Size = new System.Drawing.Size(180, 22);
             this.mnuEdit.Text = "&Edit";
             this.mnuEdit.Click += new System.EventHandler(this.MnuEdit_Click);
             // 
@@ -297,7 +298,7 @@
             // 
             this.mnuDelete.Image = global::MyId.Properties.Resources.small_delete_32x32;
             this.mnuDelete.Name = "mnuDelete";
-            this.mnuDelete.Size = new System.Drawing.Size(107, 22);
+            this.mnuDelete.Size = new System.Drawing.Size(180, 22);
             this.mnuDelete.Text = "&Delete";
             this.mnuDelete.Click += new System.EventHandler(this.MnuDelete_Click);
             // 

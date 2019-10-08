@@ -566,6 +566,31 @@ namespace MyId
             }
         }
 
+        private bool ValidatePassword(string pass)
+        {
+            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+            {
+                SaveKeyIv("Key", Encoding.Unicode.GetBytes(pass));
+            }
+            else
+            {
+                byte[] keyBytes;
+                using (SHA256 mySHA256 = SHA256.Create())
+                {
+                    byte[] keyB = Encoding.Unicode.GetBytes(pass);
+                    keyBytes = mySHA256.ComputeHash(keyB);
+                }
+                byte[] savedKey = GetKeyIv("Key");
+                if (!keyBytes.SequenceEqual(savedKey))
+                {
+                    MessageBox.Show("Invalid password!");
+                    return false;
+                }
+
+            }
+            return true;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
 #if DEBUG
@@ -598,25 +623,30 @@ namespace MyId
                                 return;
                             }
                         }
-                        
+
                         //byte[] mp = GetKeyIv("MasterPass");
                         //if (Encoding.Unicode.GetString(mp) == si.uxPassword.Text)
                         //SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
-                        if (LoadFromDisk(si.uxPassword.Text))
+                        
+                        if (ValidatePassword(si.uxPassword.Text))
                         {
-                            //password match
-                            success = true;
-                            timer1.Enabled = true;
-                            break;
-                        }
-                        else
-                        {
-                            if (MessageBox.Show("Try importing private key?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                            if (LoadFromDisk())
                             {
-                                ImportPrivateKey();
+                                //password match
+                                success = true;
+                                timer1.Enabled = true;
+                                break;
+                            }
+                            else
+                            {
+                                if (MessageBox.Show("Try importing private key?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                                {
+                                    ImportPrivateKey();
+                                }
                             }
                         }
-                        //MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        else 
+                            MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         
                     }
                     else if (result == DialogResult.Ignore)
@@ -700,8 +730,14 @@ namespace MyId
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
                     break;
                 case "Key":
+                    byte[] keyBytes;
+                    using (SHA256 mySHA256 = SHA256.Create())
+                    {
+                        byte[] keyB = value ;
+                        keyBytes = mySHA256.ComputeHash(keyB);
+                    }
                     byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
-                    byte[] ciphertext = ProtectedData.Protect(value, iv32, DataProtectionScope.CurrentUser);
+                    byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
                     break;
                 default:
@@ -789,7 +825,6 @@ namespace MyId
                         if (noOfLines > 0)
                         {
                             SaveToDisk();
-                            //LoadFromDisk();
                             UxSearchBox_TextChanged();
                         }
                     }
@@ -835,7 +870,6 @@ namespace MyId
                     SaveToDisk();
                     UxSearchBox_TextChanged();
                     ShowNumberOfItems();
-                    //LoadFromDisk();
                 }
 
             }
@@ -1007,19 +1041,16 @@ namespace MyId
 
                 byte[] buffer = new byte[2+16+32+16];
 
-                //RNGCryptoServiceProvider is an implementation of a random number generator.
-                //RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                //rng.GetBytes(random);
                 buffer[0] = 0x01; //major version #
                 buffer[1] = 0x02; //minor version #
 
-                GetKeyIv("IV").CopyTo(buffer, 0);
-                GetKeyIv("RiKey").CopyTo(buffer, 16);
-                GetKeyIv("RiIv").CopyTo(buffer, 48);
-                //File.WriteAllBytes(fd.FileName, random);
+                GetKeyIv("IV").CopyTo(buffer, 2); //length 16
+                GetKeyIv("RiKey").CopyTo(buffer, 16+2); //length 32
+                GetKeyIv("RiIv").CopyTo(buffer, 48+2); //length 16
                 try
                 {
                     File.WriteAllText(fd.FileName, BitConverter.ToString(buffer).Replace("-", ","));
+                    MessageBox.Show("Private key exported");
                 }
                 catch (IOException ex)
                 {
@@ -1032,8 +1063,6 @@ namespace MyId
         private void ImportPrivateKey()
         {
 
-            
-            
             string downloadsPath = KnownFolders.GetPath(KnownFolder.Downloads);
             downloadsPath = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportKeyPath", downloadsPath);
 
@@ -1080,7 +1109,6 @@ namespace MyId
 
                         MessageBox.Show("Private key imported");
 
-                        //Application.Exit();
                     }
                     else
                     {
@@ -1095,7 +1123,6 @@ namespace MyId
         private void ImportPrivateKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ImportPrivateKey();
-            //LoadFromDisk();
             UxSearchBox_TextChanged();
         }
         private byte[] ToByteArray(String HexString)
@@ -1129,7 +1156,7 @@ namespace MyId
             var si = new SignIn();
             if (si.ShowDialog() == DialogResult.OK)
             {
-                if (LoadFromDisk(si.uxPassword.Text))
+                if (ValidatePassword(si.uxPassword.Text))
                 {
                     //password match
                     var np = new CreateNewMaster();
@@ -1255,7 +1282,6 @@ namespace MyId
         {
             CreateNewFile();
         }
-
 
     }
 
