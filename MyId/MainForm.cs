@@ -374,12 +374,8 @@ namespace MyId
             }
             if (File.Exists(IdFile))
             {
-                if (MessageBox.Show("Cannot create new data file in this location. Choose a new location?", "Data file already exists", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation) == DialogResult.Yes)
-                {
-
-                }
-                else
-                    Application.Exit();
+                MessageBox.Show("Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                Application.Exit();
             }
             var si = new CreateNewMaster();
             if (si.ShowDialog() == DialogResult.OK)
@@ -583,6 +579,7 @@ namespace MyId
                 for (int i = 0; i < 3; i++)
                 {
                     SignIn si = new SignIn();
+
                     var result = si.ShowDialog();
                     if (result == DialogResult.OK)
                     {
