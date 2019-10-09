@@ -649,11 +649,16 @@ namespace MyId
                             MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         
                     }
-                    else if (result == DialogResult.Ignore)
+                    else if (result == DialogResult.Yes) //Create new data file
                     {
- 
+            
                         CreateNewFile();
                         success = true;
+                        break;
+                    }
+                    else if (result == DialogResult.No) //Open data file
+                    {
+                        success = OpenDataFile();
                         break;
                     }
                     else
@@ -697,15 +702,17 @@ namespace MyId
                     }
                 case "Key":
                     {
-                        byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                        byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
                         byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
 
                         byte[] plaintext = ProtectedData.Unprotect(ciphertext, iv32, DataProtectionScope.CurrentUser);
 
-                        using (SHA256 mySHA256 = SHA256.Create())
-                        {
-                            return mySHA256.ComputeHash(plaintext);
-                        }
+                        return plaintext;
+
+                        //using (SHA256 mySHA256 = SHA256.Create())
+                        //{
+                        //    return mySHA256.ComputeHash(plaintext);
+                        //}
                     }
                 default:
                     throw new Exception("error 191");
@@ -736,7 +743,7 @@ namespace MyId
                         byte[] keyB = value ;
                         keyBytes = mySHA256.ComputeHash(keyB);
                     }
-                    byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                    byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
                     byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
                     break;
@@ -1159,16 +1166,25 @@ namespace MyId
                 if (ValidatePassword(si.uxPassword.Text))
                 {
                     //password match
-                    var np = new CreateNewMaster();
-                    if (np.ShowDialog() == DialogResult.OK)
-                    {
-                        SaveKeyIv("Key", Encoding.Unicode.GetBytes(np.uxMasterPassword.Text));
-
-                        SaveToDisk();
+                   if ( CreateNewPass())
                         MessageBox.Show("Master password changed", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+
                 }
             }
+        }
+        private bool CreateNewPass()
+        {
+            var np = new CreateNewMaster();
+            if (np.ShowDialog() == DialogResult.OK)
+            {
+                SaveKeyIv("Key", Encoding.Unicode.GetBytes(np.uxMasterPassword.Text));
+
+                //SaveToDisk();
+
+                return true;
+            }
+            else
+                return false;
         }
 
         private void UxAbout_Click(object sender, EventArgs e)
@@ -1247,20 +1263,30 @@ namespace MyId
  
         //}
 
-        private void UxOpenData_Click(object sender, EventArgs e)
+        private bool OpenDataFile()
         {
             folderBrowserDialog1.SelectedPath = KnownFolders.DataDir;
-            folderBrowserDialog1.Description = "Current Data Folder: " +  KnownFolders.DataDir;
+            folderBrowserDialog1.Description = "Current Data Folder: " + KnownFolders.DataDir;
 
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 KnownFolders.DataDir = folderBrowserDialog1.SelectedPath;
-                if (!LoadFromDisk())
+                if (LoadFromDisk())
+                {
+                    CreateNewPass();
+                    return true;
+                }
+                else
                 {
                     MessageBox.Show("Failed to load data folder", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
+                
             }
+            return false;
+        }
+        private void UxOpenData_Click(object sender, EventArgs e)
+        {
+            OpenDataFile();
         }
 
         private void UxExplorer_Click(object sender, EventArgs e)

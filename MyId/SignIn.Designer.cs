@@ -33,7 +33,11 @@
             this.uxUnlock = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.uxPassword = new System.Windows.Forms.TextBox();
-            this.uxNew = new System.Windows.Forms.Button();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.newDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // uxCancel
@@ -80,17 +84,38 @@
             this.uxPassword.UseSystemPasswordChar = true;
             this.uxPassword.TextChanged += new System.EventHandler(this.UxPassword_TextChanged);
             // 
-            // uxNew
+            // menuStrip1
             // 
-            this.uxNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.uxNew.DialogResult = System.Windows.Forms.DialogResult.Ignore;
-            this.uxNew.Location = new System.Drawing.Point(30, 124);
-            this.uxNew.Name = "uxNew";
-            this.uxNew.Size = new System.Drawing.Size(96, 23);
-            this.uxNew.TabIndex = 4;
-            this.uxNew.Text = "&New Data File";
-            this.uxNew.UseVisualStyleBackColor = true;
-            this.uxNew.Click += new System.EventHandler(this.uxNew_Click);
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(417, 24);
+            this.menuStrip1.TabIndex = 5;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // fileToolStripMenuItem
+            // 
+            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newDataFileToolStripMenuItem,
+            this.openDataFileToolStripMenuItem});
+            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            this.fileToolStripMenuItem.Text = "&File";
+            // 
+            // newDataFileToolStripMenuItem
+            // 
+            this.newDataFileToolStripMenuItem.Name = "newDataFileToolStripMenuItem";
+            this.newDataFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newDataFileToolStripMenuItem.Text = "&New Data File";
+            this.newDataFileToolStripMenuItem.Click += new System.EventHandler(this.newDataFileToolStripMenuItem_Click);
+            // 
+            // openDataFileToolStripMenuItem
+            // 
+            this.openDataFileToolStripMenuItem.Name = "openDataFileToolStripMenuItem";
+            this.openDataFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openDataFileToolStripMenuItem.Text = "&Open Data File";
+            this.openDataFileToolStripMenuItem.Click += new System.EventHandler(this.openDataFileToolStripMenuItem_Click);
             // 
             // SignIn
             // 
@@ -99,15 +124,18 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.uxCancel;
             this.ClientSize = new System.Drawing.Size(417, 170);
-            this.Controls.Add(this.uxNew);
             this.Controls.Add(this.uxPassword);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.uxUnlock);
             this.Controls.Add(this.uxCancel);
+            this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "SignIn";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "SignIn";
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -118,7 +146,10 @@
         private System.Windows.Forms.Button uxCancel;
         public System.Windows.Forms.TextBox uxPassword;
         public System.Windows.Forms.Button uxUnlock;
-        private System.Windows.Forms.Button uxNew;
         public System.Windows.Forms.Label label1;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem newDataFileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openDataFileToolStripMenuItem;
     }
 }

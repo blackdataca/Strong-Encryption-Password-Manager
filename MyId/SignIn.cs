@@ -29,5 +29,17 @@ namespace MyId
         {
 
         }
+
+        private void newDataFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Yes;
+            Close();
+        }
+
+        private void openDataFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.No;
+            Close();
+        }
     }
 }
