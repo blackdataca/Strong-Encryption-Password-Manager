@@ -385,10 +385,8 @@ namespace MyId
 
                 using (RijndaelManaged myRijndael = new RijndaelManaged())
                 {
-                    //myRijndael.GenerateIV();
-
-
-                    //SaveKeyIv("IV", myRijndael.IV);
+                    myRijndael.GenerateIV();
+                    SaveKeyIv("IV", myRijndael.IV);
 
                     //SaveKeyIv("IV", GenerateRandomSalt());
                     SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPass));
@@ -593,9 +591,8 @@ namespace MyId
 
         private void Form1_Load(object sender, EventArgs e)
         {
-#if DEBUG
+
             uxExport.Visible = true;
-#endif
             uxVersion.Text = Application.ProductVersion;
             if (File.Exists(IdFile))
             {
