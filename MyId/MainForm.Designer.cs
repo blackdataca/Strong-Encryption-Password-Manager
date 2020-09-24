@@ -47,6 +47,7 @@
             this.uxExplorer = new System.Windows.Forms.ToolStripMenuItem();
             this.uxImport = new System.Windows.Forms.ToolStripMenuItem();
             this.uxExport = new System.Windows.Forms.ToolStripMenuItem();
+            this.uxPrint = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.uxExportPrivateKey = new System.Windows.Forms.ToolStripMenuItem();
             this.importPrivateKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -75,6 +76,8 @@
             this.uxTimeout = new System.Windows.Forms.ToolStripStatusLabel();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.printDocument1 = new System.Drawing.Printing.PrintDocument();
+            this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.contextMenuStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
@@ -185,6 +188,7 @@
             this.uxExplorer,
             this.uxImport,
             this.uxExport,
+            this.uxPrint,
             this.toolStripSeparator2,
             this.uxExportPrivateKey,
             this.importPrivateKeyToolStripMenuItem,
@@ -230,6 +234,13 @@
             this.uxExport.Text = "&Export CSV...";
             this.uxExport.Visible = false;
             this.uxExport.Click += new System.EventHandler(this.UxExport_Click);
+            // 
+            // uxPrint
+            // 
+            this.uxPrint.Name = "uxPrint";
+            this.uxPrint.Size = new System.Drawing.Size(246, 22);
+            this.uxPrint.Text = "&Print";
+            this.uxPrint.Click += new System.EventHandler(this.uxPrint_Click);
             // 
             // toolStripSeparator2
             // 
@@ -283,14 +294,14 @@
             // 
             this.newToolStripMenuItem.Image = global::MyId.Properties.Resources.small_new_32x32;
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.newToolStripMenuItem.Text = "&New...";
             // 
             // mnuEdit
             // 
             this.mnuEdit.Image = global::MyId.Properties.Resources.small_pencil_32x32;
             this.mnuEdit.Name = "mnuEdit";
-            this.mnuEdit.Size = new System.Drawing.Size(180, 22);
+            this.mnuEdit.Size = new System.Drawing.Size(107, 22);
             this.mnuEdit.Text = "&Edit";
             this.mnuEdit.Click += new System.EventHandler(this.MnuEdit_Click);
             // 
@@ -298,7 +309,7 @@
             // 
             this.mnuDelete.Image = global::MyId.Properties.Resources.small_delete_32x32;
             this.mnuDelete.Name = "mnuDelete";
-            this.mnuDelete.Size = new System.Drawing.Size(180, 22);
+            this.mnuDelete.Size = new System.Drawing.Size(107, 22);
             this.mnuDelete.Text = "&Delete";
             this.mnuDelete.Click += new System.EventHandler(this.MnuDelete_Click);
             // 
@@ -445,6 +456,17 @@
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
             // 
+            // printDocument1
+            // 
+            this.printDocument1.BeginPrint += new System.Drawing.Printing.PrintEventHandler(this.printDocument1_BeginPrint);
+            this.printDocument1.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(this.printDocument1_PrintPage);
+            // 
+            // printDialog1
+            // 
+            this.printDialog1.AllowSomePages = true;
+            this.printDialog1.Document = this.printDocument1;
+            this.printDialog1.UseEXDialog = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -518,6 +540,9 @@
         private System.Windows.Forms.ToolStripMenuItem importPrivateKeyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mnuEdit;
         private System.Windows.Forms.ToolStripMenuItem mnuDelete;
+        private System.Windows.Forms.ToolStripMenuItem uxPrint;
+        private System.Drawing.Printing.PrintDocument printDocument1;
+        private System.Windows.Forms.PrintDialog printDialog1;
     }
 }
 

@@ -17,6 +17,7 @@ using System.Timers;
 using System.Windows.Forms;
 using System.Linq;
 using System.Diagnostics;
+using System.Drawing.Printing;
 
 namespace MyId
 {
@@ -61,10 +62,10 @@ namespace MyId
 
         private MemoryStream DecryptFileStream(string encFile)
         {
-            MemoryStream ms = null; 
+            MemoryStream ms = null;
 
             string encFileNameOnly = Path.GetFileName(encFile);
-            encFile = Path.Combine(KnownFolders.DataDir,  encFileNameOnly);
+            encFile = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
 
             if (File.Exists(encFile))
             {
@@ -130,10 +131,10 @@ namespace MyId
         {
             if (!File.Exists(imageFile))
                 return null;
-            
+
             string ext = Path.GetExtension(imageFile);
             string encFileNameOnly = string.Format("enc.{0}{1}", Guid.NewGuid(), ext);
-            string encFile = Path.Combine(KnownFolders.DataDir,  encFileNameOnly);
+            string encFile = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
 
             using (RijndaelManaged myRijndael = new RijndaelManaged())
             {
@@ -168,9 +169,9 @@ namespace MyId
                                 cryptoStream.Write(buffer, 0, read);
                                 Thread.Sleep(1);
                             }
-                            
+
                             cryptoStream.Close();
-                            
+
                         }
                         fsCrypt.Close();
                     }
@@ -179,16 +180,16 @@ namespace MyId
             }
             //for (int i = 0; i < 5; i++)
             //{
-                try
-                {
-                    File.Delete(imageFile);
-                    //break;
-                }
-                catch (IOException ex)
-                {
-                    MessageBox.Show(string.Format("Error delete file {0}: {1}" , imageFile, ex.Message), this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                //Thread.Sleep(1000);
+            try
+            {
+                File.Delete(imageFile);
+                //break;
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(string.Format("Error delete file {0}: {1}", imageFile, ex.Message), this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            //Thread.Sleep(1000);
             //}
             return encFileNameOnly;
         }
@@ -208,7 +209,7 @@ namespace MyId
                     //    Thread.CurrentThread.IsBackground = true;
                     if (aItem.Images != null)
                     {
-                        
+
                         Cursor.Current = Cursors.WaitCursor;
                         foreach (var encFile in aItem.Images)
                         {
@@ -222,11 +223,11 @@ namespace MyId
                                 }
                                 catch (Exception ex)
                                 {
-                                    string f = Path.Combine(KnownFolders.DataDir,  encFile.Key);
+                                    string f = Path.Combine(KnownFolders.DataDir, encFile.Key);
 
                                     img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
                                 }
-                                
+
 
                                 if (img != null)
                                 {
@@ -242,12 +243,12 @@ namespace MyId
 
                         }
                         Cursor.Current = Cursors.Default;
-                        
+
                     }
                     //});
                     //t.Start();
                     //t.Join();
-                    
+
 
                     if (edit.ShowDialog(this) == DialogResult.OK)
                     {
@@ -270,7 +271,7 @@ namespace MyId
                                     aItem.Images.Add(encImg, Path.GetFileName(imgFile));
                                 }
                             }
-                            for (int i = aItem.Images.Count -1; i>=0; i--)
+                            for (int i = aItem.Images.Count - 1; i >= 0; i--)
                             //foreach (var encFile in aItem.Images.Keys)
                             {
                                 var encFile = aItem.Images.ElementAt(i).Key;
@@ -288,7 +289,7 @@ namespace MyId
                             }
                             Cursor.Current = Cursors.Default;
                         }
-                    
+
                         if (oldPass != aItem.Password)
                             aItem.Changed = DateTime.Now;
 
@@ -308,17 +309,17 @@ namespace MyId
             {
                 if (edit.ShowDialog(this) == DialogResult.OK)
                 {
-                    
+
                     Cursor.Current = Cursors.WaitCursor;
                     foreach (var img in edit.TempImages.Keys)
                     {
                         string encFile = EncryptFile(img);
 
-                        edit.AIdItem.Images.Add(encFile, Path.GetFileName( img));
+                        edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
 
                     }
                     Cursor.Current = Cursors.Default;
-                    
+
                     AddListItem(edit.AIdItem);
                     _idList.Add(edit.AIdItem);
                     SaveToDisk();
@@ -380,7 +381,7 @@ namespace MyId
             var si = new CreateNewMaster();
             if (si.ShowDialog() == DialogResult.OK)
             {
-                string masterPass = si.uxMasterPassword.Text;  
+                string masterPass = si.uxMasterPassword.Text;
 
 
                 using (RijndaelManaged myRijndael = new RijndaelManaged())
@@ -399,8 +400,8 @@ namespace MyId
                     //myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
 
                 }
-                
-                
+
+
 
 
                 SaveToDisk();
@@ -422,7 +423,7 @@ namespace MyId
                 //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                 myRijndael.Mode = CipherMode.CFB;
 
-               // var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
+                // var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
                 //myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
                 //myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
 
@@ -495,7 +496,7 @@ namespace MyId
 
                             SaveKeyIv("RiKey", myRijndael.Key);
                             SaveKeyIv("RiIv", myRijndael.IV);
-                            
+
                         }
                         else
                         {
@@ -522,9 +523,9 @@ namespace MyId
                     int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
                     if (col != -1)
                     {
-                        lvwColumnSorter.SortColumn = (int) Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
-                        int or = (int) Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
-                        lvwColumnSorter.Order = (SortOrder) or;
+                        lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
+                        int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
+                        lvwColumnSorter.Order = (SortOrder)or;
                         // Perform the sort with these new sort options.
                         uxList.Sort();
                     }
@@ -558,7 +559,7 @@ namespace MyId
         {
             get
             {
-                
+
                 string p = Path.Combine(KnownFolders.DataDir, "myid_secret.data");
                 return p;
             }
@@ -596,7 +597,7 @@ namespace MyId
             uxVersion.Text = Application.ProductVersion;
             if (File.Exists(IdFile))
             {
-                
+
                 bool success = false;
                 for (int i = 0; i < 3; i++)
                 {
@@ -624,7 +625,7 @@ namespace MyId
                         //byte[] mp = GetKeyIv("MasterPass");
                         //if (Encoding.Unicode.GetString(mp) == si.uxPassword.Text)
                         //SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
-                        
+
                         if (ValidatePassword(si.uxPassword.Text))
                         {
                             if (LoadFromDisk())
@@ -642,13 +643,13 @@ namespace MyId
                                 }
                             }
                         }
-                        else 
+                        else
                             MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        
+
                     }
                     else if (result == DialogResult.Yes) //Create new data file
                     {
-            
+
                         CreateNewFile();
                         success = true;
                         break;
@@ -737,7 +738,7 @@ namespace MyId
                     byte[] keyBytes;
                     using (SHA256 mySHA256 = SHA256.Create())
                     {
-                        byte[] keyB = value ;
+                        byte[] keyB = value;
                         keyBytes = mySHA256.ComputeHash(keyB);
                     }
                     byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
@@ -765,7 +766,7 @@ namespace MyId
             };
             if (fd.ShowDialog() == DialogResult.OK)
             {
-                
+
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportPath", Path.GetDirectoryName(fd.FileName));
                 var csvFile = fd.FileName;
                 int noOfLines = 0;
@@ -810,9 +811,9 @@ namespace MyId
                                     Site = fields[0],
                                     User = fields[1],
                                     Password = fields[2]
-                                    
+
                                 };
-                                if (noOfLines !=0 && fields[3] != "")
+                                if (noOfLines != 0 && fields[3] != "")
                                 {
                                     item.Changed = DateTime.Parse(fields[3]);
                                 }
@@ -841,7 +842,7 @@ namespace MyId
 
         }
 
-       
+
 
         private void UxList_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -909,7 +910,7 @@ namespace MyId
                 {
                     lvwColumnSorter.Order = SortOrder.Descending;
                 }
-                else 
+                else
                 {
                     lvwColumnSorter.Order = SortOrder.Ascending;
                 }
@@ -922,7 +923,7 @@ namespace MyId
             }
 
             Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
-            Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int) lvwColumnSorter.Order);
+            Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
             // Perform the sort with these new sort options.
             uxList.Sort();
         }
@@ -938,7 +939,7 @@ namespace MyId
                 uxList.Items.Clear();
                 foreach (var idItem in _idList)
                 {
-                    if (idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >=0 ||
+                    if (idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                         idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                         idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0
                         )
@@ -1003,8 +1004,8 @@ namespace MyId
                     sb.AppendLine();
                 }
                 File.WriteAllText(fn, sb.ToString());
-      
-                 MessageBox.Show(string.Format("{0} records exported.", _idList.Count), fd.FileName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                MessageBox.Show(string.Format("{0} records exported.", _idList.Count), fd.FileName, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -1019,12 +1020,12 @@ namespace MyId
             {
                 data = String.Format("\"{0}\"", data);
             }
-            
+
             else if (data.Contains("\n"))
             {
                 data = String.Format("\"{0}\"", data);
             }
-            return data ;
+            return data;
         }
 
         private void UxExportPrivateKey_Click(object sender, EventArgs e)
@@ -1043,14 +1044,14 @@ namespace MyId
             {
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ExportKeyPath", Path.GetDirectoryName(fd.FileName));
 
-                byte[] buffer = new byte[2+16+32+16];
+                byte[] buffer = new byte[2 + 16 + 32 + 16];
 
                 buffer[0] = 0x01; //major version #
                 buffer[1] = 0x02; //minor version #
 
                 GetKeyIv("IV").CopyTo(buffer, 2); //length 16
-                GetKeyIv("RiKey").CopyTo(buffer, 16+2); //length 32
-                GetKeyIv("RiIv").CopyTo(buffer, 48+2); //length 16
+                GetKeyIv("RiKey").CopyTo(buffer, 16 + 2); //length 32
+                GetKeyIv("RiIv").CopyTo(buffer, 48 + 2); //length 16
                 try
                 {
                     File.WriteAllText(fd.FileName, BitConverter.ToString(buffer).Replace("-", ","));
@@ -1102,11 +1103,11 @@ namespace MyId
                         SaveKeyIv("IV", iv);
 
                         byte[] riKey = new byte[32];
-                        Array.Copy(buffer, 2+16, riKey, 0, 32);
+                        Array.Copy(buffer, 2 + 16, riKey, 0, 32);
                         SaveKeyIv("RiKey", riKey);
 
                         byte[] riIv = new byte[16];
-                        Array.Copy(buffer, 2+48, riIv, 0, 16);
+                        Array.Copy(buffer, 2 + 48, riIv, 0, 16);
                         SaveKeyIv("RiIv", riIv);
 
                         SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
@@ -1163,7 +1164,7 @@ namespace MyId
                 if (ValidatePassword(si.uxPassword.Text))
                 {
                     //password match
-                   if ( CreateNewPass())
+                    if (CreateNewPass())
                         MessageBox.Show("Master password changed", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 }
@@ -1194,15 +1195,15 @@ namespace MyId
         {
             // uint idle = GetIdleTimeMs();
             TimeSpan diff = DateTime.Now - _wentIdle;
-            int timo = (int) Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "IdleTimeout", 300); 
-            
-            uxTimeout.Text = string.Format("Idle timeout {0}s", timo - (int) diff.TotalSeconds );
+            int timo = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "IdleTimeout", 300);
+
+            uxTimeout.Text = string.Format("Idle timeout {0}s", timo - (int)diff.TotalSeconds);
             if (diff.TotalSeconds > timo)
                 Application.Exit();//close after 30s
         }
 
 
-       
+
         private bool isUserInput(Message m)
         {
             // look for any message that was the result of user input
@@ -1257,7 +1258,7 @@ namespace MyId
         //        KnownFolders.DataDir = backupForm.uxNewLocation.Text;
         //        MessageBox.Show("Data moved to new directory: " + KnownFolders.DataDir);
         //    }
- 
+
         //}
 
         private bool OpenDataFile()
@@ -1277,7 +1278,7 @@ namespace MyId
                 {
                     MessageBox.Show("Failed to load data folder", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                
+
             }
             return false;
         }
@@ -1306,6 +1307,152 @@ namespace MyId
             CreateNewFile();
         }
 
+        private int printLineNo;
+        private int page = 0;
+        private void uxPrint_Click(object sender, EventArgs e)
+        {
+            //printDocument1.DefaultPageSettings.Landscape = true;
+
+            if ( printDialog1.ShowDialog() == DialogResult.OK)
+            {
+                // this is were you take the printersettings from the printDialog
+
+                printDocument1.PrinterSettings = printDialog1.PrinterSettings;
+                printDocument1.Print();
+
+            }
+        }
+
+        private string GetItemField(int itemIndex, int fieldIndex)
+        {
+            switch (fieldIndex)
+            {
+                case 0:
+                    return (itemIndex + 1).ToString() ;
+                case 1:
+                    return _idList[itemIndex].Site;
+                case 2:
+                    return _idList[itemIndex].User;
+                case 3:
+                    return _idList[itemIndex].Password;
+                case 4:
+                    return _idList[itemIndex].Changed.ToString("yyyy-MM-dd HH:mm:ss");
+                case 5:
+                    return _idList[itemIndex].Memo;
+                default:
+                    throw new Exception("Unknown item");
+
+            }
+        }
+        private void printDocument1_PrintPage(object sender, PrintPageEventArgs ev)
+        {
+            //float linesPerPage = 0;
+            
+            
+            float leftMargin = ev.MarginBounds.Left;
+            float topMargin = ev.MarginBounds.Top;
+            float bottomMargin = topMargin + ev.MarginBounds.Height;
+            var printFont = new Font("Arial", 8);
+
+            float fontHeight = printFont.GetHeight(ev.Graphics);
+
+
+            ev.Graphics.DrawString(string.Format("Printed {0}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")), printFont, Brushes.Black, leftMargin, topMargin - fontHeight);
+
+
+
+            var recfs = new RectangleF[6];
+            var fields = new string[] { "#", "Site","User","Password" ,"Changed","Memo" };
+
+            float xPos = 0;
+            for (int i = 0;i<6; i++)
+            {
+                float width;
+                if (i == 0)
+                {
+                    var size = ev.Graphics.MeasureString(_idList.Count.ToString(), printFont);
+                    width = size.Width;
+                }
+                //else if (i == 4)
+                //{
+                //    var size = ev.Graphics.MeasureString("2020-09-24 00:00:00", printFont);
+                //    width = size.Width;
+                //}
+                else
+                    width = (float)ev.MarginBounds.Width * 0.2f;
+                recfs[i] = new RectangleF(leftMargin + xPos, topMargin, width , fontHeight);
+                xPos += width;
+                ev.Graphics.FillRectangle(Brushes.DarkGray, recfs[i]);
+                ev.Graphics.DrawString(fields[i], printFont, Brushes.White, recfs[i]);
+            }
+
+            
+            float yPos = fontHeight; //max. height of a line or bottom of last line
+            float maxHeight = fontHeight;
+            
+            // Iterate over the file, printing each line.
+            while ( printLineNo < _idList.Count)
+            {
+                
+                var item = _idList[printLineNo];
+
+                for (int i =0;i <6;i++)
+                {
+                    recfs[i].Offset(0, maxHeight);
+                   
+                }
+
+                maxHeight = fontHeight;
+                var sizefs = new SizeF[6];
+                for (int i = 0; i < 6; i++)
+                {
+                    sizefs[i] = ev.Graphics.MeasureString(GetItemField(printLineNo,i), printFont, (int)recfs[i].Width);
+                    if (maxHeight < sizefs[i].Height)
+                        maxHeight = sizefs[i].Height;
+                }
+                
+                if (yPos + topMargin + maxHeight > bottomMargin)
+                    break;
+
+                for (int i = 0; i < 6; i++)
+                {
+                    recfs[i].Height = maxHeight;
+                    ev.Graphics.DrawRectangle(Pens.DarkGray, Rectangle.Round(recfs[i]));
+                    ev.Graphics.DrawString(GetItemField(printLineNo, i), printFont, Brushes.Black, recfs[i]);
+                }
+
+
+                yPos += maxHeight;
+
+
+                //sb.Append(CsvString(item.Site)).Append(",");
+                //sb.Append(CsvString(item.User)).Append(",");
+                //sb.Append(CsvString(item.Password)).Append(",");
+                //sb.Append(CsvString(item.Changed.ToString("yyyy-MM-dd HH:mm:ss"))).Append(",");
+                //sb.Append(CsvString(item.Memo));
+                //sb.AppendLine();
+                //string line = sb.ToString();
+
+                //ev.Graphics.DrawString(line, printFont, Brushes.Black,
+                //   leftMargin, yPos, new StringFormat());
+                printLineNo++;
+            }
+
+            page++;
+            ev.Graphics.DrawString(string.Format("Page {0}", page), printFont, Brushes.Black, leftMargin, bottomMargin + fontHeight);
+
+            // If more lines exist, print another page.
+            if (printLineNo < _idList.Count)
+                ev.HasMorePages = true;
+            else
+                ev.HasMorePages = false;
+        }
+
+        private void printDocument1_BeginPrint(object sender, PrintEventArgs e)
+        {
+            printLineNo = 0;
+            page = 0;
+        }
     }
 
     
