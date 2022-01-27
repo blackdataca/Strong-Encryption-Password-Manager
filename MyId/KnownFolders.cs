@@ -12,17 +12,20 @@ namespace MyId
     /// </summary>
     public static class KnownFolders
     {
+     
+        /// <summary>
+        /// The directory stores data file without the file name
+        /// </summary>
         public static string DataDir
         {
             get
             {
-                string d = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + Path.DirectorySeparatorChar + "MyId";
-
-                string p = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", d);
-                if (string.IsNullOrEmpty(p))
-                    return d;
+                string defaultDataDir = AppDomain.CurrentDomain.BaseDirectory;
+                string savedDataDir = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", defaultDataDir);
+                if (string.IsNullOrEmpty(savedDataDir))
+                    return defaultDataDir;
                 else
-                    return p;
+                    return savedDataDir;
             }
             set
             {

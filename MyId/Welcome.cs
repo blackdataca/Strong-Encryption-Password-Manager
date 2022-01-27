@@ -84,7 +84,7 @@ namespace MyId
             if (!string.IsNullOrWhiteSpace(uxPrivateKeyPath.Text))
                 initDir = System.IO.Path.GetDirectoryName(uxPrivateKeyPath.Text);
             if (!System.IO.Directory.Exists(initDir))
-                initDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                initDir = KnownFolders.DataDir; // Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             uxSavePrivateKeyFile.InitialDirectory = initDir;
             
 

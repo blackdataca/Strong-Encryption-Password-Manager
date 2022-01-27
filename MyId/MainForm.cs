@@ -403,6 +403,12 @@ namespace MyId
                 
                 using (RijndaelManaged myRijndael = new RijndaelManaged())
                 {
+                    myRijndael.KeySize = 256;
+                    myRijndael.BlockSize = 128;
+                    myRijndael.Padding = PaddingMode.PKCS7;
+                    //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                    myRijndael.Mode = CipherMode.CFB;
+
                     //Save PIN
                     myRijndael.GenerateIV();
                     SaveKeyIv("IV", myRijndael.IV);
@@ -591,8 +597,8 @@ namespace MyId
             get
             {
 
-                string p = Path.Combine(KnownFolders.DataDir, "myid_secret.data");
-                return p;
+                string dataFile = Path.Combine(KnownFolders.DataDir, "myid_secret.data");
+                return dataFile;
             }
         }
 
