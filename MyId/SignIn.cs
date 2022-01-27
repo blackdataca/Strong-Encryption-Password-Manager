@@ -41,5 +41,10 @@ namespace MyId
             DialogResult = DialogResult.No;
             Close();
         }
+
+        private void SignIn_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

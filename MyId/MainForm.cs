@@ -27,9 +27,25 @@ namespace MyId
         private ListViewColumnSorter lvwColumnSorter;
         private DateTime _wentIdle = DateTime.Now;
 
+        /// <summary>
+        /// Recovers this instance of the form.
+        /// </summary>
+        public void RestoreFromTray()
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(RestoreFromTray));
+                return;
+            }
+            this.Visible = true;
+            this.WindowState = FormWindowState.Normal;
+            this.Activate();
+        }
+
         public MainForm()
         {
             InitializeComponent();
+
             // Create an instance of a ListView column sorter and assign it 
             // to the ListView control.
             lvwColumnSorter = new ListViewColumnSorter();
@@ -221,7 +237,7 @@ namespace MyId
                                 {
                                     img = Image.FromStream(st);
                                 }
-                                catch (Exception ex)
+                                catch 
                                 {
                                     string f = Path.Combine(KnownFolders.DataDir, encFile.Key);
 
@@ -375,26 +391,31 @@ namespace MyId
             }
             if (File.Exists(IdFile))
             {
-                MessageBox.Show("Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("TODO: Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 Application.Exit();
             }
-            var si = new CreateNewMaster();
+            var si = new Welcome();
+            si.IdFile = IdFile;
             if (si.ShowDialog() == DialogResult.OK)
             {
-                string masterPass = si.uxMasterPassword.Text;
+                string masterPin = si.uxMasterPin.Text;
 
-
+                
                 using (RijndaelManaged myRijndael = new RijndaelManaged())
                 {
+                    //Save PIN
                     myRijndael.GenerateIV();
                     SaveKeyIv("IV", myRijndael.IV);
+                    SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
 
-                    //SaveKeyIv("IV", GenerateRandomSalt());
-                    SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPass));
-
+                    //Create private key
                     var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GenerateRandomSalt(), 50000);
-                    SaveKeyIv("RiKey", key.GetBytes(myRijndael.KeySize / 8));
-                    SaveKeyIv("RiIv", key.GetBytes(myRijndael.BlockSize / 8));
+                    var riKey = key.GetBytes(myRijndael.KeySize / 8);
+                    var ver = Encoding.ASCII.GetBytes("MyIdV2");
+                    SaveKeyIv("RiKey", ver.Concat(riKey).ToArray());
+
+                    var riIv = key.GetBytes(myRijndael.BlockSize / 8);
+                    SaveKeyIv("RiIv", ver.Concat(riIv).ToArray() );
 
                     //myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
                     //myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
@@ -672,7 +693,7 @@ namespace MyId
             }
             else
             {
-                CreateNewFile();
+                CreateNewFile(); //First time app run
             }
         }
 
@@ -1172,10 +1193,10 @@ namespace MyId
         }
         private bool CreateNewPass()
         {
-            var np = new CreateNewMaster();
+            var np = new Welcome();
             if (np.ShowDialog() == DialogResult.OK)
             {
-                SaveKeyIv("Key", Encoding.Unicode.GetBytes(np.uxMasterPassword.Text));
+                SaveKeyIv("Key", Encoding.Unicode.GetBytes(np.uxMasterPin.Text));
 
                 //SaveToDisk();
 

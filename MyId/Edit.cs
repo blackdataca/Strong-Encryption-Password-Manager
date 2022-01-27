@@ -163,7 +163,7 @@ namespace MyId
                     {
                         image = Image.FromFile(f);
                     }
-                    catch (Exception ex)
+                    catch 
                     {
                         image = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
                     }
