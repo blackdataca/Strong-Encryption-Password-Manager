@@ -62,9 +62,9 @@ namespace MyId
         //    _wentIdle = DateTime.Now;
         //}
 
-        private byte[] GenerateRandomSalt()
+        private byte[] GenerateRandomBytes(int size)
         {
-            byte[] data = new byte[32];
+            byte[] data = new byte[size];
 
             RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
             for (int i = 0; i < 10; i++)
@@ -172,7 +172,7 @@ namespace MyId
                     {
 
                         //generate random salt
-                        byte[] salt = GenerateRandomSalt();
+                        byte[] salt = GenerateRandomBytes(32);
                         fsCrypt.Write(salt, 0, salt.Length);
 
                         using (var cryptoStream = new CryptoStream(fsCrypt, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
@@ -409,17 +409,27 @@ namespace MyId
                     SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
 
                     //Create private key
-                    var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GenerateRandomSalt(), 50000);
+                    var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GenerateRandomBytes(32), 50000);
                     var riKey = key.GetBytes(myRijndael.KeySize / 8);
-                    var ver = Encoding.ASCII.GetBytes("MyIdV2");
-                    SaveKeyIv("RiKey", ver.Concat(riKey).ToArray());
-
                     var riIv = key.GetBytes(myRijndael.BlockSize / 8);
-                    SaveKeyIv("RiIv", ver.Concat(riIv).ToArray() );
 
-                    //myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                    //myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+                    if (si.uxSavePrivateKeyTo.Checked)
+                    { //save to disk
+                        Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "PrivateKeyFile", si.uxPrivateKeyPath.Text);
+                        var ver = Encoding.ASCII.GetBytes("MyIdV2PrivateKey");
+                        var buffer = ver.Concat(riKey).Concat(riIv).ToArray();
+                        File.WriteAllBytes(si.uxPrivateKeyPath.Text, buffer);
+                    }
+                    else
+                    {
+                        //var ver = Encoding.ASCII.GetBytes("MyIdV2PrivateKey");
+                        //SaveKeyIv("RiKey", ver.Concat(riKey).ToArray());
+                        SaveKeyIv("RiKey", riKey);
 
+
+                        //SaveKeyIv("RiIv", ver.Concat(riIv).ToArray() );
+                        SaveKeyIv("RiIv", riIv);
+                    }
                 }
 
 
@@ -714,10 +724,27 @@ namespace MyId
                 case "RiKey": //32
                 case "RiIv": //16
                     {
-                        byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
-                        if (data == null)
-                            return null;
-                        return data;
+                        string privateKeyFile = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "PrivateKeyFile", "");
+                        if (!string.IsNullOrWhiteSpace(privateKeyFile) && System.IO.File.Exists(privateKeyFile))
+                        {
+                            var data = File.ReadAllBytes(privateKeyFile);
+                            if (data.Length == 64 && Encoding.ASCII.GetString(data, 0, 16) == "MyIdV2PrivateKey")
+                            {
+                                if (type == "RiKey")
+                                    return data.Skip(16).Take(32).ToArray();
+                                else
+                                    return data.Skip(16 + 32).Take(16).ToArray();
+                            }
+                            else
+                                return null;
+                        }
+                        else
+                        {
+                            byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
+                            if (data == null)
+                                return null;
+                            return data;
+                        }
                     }
                 case "Key":
                     {
@@ -737,6 +764,8 @@ namespace MyId
                     throw new Exception("error 191");
             }
         }
+
+
         private void SaveKeyIv(string type, byte[] value)
         {
 
@@ -762,7 +791,7 @@ namespace MyId
                         byte[] keyB = value;
                         keyBytes = mySHA256.ComputeHash(keyB);
                     }
-                    byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                    byte[] iv32 = GetKeyIv("IV");// PIN is only accessible on this computer
                     byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
                     break;

@@ -83,29 +83,9 @@ namespace MyId.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap MyId_Infograph_drawio {
-            get {
-                object obj = ResourceManager.GetObject("MyId Infograph.drawio", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap MyId_Infograph_drawio__1_ {
             get {
                 object obj = ResourceManager.GetObject("MyId Infograph.drawio (1)", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap MyId_Infograph1 {
-            get {
-                object obj = ResourceManager.GetObject("MyId Infograph1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
