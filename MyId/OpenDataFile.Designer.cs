@@ -30,14 +30,12 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OpenDataFile));
             this.label1 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.uxDataFileDir = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
             this.uxPrivateKeyThisComputer = new System.Windows.Forms.RadioButton();
             this.uxPriviateKeyOn = new System.Windows.Forms.RadioButton();
             this.uxPrivateKeyPath = new System.Windows.Forms.TextBox();
             this.uxBrowsePrivateKey = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.textBox3 = new System.Windows.Forms.TextBox();
             this.uxOk = new System.Windows.Forms.Button();
             this.uxCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -45,18 +43,18 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(44, 46);
+            this.label1.Location = new System.Drawing.Point(24, 46);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(46, 13);
             this.label1.TabIndex = 0;
             this.label1.Text = "Data file";
             // 
-            // textBox1
+            // uxDataFileDir
             // 
-            this.textBox1.Location = new System.Drawing.Point(115, 46);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(342, 20);
-            this.textBox1.TabIndex = 1;
+            this.uxDataFileDir.Location = new System.Drawing.Point(115, 46);
+            this.uxDataFileDir.Name = "uxDataFileDir";
+            this.uxDataFileDir.Size = new System.Drawing.Size(342, 20);
+            this.uxDataFileDir.TabIndex = 1;
             // 
             // button1
             // 
@@ -70,7 +68,7 @@
             // uxPrivateKeyThisComputer
             // 
             this.uxPrivateKeyThisComputer.AutoSize = true;
-            this.uxPrivateKeyThisComputer.Location = new System.Drawing.Point(47, 106);
+            this.uxPrivateKeyThisComputer.Location = new System.Drawing.Point(27, 106);
             this.uxPrivateKeyThisComputer.Name = "uxPrivateKeyThisComputer";
             this.uxPrivateKeyThisComputer.Size = new System.Drawing.Size(180, 17);
             this.uxPrivateKeyThisComputer.TabIndex = 3;
@@ -81,60 +79,45 @@
             // 
             this.uxPriviateKeyOn.AutoSize = true;
             this.uxPriviateKeyOn.Checked = true;
-            this.uxPriviateKeyOn.Location = new System.Drawing.Point(47, 156);
+            this.uxPriviateKeyOn.Location = new System.Drawing.Point(27, 156);
             this.uxPriviateKeyOn.Name = "uxPriviateKeyOn";
-            this.uxPriviateKeyOn.Size = new System.Drawing.Size(114, 17);
+            this.uxPriviateKeyOn.Size = new System.Drawing.Size(94, 17);
             this.uxPriviateKeyOn.TabIndex = 4;
             this.uxPriviateKeyOn.TabStop = true;
-            this.uxPriviateKeyOn.Text = "Use private key on";
+            this.uxPriviateKeyOn.Text = "Private key file";
             this.uxPriviateKeyOn.UseVisualStyleBackColor = true;
             this.uxPriviateKeyOn.CheckedChanged += new System.EventHandler(this.uxPriviateKeyOn_CheckedChanged);
             // 
             // uxPrivateKeyPath
             // 
-            this.uxPrivateKeyPath.Location = new System.Drawing.Point(115, 194);
+            this.uxPrivateKeyPath.Location = new System.Drawing.Point(160, 156);
             this.uxPrivateKeyPath.Name = "uxPrivateKeyPath";
-            this.uxPrivateKeyPath.Size = new System.Drawing.Size(342, 20);
+            this.uxPrivateKeyPath.Size = new System.Drawing.Size(297, 20);
             this.uxPrivateKeyPath.TabIndex = 5;
             // 
             // uxBrowsePrivateKey
             // 
-            this.uxBrowsePrivateKey.Location = new System.Drawing.Point(463, 191);
+            this.uxBrowsePrivateKey.Location = new System.Drawing.Point(463, 156);
             this.uxBrowsePrivateKey.Name = "uxBrowsePrivateKey";
             this.uxBrowsePrivateKey.Size = new System.Drawing.Size(30, 23);
             this.uxBrowsePrivateKey.TabIndex = 6;
             this.uxBrowsePrivateKey.Text = "...";
             this.uxBrowsePrivateKey.UseVisualStyleBackColor = true;
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(44, 260);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(25, 13);
-            this.label2.TabIndex = 7;
-            this.label2.Text = "PIN";
-            // 
-            // textBox3
-            // 
-            this.textBox3.Location = new System.Drawing.Point(115, 253);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(342, 20);
-            this.textBox3.TabIndex = 8;
-            // 
             // uxOk
             // 
-            this.uxOk.Location = new System.Drawing.Point(316, 316);
+            this.uxOk.Location = new System.Drawing.Point(312, 236);
             this.uxOk.Name = "uxOk";
             this.uxOk.Size = new System.Drawing.Size(75, 23);
             this.uxOk.TabIndex = 9;
             this.uxOk.Text = "&OK";
             this.uxOk.UseVisualStyleBackColor = true;
+            this.uxOk.Click += new System.EventHandler(this.uxOk_Click);
             // 
             // uxCancel
             // 
             this.uxCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.uxCancel.Location = new System.Drawing.Point(422, 316);
+            this.uxCancel.Location = new System.Drawing.Point(418, 236);
             this.uxCancel.Name = "uxCancel";
             this.uxCancel.Size = new System.Drawing.Size(75, 23);
             this.uxCancel.TabIndex = 10;
@@ -145,17 +128,15 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(535, 367);
+            this.ClientSize = new System.Drawing.Size(535, 289);
             this.Controls.Add(this.uxCancel);
             this.Controls.Add(this.uxOk);
-            this.Controls.Add(this.textBox3);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.uxBrowsePrivateKey);
             this.Controls.Add(this.uxPrivateKeyPath);
             this.Controls.Add(this.uxPriviateKeyOn);
             this.Controls.Add(this.uxPrivateKeyThisComputer);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.uxDataFileDir);
             this.Controls.Add(this.label1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "OpenDataFile";
@@ -170,15 +151,13 @@
         #endregion
 
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.RadioButton uxPrivateKeyThisComputer;
-        private System.Windows.Forms.RadioButton uxPriviateKeyOn;
-        private System.Windows.Forms.TextBox uxPrivateKeyPath;
         private System.Windows.Forms.Button uxBrowsePrivateKey;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.Button uxOk;
         private System.Windows.Forms.Button uxCancel;
+        public System.Windows.Forms.TextBox uxDataFileDir;
+        public System.Windows.Forms.RadioButton uxPriviateKeyOn;
+        public System.Windows.Forms.TextBox uxPrivateKeyPath;
     }
 }

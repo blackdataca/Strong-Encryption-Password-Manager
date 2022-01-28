@@ -383,7 +383,7 @@ namespace MyId
         }
 
 
-        private void CreateNewFile()
+        private bool CreateNewFile()
         {
             if (!Directory.Exists(Path.GetDirectoryName(IdFile)))
             {
@@ -391,62 +391,57 @@ namespace MyId
             }
             if (File.Exists(IdFile))
             {
-                MessageBox.Show("TODO: Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                Application.Exit();
+                MessageBox.Show("Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return OpenDataFile();
             }
             var si = new Welcome();
-            si.IdFile = IdFile;
-            if (si.ShowDialog() == DialogResult.OK)
+            switch (si.ShowDialog())
             {
-                string masterPin = si.uxMasterPin.Text;
+                case DialogResult.OK:
+                    string masterPin = si.uxMasterPin.Text;
+                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    {
+                        myRijndael.KeySize = 256;
+                        myRijndael.BlockSize = 128;
+                        myRijndael.Padding = PaddingMode.PKCS7;
+                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                        myRijndael.Mode = CipherMode.CFB;
 
-                
-                using (RijndaelManaged myRijndael = new RijndaelManaged())
-                {
-                    myRijndael.KeySize = 256;
-                    myRijndael.BlockSize = 128;
-                    myRijndael.Padding = PaddingMode.PKCS7;
-                    //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                    myRijndael.Mode = CipherMode.CFB;
+                        //Save PIN
+                        myRijndael.GenerateIV();
+                        SaveKeyIv("IV", myRijndael.IV);
+                        SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
 
-                    //Save PIN
-                    myRijndael.GenerateIV();
-                    SaveKeyIv("IV", myRijndael.IV);
-                    SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
+                    }
 
                     //Create private key
                     var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GenerateRandomBytes(32), 50000);
-                    var riKey = key.GetBytes(myRijndael.KeySize / 8);
-                    var riIv = key.GetBytes(myRijndael.BlockSize / 8);
+                    var riKey = key.GetBytes(32);  //256 bits = 32 bytes
+                    var riIv = key.GetBytes(16);  //128 bits = 16 bytes
+
+                    SaveKeyIv("RiKey", riKey);
+                    SaveKeyIv("RiIv", riIv);
 
                     if (si.uxSavePrivateKeyTo.Checked)
-                    { //save to disk
-                        Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "PrivateKeyFile", si.uxPrivateKeyPath.Text);
-                        var ver = Encoding.ASCII.GetBytes("MyIdV2PrivateKey");
-                        var buffer = ver.Concat(riKey).Concat(riIv).ToArray();
-                        File.WriteAllBytes(si.uxPrivateKeyPath.Text, buffer);
+                    {  //save to disk
+                        SavePrivateKey(si.uxPrivateKeyPath.Text);
+                    }
+
+                    SaveToDisk();
+                    return true;
+                case DialogResult.Retry:
+                    if (OpenDataFile())
+                    {
+
                     }
                     else
-                    {
-                        //var ver = Encoding.ASCII.GetBytes("MyIdV2PrivateKey");
-                        //SaveKeyIv("RiKey", ver.Concat(riKey).ToArray());
-                        SaveKeyIv("RiKey", riKey);
-
-
-                        //SaveKeyIv("RiIv", ver.Concat(riIv).ToArray() );
-                        SaveKeyIv("RiIv", riIv);
-                    }
-                }
-
-
-
-
-                SaveToDisk();
+                        Application.Exit();
+                    break;
+                default:
+                    Application.Exit();
+                    break;
             }
-            else
-            {
-                Application.Exit();
-            }
+            return false;
         }
 
         private void SaveToDisk()
@@ -485,17 +480,17 @@ namespace MyId
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="tryKey">if tryKey is not null, do a dry run to test the key</param>
+        /// 
         /// <returns></returns>
-        private bool LoadFromDisk(string tryKey = null)
+        private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
         {
-            if (tryKey == null)
-                uxList.Items.Clear();
+            
+            uxList.Items.Clear();
             bool success = false;
 
             try
             {
-                using (var fs = new FileStream(IdFile, FileMode.Open, FileAccess.Read))
+                using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
                 {
                     BinaryFormatter formatter = new BinaryFormatter();
                     using (RijndaelManaged myRijndael = new RijndaelManaged())
@@ -506,35 +501,26 @@ namespace MyId
                         //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                         myRijndael.Mode = CipherMode.CFB;
 
-                        //myRijndael.IV = GetKeyIv("IV");
-                        byte[] keyBytes;
-                        if (tryKey == null)
-                            keyBytes = GetKeyIv("Key");
-                        else
+                        //byte[] keyBytes = GetKeyIv("Key");
+
+                        if (pPrivateKeyFile != null)
                         {
-                            using (SHA256 mySHA256 = SHA256.Create())
+                            if (!LoadPrivateKey(pPrivateKeyFile))
                             {
-                                byte[] keyB = Encoding.Unicode.GetBytes(tryKey);
-                                keyBytes = mySHA256.ComputeHash(keyB);
-                            }
-                            byte[] savedKey = GetKeyIv("Key");
-                            if (!keyBytes.SequenceEqual(savedKey))
-                            {
-                                MessageBox.Show("Invalid password!");
+                                MessageBox.Show("Unable load private key!");
                                 return false;
                             }
                         }
+                        //if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                        //{
+                        //    var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                        //    myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
+                        //    myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
 
-                        if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
-                        {
-                            var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                            myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
-                            myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
+                        //    SaveKeyIv("RiKey", myRijndael.Key);
+                        //    SaveKeyIv("RiIv", myRijndael.IV);
 
-                            SaveKeyIv("RiKey", myRijndael.Key);
-                            SaveKeyIv("RiIv", myRijndael.IV);
-
-                        }
+                        //}
                         else
                         {
                             //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
@@ -544,28 +530,23 @@ namespace MyId
 
                         using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
                         {
-                            if (tryKey == null)
-                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
-                            else
-                                formatter.Deserialize(cryptoStream);
+                            _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
                         }
                     }
                 }
-                if (tryKey == null)
+
+                foreach (var idItem in _idList)
                 {
-                    foreach (var idItem in _idList)
-                    {
-                        AddListItem(idItem);
-                    }
-                    int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
-                    if (col != -1)
-                    {
-                        lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
-                        int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
-                        lvwColumnSorter.Order = (SortOrder)or;
-                        // Perform the sort with these new sort options.
-                        uxList.Sort();
-                    }
+                    AddListItem(idItem);
+                }
+                int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
+                if (col != -1)
+                {
+                    lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
+                    int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
+                    lvwColumnSorter.Order = (SortOrder)or;
+                    // Perform the sort with these new sort options.
+                    uxList.Sort();
                 }
                 success = true;
             }
@@ -577,10 +558,8 @@ namespace MyId
                 MessageBox.Show("Access denied", "Unlock MyId", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 #endif
             }
-            if (tryKey == null)
-            {
+
                 ShowNumberOfItems();
-            }
             return success;
         }
 
@@ -665,7 +644,7 @@ namespace MyId
 
                         if (ValidatePassword(si.uxPassword.Text))
                         {
-                            if (LoadFromDisk())
+                            if (LoadFromDisk(IdFile, null))
                             {
                                 //password match
                                 success = true;
@@ -730,27 +709,8 @@ namespace MyId
                 case "RiKey": //32
                 case "RiIv": //16
                     {
-                        string privateKeyFile = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "PrivateKeyFile", "");
-                        if (!string.IsNullOrWhiteSpace(privateKeyFile) && System.IO.File.Exists(privateKeyFile))
-                        {
-                            var data = File.ReadAllBytes(privateKeyFile);
-                            if (data.Length == 64 && Encoding.ASCII.GetString(data, 0, 16) == "MyIdV2PrivateKey")
-                            {
-                                if (type == "RiKey")
-                                    return data.Skip(16).Take(32).ToArray();
-                                else
-                                    return data.Skip(16 + 32).Take(16).ToArray();
-                            }
-                            else
-                                return null;
-                        }
-                        else
-                        {
-                            byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
-                            if (data == null)
-                                return null;
-                            return data;
-                        }
+                        byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
+                        return data;
                     }
                 case "Key":
                     {
@@ -988,7 +948,7 @@ namespace MyId
             string searchTerm = uxSearchBox.Text.Trim();
             if (searchTerm.Length == 0)
             {
-                LoadFromDisk();
+                LoadFromDisk(IdFile, null);
             }
             else
             {
@@ -1099,25 +1059,30 @@ namespace MyId
             if (fd.ShowDialog() == DialogResult.OK)
             {
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ExportKeyPath", Path.GetDirectoryName(fd.FileName));
+                SavePrivateKey(fd.FileName);
 
-                byte[] buffer = new byte[2 + 16 + 32 + 16];
+            }
+        }
 
-                buffer[0] = 0x01; //major version #
-                buffer[1] = 0x02; //minor version #
+        private void SavePrivateKey(string fileName)
+        {
+            byte[] buffer = new byte[2 + 16 + 32 + 16];
 
-                GetKeyIv("IV").CopyTo(buffer, 2); //length 16
-                GetKeyIv("RiKey").CopyTo(buffer, 16 + 2); //length 32
-                GetKeyIv("RiIv").CopyTo(buffer, 48 + 2); //length 16
-                try
-                {
-                    File.WriteAllText(fd.FileName, BitConverter.ToString(buffer).Replace("-", ","));
-                    MessageBox.Show("Private key exported");
-                }
-                catch (IOException ex)
-                {
-                    MessageBox.Show(ex.Message, "Failed to save private key", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+            buffer[0] = 0x01; //major version #
+            buffer[1] = 0x02; //minor version #
 
+            GetKeyIv("IV").CopyTo(buffer, 2); //length 16
+            GetKeyIv("RiKey").CopyTo(buffer, 16 + 2); //length 32
+            GetKeyIv("RiIv").CopyTo(buffer, 48 + 2); //length 16
+            try
+            {
+                File.WriteAllText(fileName, BitConverter.ToString(buffer).Replace("-", ","));
+                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportKeyPath", Path.GetDirectoryName(fileName));
+                MessageBox.Show("Private key exported");
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.Message, "Failed to save private key", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1139,53 +1104,63 @@ namespace MyId
             {
                 if (File.Exists(fd.FileName))
                 {
+                    SignIn si = new SignIn();
+
+                    si.Text = "Restore Private Key";
+                    si.label1.Text = "Enter new master password to encrypt restored private key:";
+
+                    if (si.ShowDialog() != DialogResult.OK)
+                        return;
+
+
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "ImportKeyPath", Path.GetDirectoryName(fd.FileName));
-                    string bufferS = File.ReadAllText(fd.FileName);
 
-                    byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
-
-                    if (buffer[0] == 0x01 && buffer[1] == 0x02)
+                    if (LoadPrivateKey(fd.FileName))
                     {
-                        SignIn si = new SignIn();
-
-                        si.Text = "Restore Private Key";
-                        si.label1.Text = "Enter new master password to encrypt restored private key:";
-
-                        if (si.ShowDialog() != DialogResult.OK)
-                            return;
-
-                        byte[] iv = new byte[16];
-                        Array.Copy(buffer, 2, iv, 0, 16);
-                        SaveKeyIv("IV", iv);
-
-                        byte[] riKey = new byte[32];
-                        Array.Copy(buffer, 2 + 16, riKey, 0, 32);
-                        SaveKeyIv("RiKey", riKey);
-
-                        byte[] riIv = new byte[16];
-                        Array.Copy(buffer, 2 + 48, riIv, 0, 16);
-                        SaveKeyIv("RiIv", riIv);
-
                         SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
-
                         MessageBox.Show("Private key imported");
-
+                       
                     }
                     else
-                    {
                         MessageBox.Show("Unknown key file!", "Failed to restore key file", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                    }
                 }
                 else
                     MessageBox.Show("Key file not found: " + fd.FileName);
             }
         }
+
+        private bool LoadPrivateKey(string privateKeyFile)
+        {
+            string bufferS = File.ReadAllText(privateKeyFile);
+
+            byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
+
+            if (buffer[0] == 0x01 && buffer[1] == 0x02)
+            {
+                byte[] iv = new byte[16];
+                Array.Copy(buffer, 2, iv, 0, 16);
+                SaveKeyIv("IV", iv);
+
+                byte[] riKey = new byte[32];
+                Array.Copy(buffer, 2 + 16, riKey, 0, 32);
+                SaveKeyIv("RiKey", riKey);
+
+                byte[] riIv = new byte[16];
+                Array.Copy(buffer, 2 + 48, riIv, 0, 16);
+                SaveKeyIv("RiIv", riIv);
+
+                return true;
+
+            }
+            return false;
+        }
+
         private void ImportPrivateKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ImportPrivateKey();
             UxSearchBox_TextChanged();
         }
+
         private byte[] ToByteArray(String HexString)
         {
             int NumberChars = HexString.Length;
@@ -1319,13 +1294,13 @@ namespace MyId
 
         private bool OpenDataFile()
         {
-            folderBrowserDialog1.SelectedPath = KnownFolders.DataDir;
-            folderBrowserDialog1.Description = "Current Data Folder: " + KnownFolders.DataDir;
-
-            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            var openDataFileBox = new OpenDataFile();
+            if (openDataFileBox.ShowDialog() == DialogResult.OK)
             {
-                KnownFolders.DataDir = folderBrowserDialog1.SelectedPath;
-                if (LoadFromDisk())
+                string privateKeyFile = null;
+                if (openDataFileBox.uxPriviateKeyOn.Checked)
+                    privateKeyFile = openDataFileBox.uxPrivateKeyPath.Text;
+                if (LoadFromDisk(openDataFileBox.uxDataFileDir.Text, privateKeyFile))
                 {
                     CreateNewPass();
                     return true;
@@ -1334,7 +1309,6 @@ namespace MyId
                 {
                     MessageBox.Show("Failed to load data folder", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
             }
             return false;
         }
@@ -1481,16 +1455,6 @@ namespace MyId
                 yPos += maxHeight;
 
 
-                //sb.Append(CsvString(item.Site)).Append(",");
-                //sb.Append(CsvString(item.User)).Append(",");
-                //sb.Append(CsvString(item.Password)).Append(",");
-                //sb.Append(CsvString(item.Changed.ToString("yyyy-MM-dd HH:mm:ss"))).Append(",");
-                //sb.Append(CsvString(item.Memo));
-                //sb.AppendLine();
-                //string line = sb.ToString();
-
-                //ev.Graphics.DrawString(line, printFont, Brushes.Black,
-                //   leftMargin, yPos, new StringFormat());
                 printLineNo++;
             }
 

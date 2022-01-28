@@ -15,7 +15,6 @@ namespace MyId
         {
             InitializeComponent();
         }
-        public string IdFile;
         private void UxOk_Click(object sender, EventArgs e)
         {
             if (uxMasterPin.Text == "" )
@@ -40,7 +39,7 @@ namespace MyId
         private void CreateNewMaster_Load(object sender, EventArgs e)
         {
             this.Text += Application.ProductVersion;
-            uxDataFilePath.Text = System.IO.Path.GetDirectoryName(IdFile);
+            //uxDataFilePath.Text = System.IO.Path.GetDirectoryName(IdFile);
             ShowPrivateLocation();
         }
 
@@ -63,19 +62,8 @@ namespace MyId
 
         private void uxOther_Click(object sender, EventArgs e)
         {
-            OpenDataFile of = new OpenDataFile();
-            of.ShowDialog();
-        }
-
-        private void uxBrowseDataFile_Click(object sender, EventArgs e)
-        {
-            uxDataFileFolderBrowser.SelectedPath = uxDataFilePath.Text;
-            uxDataFileFolderBrowser.Description = "Create data files in folder";
-
-            if (uxDataFileFolderBrowser.ShowDialog() == DialogResult.OK)
-            {
-                uxDataFilePath.Text = uxDataFileFolderBrowser.SelectedPath;
-            }
+            this.DialogResult = DialogResult.Retry;
+            this.Close();
         }
 
         private void uxBrowsePrivateKey_Click(object sender, EventArgs e)

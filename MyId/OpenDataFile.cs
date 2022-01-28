@@ -30,7 +30,23 @@ namespace MyId
 
         private void OpenDataFile_Load(object sender, EventArgs e)
         {
+            uxDataFileDir.Text= KnownFolders.DataDir;
+            
             ShowPrivateKey();
+        }
+
+        private void uxOk_Click(object sender, EventArgs e)
+        {
+            if (uxPriviateKeyOn.Checked)
+            {
+                if (!System.IO.File.Exists(uxPrivateKeyPath.Text))
+                {
+                    MessageBox.Show("Unable to open private key file!");
+                    return;
+                }
+            }
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
     }
 }

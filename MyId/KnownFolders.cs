@@ -20,7 +20,8 @@ namespace MyId
         {
             get
             {
-                string defaultDataDir = AppDomain.CurrentDomain.BaseDirectory;
+                
+                string defaultDataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MyIdData");
                 string savedDataDir = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", defaultDataDir);
                 if (string.IsNullOrEmpty(savedDataDir))
                     return defaultDataDir;
