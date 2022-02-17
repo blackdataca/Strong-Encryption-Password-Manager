@@ -248,7 +248,7 @@ namespace MyId
                             var st = DecryptFileStream(encFile.Key);
                             if (st != null)
                             {
-                                Image img = null;
+                                Image img;
                                 try
                                 {
                                     img = Image.FromStream(st);
@@ -330,8 +330,8 @@ namespace MyId
                         li.SubItems[2].Text = ShowHint(li, aItem);
                         li.SubItems[3].Text = aItem.ChangedHuman;
                         li.SubItems[4].Text = aItem.Memo;
-                        if (aItem.Images != null)
-                            li.SubItems[4].Text = "(Attachment) " + li.SubItems[4].Text;
+                        if (aItem.Images != null && aItem.Images.Count>0)
+                            li.SubItems[4].Text = $"(File{(aItem.Images.Count==1?"":"s")}) {li.SubItems[4].Text}";
                         SaveToDisk();
                     }
                 }
@@ -369,9 +369,9 @@ namespace MyId
             ListViewItem li = uxList.Items.Add(item);
             li.Tag = idItem.Uid.ToString();
             li.SubItems[2].Text = ShowHint(li, idItem);
-            if (idItem.Images.Count > 0)
+            if (idItem.Images != null && idItem.Images.Count > 0)
             {
-                li.SubItems[4].Text = "(Attachment) " + li.SubItems[4].Text;
+                li.SubItems[4].Text = $"(File{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}"; 
             }
         }
 

@@ -114,16 +114,33 @@ namespace MyId
                 {
                     foreach (var inFile in openFileDialog1.FileNames)
                     {
-                        string idx = imageList1.Images.Count.ToString();
                         
-                        using (Bitmap thumbnail = WindowsThumbnailProvider.GetThumbnail(inFile, 64, 64, ThumbnailOptions.None))
+
+                        Image img;
+                        try
+                        {
+                            img = Image.FromFile(inFile);
+                        }
+                        catch
                         {
 
-                            imageList1.Images.Add(idx, thumbnail);
+                            img = WindowsThumbnailProvider.GetThumbnail(inFile, 64, 64, ThumbnailOptions.None);
                         }
-                        TempImages.Add(inFile, null);
 
-                        uxImages.Items.Add(Path.GetFileName(inFile), idx);
+
+                        //using (Bitmap thumbnail = WindowsThumbnailProvider.GetThumbnail(inFile, 64, 64, ThumbnailOptions.None))
+                        //{
+
+                        //    imageList1.Images.Add(idx, thumbnail);
+                        //}
+                        if (img != null)
+                        {
+                            string idx = imageList1.Images.Count.ToString();
+                            imageList1.Images.Add(idx, img);
+                            TempImages.Add(inFile, null);
+
+                            uxImages.Items.Add(Path.GetFileName(inFile), idx);
+                        }
                     }
                 }
             }
