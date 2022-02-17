@@ -416,7 +416,7 @@ namespace MyId
             //    MessageBox.Show("Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             //    return OpenDataFile();
             //}
-            if (IdFile != "")
+            if (KnownFolders.DataFile != "")
             {
                 if (MessageBox.Show("You will lose access to existing data file if private key is not backed up. Only click Yes if you are 100% sure private key has been backed up or you no longer need existing data file. Otherwise click No.", "Backup private key", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                     return false;
@@ -457,10 +457,8 @@ namespace MyId
                     case DialogResult.Retry:
                         if (OpenDataFile())
                         {
-
+                            return true;
                         }
-                        else
-                            Application.Exit();
                         break;
                     default:
                         return false;
@@ -779,7 +777,8 @@ namespace MyId
             }
             else
             {
-                CreateNewFile(); //First time app run
+                if (!CreateNewFile())
+                    System.Environment.Exit(1);  //First time app run
             }
         }
 
@@ -1379,36 +1378,13 @@ namespace MyId
             uxNew.PerformClick();
         }
 
-        //private void UxBackup_Click(object sender, EventArgs e)
-        //{
-        //    var backupForm = new BackupForm();
-        //    if (backupForm.ShowDialog()== DialogResult.OK)
-        //    {
-        //        if (!Directory.Exists(backupForm.uxNewLocation.Text))
-        //        {
-        //            MessageBox.Show("Path not found: " + backupForm.uxNewLocation.Text);
-        //            return;
-        //        }
-
-        //        if (KnownFolders.DataDir == backupForm.uxNewLocation.Text)
-        //        {
-        //            MessageBox.Show("Target path is the same as source");
-        //            return;
-        //        }
-
-        //        Directory.Delete(backupForm.uxNewLocation.Text);
-        //        Directory.Move(KnownFolders.DataDir, backupForm.uxNewLocation.Text);
-        //        KnownFolders.DataDir = backupForm.uxNewLocation.Text;
-        //        MessageBox.Show("Data moved to new directory: " + KnownFolders.DataDir);
-        //    }
-
-        //}
-
         private bool OpenDataFile()
         {
-            if (MessageBox.Show("You will lose access to existing data file if private key is not backed up. Only click Yes if you are 100% sure private key has been backed up or you no longer need existing data file. Otherwise click No.", "Backup private key", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
-                return false;
-
+            if (KnownFolders.DataFile != "")
+            {
+                if (MessageBox.Show("You will lose access to existing data file if private key is not backed up. Only click Yes if you are 100% sure private key has been backed up or you no longer need existing data file. Otherwise click No.", "Backup private key", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                    return false;
+            }
             var openDataFileBox = new OpenDataFile();
             if (openDataFileBox.ShowDialog() == DialogResult.OK)
             {
