@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Text;
 using System.Windows.Forms;
 
@@ -22,11 +23,11 @@ namespace MyId
                 MessageBox.Show("Please create a PIN", "Create data file", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
-            if (uxSavePrivateKeyTo.Checked && string.IsNullOrWhiteSpace(uxPrivateKeyPath.Text))
-            {
-                MessageBox.Show("Please specify private key file", "Create data file", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return;
-            }
+            //if (uxSavePrivateKeyTo.Checked && string.IsNullOrWhiteSpace(uxPrivateKeyFile.Text))
+            //{
+            //    MessageBox.Show("Please specify private key file", "Backup key file", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            //    return;
+            //}
 
             if (uxMasterPin.Text == uxVerify.Text)
             {
@@ -40,25 +41,28 @@ namespace MyId
         {
             this.Text += Application.ProductVersion;
             //uxDataFilePath.Text = System.IO.Path.GetDirectoryName(IdFile);
-            ShowPrivateLocation();
-        }
-
-        private void label3_Click(object sender, EventArgs e)
-        {
-
+            //ShowPrivateLocation();
+            uxDataFile.Text = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), uxSaveDataFileDialog.FileName);
         }
 
 
-        private void uxSavePrivateKeyTo_CheckedChanged(object sender, EventArgs e)
-        {
-            ShowPrivateLocation();
-        }
 
-        private void ShowPrivateLocation()
-        {
-            uxPrivateKeyPath.Enabled = uxSavePrivateKeyTo.Checked;
-            uxBrowsePrivateKey.Enabled = uxSavePrivateKeyTo.Checked;
-        }
+        //private void uxSavePrivateKeyTo_CheckedChanged(object sender, EventArgs e)
+        //{
+        //    ShowPrivateLocation();
+        //    if (!uxPrivateKeyFile.Enabled)
+        //        uxPrivateKeyFile.Text = "";
+        //    else if (string.IsNullOrWhiteSpace(uxPrivateKeyFile.Text))
+        //    {
+        //        uxPrivateKeyFile.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "myid_private.key"); 
+        //    }
+        //}
+
+        //private void ShowPrivateLocation()
+        //{
+        //    uxPrivateKeyFile.Enabled = uxSavePrivateKeyTo.Checked;
+        //    uxBrowsePrivateKey.Enabled = uxSavePrivateKeyTo.Checked;
+        //}
 
         private void uxOther_Click(object sender, EventArgs e)
         {
@@ -66,19 +70,34 @@ namespace MyId
             this.Close();
         }
 
-        private void uxBrowsePrivateKey_Click(object sender, EventArgs e)
-        {
-            string initDir = "";
-            if (!string.IsNullOrWhiteSpace(uxPrivateKeyPath.Text))
-                initDir = System.IO.Path.GetDirectoryName(uxPrivateKeyPath.Text);
-            if (!System.IO.Directory.Exists(initDir))
-                initDir = KnownFolders.DataDir; // Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            uxSavePrivateKeyFile.InitialDirectory = initDir;
-            
+        //private void uxBrowsePrivateKey_Click(object sender, EventArgs e)
+        //{
+        //    string initFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "myid_private.key");
+        //    if (!string.IsNullOrWhiteSpace(uxPrivateKeyFile.Text))
+        //        initFile = uxPrivateKeyFile.Text;
+        //    //if (!System.IO.Directory.Exists(initDir))
+        //    //    initDir = KnownFolders.DataDir; // Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        //    uxSavePrivateKeyFile.InitialDirectory = Path.GetDirectoryName(initFile);
 
-            if (uxSavePrivateKeyFile.ShowDialog() == DialogResult.OK)
+
+        //    if (uxSavePrivateKeyFile.ShowDialog() == DialogResult.OK)
+        //    {
+        //        uxPrivateKeyFile.Text = uxSavePrivateKeyFile.FileName;
+        //    }
+        //}
+
+        private void uxBrowseDataFile_Click(object sender, EventArgs e)
+        {
+            string initFile = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), uxSaveDataFileDialog.FileName);
+            if (!string.IsNullOrWhiteSpace(uxDataFile.Text))
+                initFile = uxDataFile.Text;
+
+            uxSaveDataFileDialog.InitialDirectory = Path.GetDirectoryName(initFile);
+
+
+            if (uxSaveDataFileDialog.ShowDialog() == DialogResult.OK)
             {
-                uxPrivateKeyPath.Text = uxSavePrivateKeyFile.FileName;
+                uxDataFile.Text = uxSaveDataFileDialog.FileName;
             }
         }
     }

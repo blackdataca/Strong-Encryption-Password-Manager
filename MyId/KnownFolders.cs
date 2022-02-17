@@ -20,7 +20,7 @@ namespace MyId
         {
             get
             {
-                
+
                 string defaultDataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MyIdData");
                 string savedDataDir = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", defaultDataDir);
                 if (string.IsNullOrEmpty(savedDataDir))
@@ -31,6 +31,27 @@ namespace MyId
             set
             {
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataDir", value);
+            }
+        }
+
+        /// <summary>
+        /// The directory stores data file with the file name
+        /// </summary>
+        public static string DataFile
+        {
+            get
+            {
+
+                string defaultDataFile = "";
+                string savedDataDir = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataFile", defaultDataFile);
+                if (string.IsNullOrEmpty(savedDataDir))
+                    return defaultDataFile;
+                else
+                    return savedDataDir;
+            }
+            set
+            {
+                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "DataFile", value);
             }
         }
 

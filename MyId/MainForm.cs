@@ -407,50 +407,64 @@ namespace MyId
 
         private bool CreateNewFile()
         {
-            if (!Directory.Exists(Path.GetDirectoryName(IdFile)))
+            //if (!Directory.Exists(Path.GetDirectoryName(IdFile)))
+            //{
+            //    Directory.CreateDirectory(Path.GetDirectoryName(IdFile));
+            //}
+            //if (File.Exists(IdFile))
+            //{
+            //    MessageBox.Show("Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            //    return OpenDataFile();
+            //}
+            if (IdFile != "")
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(IdFile));
-            }
-            if (File.Exists(IdFile))
-            {
-                MessageBox.Show("Data file already exists: " + IdFile, "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return OpenDataFile();
+                if (MessageBox.Show("You will lose access to existing data file if private key is not backed up. Only click Yes if you are 100% sure private key has been backed up or you no longer need existing data file. Otherwise click No.", "Backup private key", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                    return false;
             }
             var si = new Welcome();
-            switch (si.ShowDialog())
+            for (var i = 0; i < 100; i++)
             {
-                case DialogResult.OK:
-                    byte[] masterPin = Encoding.Unicode.GetBytes(si.uxMasterPin.Text);
-                    SaveKeyIv("Pin", masterPin);
-                    CreateNewKey(masterPin);
+                
+                switch (si.ShowDialog())
+                {
+                    case DialogResult.OK:
+                        if (File.Exists(si.uxDataFile.Text))
+                        {
+                            MessageBox.Show($"Data file already exists: {si.uxDataFile.Text}", "Data file already exists", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            return false;
+                        }
+                        IdFile = si.uxDataFile.Text;
+                        byte[] masterPin = Encoding.Unicode.GetBytes(si.uxMasterPin.Text);
+                        SaveKeyIv("Pin", masterPin);
+                        CreateNewKey(masterPin);
 
-                    //Create private key
+                        //Create private key
 
-                    //var key = new Rfc2898DeriveBytes(Encoding.Unicode.GetBytes(masterPin), salt, 50000);
-                    //var riKey = key.GetBytes(32);  //256 bits = 32 bytes
-                    //var riIv = key.GetBytes(16);  //128 bits = 16 bytes
+                        //var key = new Rfc2898DeriveBytes(Encoding.Unicode.GetBytes(masterPin), salt, 50000);
+                        //var riKey = key.GetBytes(32);  //256 bits = 32 bytes
+                        //var riIv = key.GetBytes(16);  //128 bits = 16 bytes
 
-                    //SaveKeyIv("RiKey", riKey);
-                    //SaveKeyIv("RiIv", riIv);
+                        //SaveKeyIv("RiKey", riKey);
+                        //SaveKeyIv("RiIv", riIv);
 
-                    if (si.uxSavePrivateKeyTo.Checked)
-                    {  //save to disk
-                        SavePrivateKey(si.uxPrivateKeyPath.Text);
-                    }
+                        //if (si.uxSavePrivateKeyTo.Checked)
+                        //{  //save to disk
+                        //    SavePrivateKey(si.uxPrivateKeyFile.Text);
+                        //}
 
-                    SaveToDisk();
-                    return true;
-                case DialogResult.Retry:
-                    if (OpenDataFile())
-                    {
+                        SaveToDisk();
+                        return true;
+                    case DialogResult.Retry:
+                        if (OpenDataFile())
+                        {
 
-                    }
-                    else
-                        Application.Exit();
-                    break;
-                default:
-                    Application.Exit();
-                    break;
+                        }
+                        else
+                            Application.Exit();
+                        break;
+                    default:
+                        return false;
+                }
             }
             return false;
         }
@@ -657,9 +671,15 @@ namespace MyId
         {
             get
             {
-
                 string dataFile = Path.Combine(KnownFolders.DataDir, "myid_secret.data");
+                if (KnownFolders.DataFile != "")
+                    dataFile = KnownFolders.DataFile;
                 return dataFile;
+            }
+            set
+            {
+                //KnownFolders.DataDir = Path.GetDirectoryName(value);
+                KnownFolders.DataFile = value;
             }
         }
 
@@ -703,33 +723,14 @@ namespace MyId
             {
 
                 bool success = false;
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < 100; i++)
                 {
                     SignIn si = new SignIn();
 
                     var result = si.ShowDialog();
                     if (result == DialogResult.OK)
                     {
-                        //byte[] iv = GetKeyIv("IV");
-                        //if (iv == null)
-                        //{
-                        //    if (MessageBox.Show("Try re-import private key", "Something wrong!", MessageBoxButtons.OKCancel, MessageBoxIcon.Error) == DialogResult.OK)
-                        //    {
-                        //        ImportPrivateKey();
-                        //        //importPrivateKeyToolStripMenuItem.PerformClick();
-                        //    }
-                        //    else
-                        //    {
-                        //        //Application.Exit();
-                        //        System.Environment.Exit(1);
-                        //        return;
-                        //    }
-                        //}
-
-                        //byte[] mp = GetKeyIv("MasterPass");
-                        //if (Encoding.Unicode.GetString(mp) == si.uxPassword.Text)
-                        //SaveKeyIv("Key", Encoding.Unicode.GetBytes(si.uxPassword.Text));
-
+ 
                         if (ValidatePassword(si.uxPassword.Text))
                         {
                             if (LoadFromDisk(IdFile, null))
@@ -751,14 +752,19 @@ namespace MyId
                     else if (result == DialogResult.Yes) //Create new data file
                     {
 
-                        CreateNewFile();
-                        success = true;
-                        break;
+                        if (CreateNewFile())
+                        {
+                            success = true;
+                            break;
+                        }
                     }
                     else if (result == DialogResult.No) //Open data file
                     {
-                        success = OpenDataFile();
-                        break;
+                        if (OpenDataFile())
+                        {
+                            success = true;
+                            break;
+                        }
                     }
                     else
                     {
@@ -1400,6 +1406,9 @@ namespace MyId
 
         private bool OpenDataFile()
         {
+            if (MessageBox.Show("You will lose access to existing data file if private key is not backed up. Only click Yes if you are 100% sure private key has been backed up or you no longer need existing data file. Otherwise click No.", "Backup private key", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return false;
+
             var openDataFileBox = new OpenDataFile();
             if (openDataFileBox.ShowDialog() == DialogResult.OK)
             {

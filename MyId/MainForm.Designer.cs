@@ -202,14 +202,14 @@
             // 
             this.uxNewData.Name = "uxNewData";
             this.uxNewData.Size = new System.Drawing.Size(246, 22);
-            this.uxNewData.Text = "&New Data Folder";
+            this.uxNewData.Text = "&New Data File";
             this.uxNewData.Click += new System.EventHandler(this.uxNewData_Click);
             // 
             // uxOpenData
             // 
             this.uxOpenData.Name = "uxOpenData";
             this.uxOpenData.Size = new System.Drawing.Size(246, 22);
-            this.uxOpenData.Text = "&Open Data Folder...";
+            this.uxOpenData.Text = "&Open Data File...";
             this.uxOpenData.Click += new System.EventHandler(this.UxOpenData_Click);
             // 
             // uxExplorer
