@@ -582,12 +582,13 @@ namespace MyId
 
                             if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
                             {
-                                var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
-                                myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
+                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                                //myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
+                                //myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
 
-                                SaveKeyIv("RiKey", myRijndael.Key);
-                                SaveKeyIv("RiIv", myRijndael.IV);
+                                //SaveKeyIv("RiKey", myRijndael.Key);
+                                //SaveKeyIv("RiIv", myRijndael.IV);
+                                MessageBox.Show("Missing private key");
 
                             }
                             else
@@ -598,14 +599,16 @@ namespace MyId
                             }
                         }
                         
-                        
-                        
-                            
-                        
-
                         using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
                         {
-                            _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                            try
+                            {
+                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                            }
+                            catch (System.Security.Cryptography.CryptographicException)
+                            {
+                                return false;
+                            }
                         }
                     }
                 }
@@ -624,6 +627,10 @@ namespace MyId
                     uxList.Sort();
                 }
                 success = true;
+            }
+            catch (System.Security.Cryptography.CryptographicException)
+            {
+                return false;
             }
             catch (Exception ex)
             {
@@ -703,21 +710,21 @@ namespace MyId
                     var result = si.ShowDialog();
                     if (result == DialogResult.OK)
                     {
-                        byte[] iv = GetKeyIv("IV");
-                        if (iv == null)
-                        {
-                            if (MessageBox.Show("Try re-import private key", "Something wrong!", MessageBoxButtons.OKCancel, MessageBoxIcon.Error) == DialogResult.OK)
-                            {
-                                ImportPrivateKey();
-                                //importPrivateKeyToolStripMenuItem.PerformClick();
-                            }
-                            else
-                            {
-                                //Application.Exit();
-                                System.Environment.Exit(1);
-                                return;
-                            }
-                        }
+                        //byte[] iv = GetKeyIv("IV");
+                        //if (iv == null)
+                        //{
+                        //    if (MessageBox.Show("Try re-import private key", "Something wrong!", MessageBoxButtons.OKCancel, MessageBoxIcon.Error) == DialogResult.OK)
+                        //    {
+                        //        ImportPrivateKey();
+                        //        //importPrivateKeyToolStripMenuItem.PerformClick();
+                        //    }
+                        //    else
+                        //    {
+                        //        //Application.Exit();
+                        //        System.Environment.Exit(1);
+                        //        return;
+                        //    }
+                        //}
 
                         //byte[] mp = GetKeyIv("MasterPass");
                         //if (Encoding.Unicode.GetString(mp) == si.uxPassword.Text)
@@ -734,14 +741,11 @@ namespace MyId
                             }
                             else
                             {
-                                if (MessageBox.Show("Try importing private key?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                                {
-                                    ImportPrivateKey();
-                                }
+                                MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             }
                         }
                         else
-                            MessageBox.Show("Access denied", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            MessageBox.Show("Invalid PIN", "Unlock MyID", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
                     }
                     else if (result == DialogResult.Yes) //Create new data file
@@ -800,7 +804,8 @@ namespace MyId
                     {
                         byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
                         byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
-
+                        if (ciphertext == null)
+                            return null;
                         byte[] plaintext = ProtectedData.Unprotect(ciphertext, iv32, DataProtectionScope.CurrentUser);
 
                         return plaintext;
@@ -825,32 +830,32 @@ namespace MyId
 
             switch (type)
             {
-                case "IV":
-                    byte[] random = new byte[32];
+                //case "IV":
+                //    byte[] random = new byte[32];
 
-                    //RNGCryptoServiceProvider is an implementation of a random number generator.
-                    RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                    rng.GetBytes(random);
-                    Array.Copy(value, random, 16);
-                    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", random);
-                    break;
+                //    //RNGCryptoServiceProvider is an implementation of a random number generator.
+                //    RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+                //    rng.GetBytes(random);
+                //    Array.Copy(value, random, 16);
+                //    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", random);
+                //    break;
                 case "Iv2022": //16
-                case "RiKey":
-                case "RiIv": //16
+                //case "RiKey":
+                //case "RiIv": //16
                 case "Salt": //32
                     Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
                     break;
-                case "Key":
-                    byte[] keyBytes;
-                    using (SHA256 mySHA256 = SHA256.Create())
-                    {
-                        byte[] keyB = value;
-                        keyBytes = mySHA256.ComputeHash(keyB);
-                    }
-                    byte[] iv32 = GetKeyIv("IV");// PIN is only accessible on this computer
-                    byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
-                    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
-                    break;
+                //case "Key":
+                //    byte[] keyBytes;
+                //    using (SHA256 mySHA256 = SHA256.Create())
+                //    {
+                //        byte[] keyB = value;
+                //        keyBytes = mySHA256.ComputeHash(keyB);
+                //    }
+                //    byte[] iv32 = GetKeyIv("IV");// PIN is only accessible on this computer
+                //    byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
+                //    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
+                //    break;
                 case "Pin":
                     _pinEnc = ProtectedData.Protect(value, null, DataProtectionScope.CurrentUser);
                     break;
@@ -1158,7 +1163,13 @@ namespace MyId
             buffer[0] = 0x20; //major version #
             buffer[1] = 0x22; //minor version #
 
-            GetKeyIv("IV").CopyTo(buffer, 2); //length 16
+
+            byte[] random = new byte[16];
+            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            rng.GetBytes(random);
+            random.CopyTo(buffer, 2);
+
+            //GetKeyIv("IV").CopyTo(buffer, 2); //length 16
             GetKeyIv("Salt").CopyTo(buffer, 16 + 2); //length 32
             GetKeyIv("Iv2022").CopyTo(buffer, 48 + 2); //length 16
             try
@@ -1222,18 +1233,22 @@ namespace MyId
 
             byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
 
+            
             if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
             {
-                byte[] iv = new byte[16];
-                Array.Copy(buffer, 2, iv, 0, 16);
-                SaveKeyIv("IV", iv);
+                int pos = 2;
+                //byte[] iv = new byte[16];
+                //Array.Copy(buffer, 2, iv, 0, 16);
+                //SaveKeyIv("IV", iv);
 
-                byte[] riKey = new byte[32];
-                Array.Copy(buffer, 2 + 16, riKey, 0, 32);
-                SaveKeyIv("Salt", riKey);
+                pos += 16;
+                byte[] salt = new byte[32];
+                Array.Copy(buffer, pos, salt, 0, 32);
+                SaveKeyIv("Salt", salt);
 
+                pos += 32;
                 byte[] riIv = new byte[16];
-                Array.Copy(buffer, 2 + 48, riIv, 0, 16);
+                Array.Copy(buffer, pos, riIv, 0, 16);
                 SaveKeyIv("Iv2022", riIv);
 
                 return true;
