@@ -219,8 +219,10 @@
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
+            this.openFileDialog1.FileName = "Select files";
+            this.openFileDialog1.Filter = "Any file (*.*)|*.*";
             this.openFileDialog1.Multiselect = true;
+            this.openFileDialog1.RestoreDirectory = true;
             // 
             // uxImages
             // 

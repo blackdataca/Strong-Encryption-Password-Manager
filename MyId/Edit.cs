@@ -70,7 +70,7 @@ namespace MyId
         /// <returns>A random password</returns>
         public static string GenerateRandomPassword()
         {
-  
+
 
             string[] randomChars = new[] {
             "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 

@@ -104,7 +104,6 @@
             this.uxList.UseCompatibleStateImageBehavior = false;
             this.uxList.View = System.Windows.Forms.View.Details;
             this.uxList.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.UxList_ColumnClick);
-            this.uxList.SelectedIndexChanged += new System.EventHandler(this.UxList_SelectedIndexChanged);
             this.uxList.DoubleClick += new System.EventHandler(this.UxList_DoubleClick);
             this.uxList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.UxList_KeyDown);
             // 
@@ -224,14 +223,14 @@
             // 
             this.uxImport.Name = "uxImport";
             this.uxImport.Size = new System.Drawing.Size(246, 22);
-            this.uxImport.Text = "&Import CSV...";
+            this.uxImport.Text = "&Import...";
             this.uxImport.Click += new System.EventHandler(this.ImportToolStripMenuItem_Click);
             // 
             // uxExport
             // 
             this.uxExport.Name = "uxExport";
             this.uxExport.Size = new System.Drawing.Size(246, 22);
-            this.uxExport.Text = "&Export CSV...";
+            this.uxExport.Text = "&Export...";
             this.uxExport.Visible = false;
             this.uxExport.Click += new System.EventHandler(this.UxExport_Click);
             // 
