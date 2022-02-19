@@ -223,14 +223,14 @@
             // 
             this.uxImport.Name = "uxImport";
             this.uxImport.Size = new System.Drawing.Size(246, 22);
-            this.uxImport.Text = "&Import...";
+            this.uxImport.Text = "&Import Data...";
             this.uxImport.Click += new System.EventHandler(this.ImportToolStripMenuItem_Click);
             // 
             // uxExport
             // 
             this.uxExport.Name = "uxExport";
             this.uxExport.Size = new System.Drawing.Size(246, 22);
-            this.uxExport.Text = "&Export...";
+            this.uxExport.Text = "&Export Data...";
             this.uxExport.Visible = false;
             this.uxExport.Click += new System.EventHandler(this.UxExport_Click);
             // 

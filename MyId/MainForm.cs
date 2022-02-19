@@ -1148,7 +1148,7 @@ namespace MyId
 
             var fd = new SaveFileDialog()
             {
-                FileName = "MyID Export.key",
+                FileName = "MyID Private Key Backup.key",
                 Filter = "Private .key file|*.key",
                 Title = "Export private key (store this file separately)",
                 InitialDirectory = downloadsPath
@@ -1163,7 +1163,7 @@ namespace MyId
 
         private void SavePrivateKey(string fileName)
         {
-            byte[] buffer = new byte[2 + 16 + 32];
+            byte[] buffer = new byte[2 + 16 + 32 + 16];
 
             buffer[0] = 0x20; //major version #
             buffer[1] = 0x22; //minor version #
@@ -1176,7 +1176,7 @@ namespace MyId
 
             //GetKeyIv("IV").CopyTo(buffer, 2); //length 16
             GetKeyIv("Salt").CopyTo(buffer, 16 + 2); //length 32
-            GetKeyIv("Iv2022").CopyTo(buffer, 48 + 2); //length 16
+            GetKeyIv("Iv2022").CopyTo(buffer, 18 + 2); //length 16
             try
             {
                 File.WriteAllText(fileName, BitConverter.ToString(buffer).Replace("-", ","));
