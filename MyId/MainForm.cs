@@ -18,6 +18,7 @@ using System.Windows.Forms;
 using System.Linq;
 using System.Diagnostics;
 using System.Drawing.Printing;
+using System.Drawing.Imaging;
 
 namespace MyId
 {
@@ -642,7 +643,7 @@ namespace MyId
             }
             catch (System.Security.Cryptography.CryptographicException)
             {
-                MessageBox.Show("Failed to decrypt data. Try re-import private key.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to decrypt data. Invalid PIN.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
             catch (Exception ex)
@@ -1403,6 +1404,7 @@ namespace MyId
 
                         if (LoadFromDisk(openDataFileBox.uxDataFile.Text, privateKeyFile))
                         {
+                            KnownFolders.DataFile = openDataFileBox.uxDataFile.Text;
                             return true;
                         }
                         else
