@@ -642,6 +642,7 @@ namespace MyId
             }
             catch (System.Security.Cryptography.CryptographicException)
             {
+                MessageBox.Show("Failed to decrypt data. Try re-import private key.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
             catch (Exception ex)
@@ -1176,7 +1177,7 @@ namespace MyId
 
             //GetKeyIv("IV").CopyTo(buffer, 2); //length 16
             GetKeyIv("Salt").CopyTo(buffer, 16 + 2); //length 32
-            GetKeyIv("Iv2022").CopyTo(buffer, 18 + 2); //length 16
+            GetKeyIv("Iv2022").CopyTo(buffer, 18 + 32); //length 16
             try
             {
                 File.WriteAllText(fileName, BitConverter.ToString(buffer).Replace("-", ","));
@@ -1390,16 +1391,24 @@ namespace MyId
             {
                 string privateKeyFile = null;
                 if (openDataFileBox.uxPriviateKeyOn.Checked)
-                    privateKeyFile = openDataFileBox.uxPrivateKeyPath.Text;
-                if (CreateNewPass())
+                    privateKeyFile = openDataFileBox.uxPrivateKeyFile.Text;
+                SignIn si = new SignIn();
+
+                var result = si.ShowDialog();
+                if (result == DialogResult.OK)
                 {
-                    if (LoadFromDisk(openDataFileBox.uxDataFileDir.Text, privateKeyFile))
+
+                    if (ValidatePassword(si.uxPassword.Text))
                     {
-                        return true;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to load data folder", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                        if (LoadFromDisk(openDataFileBox.uxDataFile.Text, privateKeyFile))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Failed to load data file", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }

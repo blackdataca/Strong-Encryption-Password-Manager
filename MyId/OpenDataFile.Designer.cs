@@ -30,11 +30,11 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OpenDataFile));
             this.label1 = new System.Windows.Forms.Label();
-            this.uxDataFileDir = new System.Windows.Forms.TextBox();
+            this.uxDataFile = new System.Windows.Forms.TextBox();
             this.UxBrowseDataFile = new System.Windows.Forms.Button();
             this.uxPrivateKeyThisComputer = new System.Windows.Forms.RadioButton();
             this.uxPriviateKeyOn = new System.Windows.Forms.RadioButton();
-            this.uxPrivateKeyPath = new System.Windows.Forms.TextBox();
+            this.uxPrivateKeyFile = new System.Windows.Forms.TextBox();
             this.UxBrowsePrivateKey = new System.Windows.Forms.Button();
             this.uxOk = new System.Windows.Forms.Button();
             this.uxCancel = new System.Windows.Forms.Button();
@@ -52,10 +52,10 @@
             // 
             // uxDataFileDir
             // 
-            this.uxDataFileDir.Location = new System.Drawing.Point(115, 46);
-            this.uxDataFileDir.Name = "uxDataFileDir";
-            this.uxDataFileDir.Size = new System.Drawing.Size(342, 20);
-            this.uxDataFileDir.TabIndex = 1;
+            this.uxDataFile.Location = new System.Drawing.Point(115, 46);
+            this.uxDataFile.Name = "uxDataFileDir";
+            this.uxDataFile.Size = new System.Drawing.Size(342, 20);
+            this.uxDataFile.TabIndex = 1;
             // 
             // UxBrowseDataFile
             // 
@@ -92,10 +92,10 @@
             // 
             // uxPrivateKeyPath
             // 
-            this.uxPrivateKeyPath.Location = new System.Drawing.Point(160, 156);
-            this.uxPrivateKeyPath.Name = "uxPrivateKeyPath";
-            this.uxPrivateKeyPath.Size = new System.Drawing.Size(297, 20);
-            this.uxPrivateKeyPath.TabIndex = 5;
+            this.uxPrivateKeyFile.Location = new System.Drawing.Point(160, 156);
+            this.uxPrivateKeyFile.Name = "uxPrivateKeyPath";
+            this.uxPrivateKeyFile.Size = new System.Drawing.Size(297, 20);
+            this.uxPrivateKeyFile.TabIndex = 5;
             // 
             // UxBrowsePrivateKey
             // 
@@ -139,11 +139,11 @@
             this.Controls.Add(this.uxCancel);
             this.Controls.Add(this.uxOk);
             this.Controls.Add(this.UxBrowsePrivateKey);
-            this.Controls.Add(this.uxPrivateKeyPath);
+            this.Controls.Add(this.uxPrivateKeyFile);
             this.Controls.Add(this.uxPriviateKeyOn);
             this.Controls.Add(this.uxPrivateKeyThisComputer);
             this.Controls.Add(this.UxBrowseDataFile);
-            this.Controls.Add(this.uxDataFileDir);
+            this.Controls.Add(this.uxDataFile);
             this.Controls.Add(this.label1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "OpenDataFile";
@@ -163,9 +163,9 @@
         private System.Windows.Forms.Button UxBrowsePrivateKey;
         private System.Windows.Forms.Button uxOk;
         private System.Windows.Forms.Button uxCancel;
-        public System.Windows.Forms.TextBox uxDataFileDir;
+        public System.Windows.Forms.TextBox uxDataFile;
         public System.Windows.Forms.RadioButton uxPriviateKeyOn;
-        public System.Windows.Forms.TextBox uxPrivateKeyPath;
+        public System.Windows.Forms.TextBox uxPrivateKeyFile;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
     }
 }

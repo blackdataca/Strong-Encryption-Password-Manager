@@ -250,14 +250,14 @@
             // 
             this.uxExportPrivateKey.Name = "uxExportPrivateKey";
             this.uxExportPrivateKey.Size = new System.Drawing.Size(246, 22);
-            this.uxExportPrivateKey.Text = "Backup &Private Key...";
+            this.uxExportPrivateKey.Text = "Export &Private Key...";
             this.uxExportPrivateKey.Click += new System.EventHandler(this.UxExportPrivateKey_Click);
             // 
             // importPrivateKeyToolStripMenuItem
             // 
             this.importPrivateKeyToolStripMenuItem.Name = "importPrivateKeyToolStripMenuItem";
             this.importPrivateKeyToolStripMenuItem.Size = new System.Drawing.Size(246, 22);
-            this.importPrivateKeyToolStripMenuItem.Text = "Restore Private &Key...";
+            this.importPrivateKeyToolStripMenuItem.Text = "Import Private &Key...";
             this.importPrivateKeyToolStripMenuItem.Click += new System.EventHandler(this.ImportPrivateKeyToolStripMenuItem_Click);
             // 
             // uxChangeMasterPasswordToolStripMenuItem
