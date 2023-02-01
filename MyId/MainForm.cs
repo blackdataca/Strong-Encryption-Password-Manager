@@ -671,30 +671,23 @@ namespace MyId
         {
             get
             {
-                string dataFile = Path.Combine(KnownFolders.DataDir, "myid_secret.data");
                 if (KnownFolders.DataFile != "")
-                    dataFile = KnownFolders.DataFile;
-                return dataFile;
+                    return KnownFolders.DataFile;
+                else
+                    return Path.Combine(KnownFolders.DataDir, "myid_secret.data");
             }
             set
             {
-                //KnownFolders.DataDir = Path.GetDirectoryName(value);
                 KnownFolders.DataFile = value;
             }
         }
 
         private bool ValidatePassword(string pass)
         {
-            //if (GetKeyIv("Salt") != null)
             byte[] masterPin = Encoding.Unicode.GetBytes(pass);
                 SaveKeyIv("Pin", masterPin);
             if (GetKeyIv("Salt")==null)
                 CreateNewKey(masterPin);
-            //if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
-            //{
-            //    SaveKeyIv("Key", Encoding.Unicode.GetBytes(pass));
-
-            //}
             if (GetKeyIv("Key")!= null)
             {  //old version
                 byte[] keyBytes;
