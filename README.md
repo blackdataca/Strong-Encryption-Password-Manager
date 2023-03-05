@@ -38,4 +38,4 @@ MIT license welcome anyone to use the software, verify and make improvements to 
 
 2. Drag "My ID on Mac.app" into Application folder
 
-![](https://github.com/blackdataca/myid/blob/MyID-on-Mac/Copy2Apps.PNG)
+![](https://github.com/blackdataca/Strong-Encryption-Password-Manager/blob/MyID-on-Mac/Copy2Apps.png?raw=true)
