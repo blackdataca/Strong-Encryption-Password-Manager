@@ -21,7 +21,7 @@ namespace MyIdOnMac
         public override void ViewDidLoad()
         {
             base.ViewDidLoad();
-            string file = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "myid_secret.data");
+            string file = System.IO.Path.Combine(KnownFolders.DataDir, "myid_secret.data");
             uxDataFile.StringValue = file;
         }
 

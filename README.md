@@ -32,3 +32,10 @@ As an extra layer of protection, use an easy to remember access password to unlo
 
 MIT license welcome anyone to use the software, verify and make improvements to make internet-world safer.
 
+## Installation
+
+1. Compile using VS 2022 for Mac
+
+2. Drag "My ID on Mac.app" into Application folder
+
+![](https://github.com/blackdataca/myid/blob/MyID-on-Mac/Copy2Apps.PNG)

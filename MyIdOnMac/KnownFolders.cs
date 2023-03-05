@@ -18,7 +18,7 @@ namespace MyIdOnMac
         {
             get
             {
-                string savedDataDir = AppDomain.CurrentDomain.BaseDirectory;
+                string savedDataDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments); // AppDomain.CurrentDomain.BaseDirectory;
                 if (Xamarin.Forms.Application.Current != null && Xamarin.Forms.Application.Current.Properties.ContainsKey("DataFile"))
                 {
                     savedDataDir = Xamarin.Forms.Application.Current.Properties["DataFile"] as string;
