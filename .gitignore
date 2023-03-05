@@ -391,3 +391,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# OS File
+.DS_Store
