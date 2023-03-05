@@ -1,4 +1,6 @@
-#  Strong Encryption Password Manager
+#  This is a Mutable branch
+
+MyID-on-Mac is a working project. Final project will be created in a new MyID-for-Mac branch
 
 Defend your passwords in depths with MyID
 
