@@ -8,6 +8,6 @@ namespace MyIdOnMac
 		{
 			NSApplication.Init ();
 			NSApplication.Main (args);
-		}
+        }
 	}
 }

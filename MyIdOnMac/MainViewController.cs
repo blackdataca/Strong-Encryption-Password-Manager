@@ -158,7 +158,19 @@ namespace MyIdOnMac
                         
                         dialog.DialogOk += (s, e) =>
                         {
-                            
+                            if (System.IO.File.Exists(dialog.DataFile))
+                            {
+                                var alert = new NSAlert()
+                                {
+                                    AlertStyle = NSAlertStyle.Warning,
+                                    InformativeText = $"Data file already exists: {dialog.DataFile}",
+                                    
+                                    MessageText = "Unable to create new data file",
+                                };
+                                alert.AddButton("OK");
+                                alert.RunModal();
+                                System.Environment.Exit(1);
+                            }
                             IdFile = dialog.DataFile;
                             byte[] masterPin = Encoding.Unicode.GetBytes(dialog.MasterPin);
                             

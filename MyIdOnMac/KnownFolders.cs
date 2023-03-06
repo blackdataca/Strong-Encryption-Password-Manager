@@ -38,15 +38,13 @@ namespace MyIdOnMac
         {
             get
             {
-
-                string savedDataFile = "";
-                if (Xamarin.Forms.Application.Current != null && Xamarin.Forms.Application.Current.Properties.ContainsKey("DataFile"))
-                    savedDataFile = Xamarin.Forms.Application.Current.Properties["DataFile"] as string;
-                return savedDataFile;
+                return Xamarin.Essentials.Preferences.Get("DataFile", "");
             }
             set
             {
-                Xamarin.Forms.Application.Current.Properties["DataFile"] = value;
+
+                Xamarin.Essentials.Preferences.Set("DataFile", value);
+
             }
         }
 
