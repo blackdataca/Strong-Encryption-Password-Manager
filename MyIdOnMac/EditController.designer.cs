@@ -27,11 +27,27 @@ namespace MyIdOnMac
 		[Action ("CancelDialog:")]
 		partial void CancelDialog (Foundation.NSObject sender);
 
+		[Action ("copyPassword:")]
+		partial void copyPassword (Foundation.NSObject sender);
+
+		[Action ("copyUser:")]
+		partial void copyUser (Foundation.NSObject sender);
+
 		[Action ("OkDialog:")]
 		partial void OkDialog (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (uxMemo != null) {
+				uxMemo.Dispose ();
+				uxMemo = null;
+			}
+
+			if (uxPassword != null) {
+				uxPassword.Dispose ();
+				uxPassword = null;
+			}
+
 			if (uxSite != null) {
 				uxSite.Dispose ();
 				uxSite = null;
@@ -40,16 +56,6 @@ namespace MyIdOnMac
 			if (uxUser != null) {
 				uxUser.Dispose ();
 				uxUser = null;
-			}
-
-			if (uxPassword != null) {
-				uxPassword.Dispose ();
-				uxPassword = null;
-			}
-
-			if (uxMemo != null) {
-				uxMemo.Dispose ();
-				uxMemo = null;
 			}
 		}
 	}

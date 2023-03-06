@@ -5,6 +5,7 @@ using System;
 using Foundation;
 using AppKit;
 using System.Drawing;
+using Xamarin.Essentials;
 
 namespace MyIdOnMac
 {
@@ -77,5 +78,15 @@ namespace MyIdOnMac
 			if (this.DialogCanceled != null)
 				this.DialogCanceled(this, EventArgs.Empty);
 		}
+
+        partial void copyUser(Foundation.NSObject sender)
+        {
+            Clipboard.SetTextAsync(uxUser.StringValue);
+        }
+
+        partial void copyPassword(Foundation.NSObject sender)
+        {
+            Clipboard.SetTextAsync(uxPassword.StringValue);
+        }
     }
 }

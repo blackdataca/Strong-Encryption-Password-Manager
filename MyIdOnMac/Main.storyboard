@@ -893,6 +893,9 @@ Gw
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="copyUser:" target="A8x-eO-c4Q" id="dVA-up-MkW"/>
+                                </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZbK-Ld-s5z">
                                 <rect key="frame" x="344" y="199" width="64" height="32"/>
@@ -909,6 +912,9 @@ Gw
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="copyPassword:" target="A8x-eO-c4Q" id="hRN-J9-DTq"/>
+                                </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="07e-Sx-Olz">
                                 <rect key="frame" x="83" y="170" width="202" height="32"/>
