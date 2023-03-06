@@ -494,6 +494,19 @@ namespace MyIdOnMac
             //}
             return false;
         }
+
+        public IdItem GetAItem(nint index)
+        {
+            return _idList[(int) index];
+
+            //TODO
+            //foreach (var item in _idList)
+            //{
+            //    if (item.Uid.ToString() == uid)
+            //        return item;
+            //}
+            //return null;
+        }
     }
 }
 

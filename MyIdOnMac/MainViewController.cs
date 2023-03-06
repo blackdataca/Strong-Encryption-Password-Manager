@@ -128,8 +128,15 @@ namespace MyIdOnMac
         {
             // Preform some action when the menu is selected
             Console.WriteLine("Request to add");
-            PerformSegue("EditSegue", this);
+            PerformSegue("AddSegue", this);
 
+        }
+
+        [Action("edit:")]
+        public void Edit(NSObject sender)
+        {
+            Console.WriteLine("Request to edit");
+            PerformSegue("EditSegue", this);
         }
 
         public override void PrepareForSegue(NSStoryboardSegue segue, NSObject sender)
@@ -168,10 +175,11 @@ namespace MyIdOnMac
                         dialog.Presentor = this;
                         break;
                     }
-                case "EditSegue":
+                
+                case "AddSegue":
                     {
                         var dialog = segue.DestinationController as EditController;
-
+                        dialog.Title = "New";
                         dialog.DialogAccepted += (s, e) =>
                         {
                             Console.WriteLine("Dialog accepted");
@@ -182,6 +190,27 @@ namespace MyIdOnMac
                         dialog.Presentor = this;
                         break;
                     }
+
+                case "EditSegue":
+                    {
+                        if (uxList.SelectedRowCount > 0)
+                        {
+                            var dialog = segue.DestinationController as EditController;
+                            dialog.AIdItem = _dataSource.GetAItem(uxList.SelectedRow);
+                            dialog.Title = "Edit";
+
+                            dialog.DialogAccepted += (s, e) =>
+                            {
+                                Console.WriteLine("Dialog accepted");
+                                _dataSource.Add(dialog.AIdItem);
+                                uxList.ReloadData();
+                                _dataSource.SaveToDisk();
+                            };
+                            dialog.Presentor = this;
+                        }
+                        break;
+                    }
+
                 case "WelcomeSegue":
                     {
                         var dialog = segue.DestinationController as WelcomeController;

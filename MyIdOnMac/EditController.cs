@@ -19,6 +19,13 @@ namespace MyIdOnMac
         public EditController (IntPtr handle) : base (handle)
 		{
             //uxHint.Text = "";
+            
+        }
+
+        public override void ViewDidLoad()
+        {
+            base.ViewDidLoad();
+
             if (AIdItem != null)
             {
                 uxSite.StringValue = AIdItem.Site;
@@ -27,13 +34,12 @@ namespace MyIdOnMac
                 uxMemo.StringValue = AIdItem.Memo;
                 //uxHint.Text = AIdItem.PasswordTip;
                 //if (uxHint.Text != "")
-                    //uxHint.ForeColor = Color.Red;
+                //uxHint.ForeColor = Color.Red;
             }
             else
                 AIdItem = new IdItem();
         }
 
-		
 
         partial void OkDialog(NSObject sender)
         {

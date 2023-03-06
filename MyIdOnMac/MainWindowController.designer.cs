@@ -15,17 +15,28 @@ namespace MyIdOnMac
 		[Outlet]
 		MyIdOnMac.ActivatableItem uxDeleteItem { get; set; }
 
+		[Outlet]
+		MyIdOnMac.ActivatableItem uxEditItem { get; set; }
+
 		[Action ("addItem:")]
 		partial void addItem (Foundation.NSObject sender);
 
 		[Action ("deleteItem:")]
 		partial void deleteItem (Foundation.NSObject sender);
+
+		[Action ("editItem:")]
+		partial void editItem (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
 			if (uxDeleteItem != null) {
 				uxDeleteItem.Dispose ();
 				uxDeleteItem = null;
+			}
+
+			if (uxEditItem != null) {
+				uxEditItem.Dispose ();
+				uxEditItem = null;
 			}
 		}
 	}
