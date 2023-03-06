@@ -115,8 +115,7 @@ namespace MyIdOnMac
 
                 }
             });
-            return;
-            
+        
             
         }
     }

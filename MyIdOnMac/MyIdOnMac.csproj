@@ -122,10 +122,6 @@
     <Compile Include="SignInViewController.designer.cs">
       <DependentUpon>SignInViewController.cs</DependentUpon>
     </Compile>
-    <Compile Include="CustomButton.cs" />
-    <Compile Include="CustomButton.designer.cs">
-      <DependentUpon>CustomButton.cs</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />

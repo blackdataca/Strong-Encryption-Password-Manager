@@ -45,12 +45,7 @@ namespace MyIdOnMac
                 uxMemo.PlaceholderString = "Optional notes";
             }
 
-            ((CustomButton)buttonView).Pressed += (sender, e) => {
-                Console.WriteLine("Pressed");
-            };
-            ((CustomButton)buttonView).Released += (sender, e) => {
-                Console.WriteLine("Released");
-            };
+           
         }
 
 
@@ -99,6 +94,60 @@ namespace MyIdOnMac
         partial void copyPassword(Foundation.NSObject sender)
         {
             Clipboard.SetTextAsync(uxPassword.StringValue);
+        }
+
+        partial void addImageAction(NSObject sender)
+        {
+            var panel = new NSOpenPanel();
+ 
+            panel.ReleasedWhenClosed = true;
+
+            panel.Title = "Add image file";
+            //panel.NameFieldLabel = "File name:";
+            //panel.NameFieldStringValue = System.IO.Path.GetFileName(uxDataFile.StringValue);
+            // panel.Prompt = "Create";
+
+            panel.Directory = KnownFolders.DataDir;
+            //panel.AllowedFileTypes = new string[] { "data" };
+            
+            panel.BeginSheet(this.View.Window, ret =>
+            {
+                if (ret == 1 && panel.Filenames.Length > 0)
+                {
+                    foreach (var inFile in panel.Filenames)
+                    {
+                        //Image img;
+                        try
+                        {
+                            var img = new NSImage(inFile);
+                        }
+                        catch (Exception ex)
+                        {
+                            //Console.WriteLine(ex.ToString());
+                            //img = WindowsThumbnailProvider.GetThumbnail(inFile, 64, 64, ThumbnailOptions.None);
+                            var alert = new NSAlert()
+                            {
+                                AlertStyle = NSAlertStyle.Warning,
+                                InformativeText = inFile,
+                                MessageText = ex.Message,
+                            };
+                            alert.BeginSheet(this.View.Window);
+
+                        }
+
+                        //if (img != null)
+                        //{
+                            //string idx = imageList1.Images.Count.ToString();
+                            //imageList1.Images.Add(idx, img);
+                            //TempImages.Add(inFile, null);
+
+                            //uxImages.Items.Add(Path.GetFileName(inFile), idx);
+                        //}
+                    }
+
+                }
+            });
+
         }
     }
 }

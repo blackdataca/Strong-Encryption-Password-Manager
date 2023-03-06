@@ -13,7 +13,10 @@ namespace MyIdOnMac
 	partial class EditController
 	{
 		[Outlet]
-		CustomButton buttonView { get; set; }
+		AppKit.NSButton buttonView { get; set; }
+
+		[Outlet]
+		AppKit.NSTableView imageTableView { get; set; }
 
 		[Outlet]
 		AppKit.NSTextField uxMemo { get; set; }
@@ -27,6 +30,9 @@ namespace MyIdOnMac
 		[Outlet]
 		AppKit.NSTextField uxUser { get; set; }
 
+		[Action ("addImageAction:")]
+		partial void addImageAction (Foundation.NSObject sender);
+
 		[Action ("buttonViewAction:")]
 		partial void buttonViewAction (Foundation.NSObject sender);
 
@@ -39,11 +45,22 @@ namespace MyIdOnMac
 		[Action ("copyUser:")]
 		partial void copyUser (Foundation.NSObject sender);
 
+		[Action ("deleteImageAction:")]
+		partial void deleteImageAction (Foundation.NSObject sender);
+
 		[Action ("OkDialog:")]
 		partial void OkDialog (Foundation.NSObject sender);
+
+		[Action ("viewImageAction:")]
+		partial void viewImageAction (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (buttonView != null) {
+				buttonView.Dispose ();
+				buttonView = null;
+			}
+
 			if (uxMemo != null) {
 				uxMemo.Dispose ();
 				uxMemo = null;
@@ -64,9 +81,9 @@ namespace MyIdOnMac
 				uxUser = null;
 			}
 
-			if (buttonView != null) {
-				buttonView.Dispose ();
-				buttonView = null;
+			if (imageTableView != null) {
+				imageTableView.Dispose ();
+				imageTableView = null;
 			}
 		}
 	}
