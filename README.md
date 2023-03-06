@@ -34,7 +34,7 @@ MIT license welcome anyone to use the software, verify and make improvements to 
 
 ## Installation
 
-1. Compile using VS 2022 for Mac
+1. Compile with VS 2022 for Mac
 
 2. Drag "My ID on Mac.app" into Application folder
 

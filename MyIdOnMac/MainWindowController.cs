@@ -5,6 +5,7 @@ using System;
 using Foundation;
 using AppKit;
 using CoreAudioKit;
+using System.Text;
 
 namespace MyIdOnMac
 {
@@ -23,6 +24,13 @@ namespace MyIdOnMac
             
         }
 
+        public override void WindowDidLoad()
+        {
+            base.WindowDidLoad();
+
+
+        }
+
         partial void deleteItem(NSObject sender)
         {
 
@@ -37,5 +45,21 @@ namespace MyIdOnMac
             var controller = ContentViewController as MainViewController;
             controller.Add(sender);
         }
+
+        public override void PrepareForSegue(NSStoryboardSegue segue, NSObject sender)
+        {
+            base.PrepareForSegue(segue, sender);
+            switch (segue.Identifier)
+            {
+                case "NewSegue":
+                    var dialog = segue.DestinationController as WelcomeController;
+
+                    dialog.Presentor = ContentViewController;
+
+                    
+                    break;
+            }
+        }
+
     }
 }

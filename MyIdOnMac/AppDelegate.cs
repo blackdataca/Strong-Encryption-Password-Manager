@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Policy;
 using AppKit;
 using Foundation;
@@ -6,7 +6,7 @@ using Foundation;
 namespace MyIdOnMac
 {
 	[Register ("AppDelegate")]
-	public class AppDelegate : NSApplicationDelegate
+	public partial class AppDelegate : NSApplicationDelegate
 	{
 		public AppDelegate ()
 		{
@@ -15,6 +15,7 @@ namespace MyIdOnMac
 		public override void DidFinishLaunching (NSNotification notification)
 		{
 			// Insert code here to initialize your application
+            
 		}
 
         public override bool ApplicationShouldTerminateAfterLastWindowClosed(NSApplication sender)

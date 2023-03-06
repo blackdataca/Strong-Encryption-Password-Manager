@@ -40,6 +40,16 @@ namespace MyIdOnMac
 
             // Do any additional setup after loading the view.
 
+           
+
+        }
+        public override void ViewDidAppear()
+        {
+            base.ViewDidAppear();
+
+            if (uxList.Delegate != null)
+                return;
+            // Create the Product Table Data Source and populate it
             _dataSource.Add(new IdItem("Xamarin.iOS", "User", "Password", "Allows you to develop native iOS Applications in C#"));
             _dataSource.Add(new IdItem("Xamarin.Android", "User", "Password", "Allows you to develop native Android Applications in C#"));
             _dataSource.Add(new IdItem("Xamarin.Mac", "User", "Password", "Allows you to develop Mac native Applications in C#"));
@@ -80,6 +90,7 @@ namespace MyIdOnMac
                     return false;
             }
 
+
             PerformSegue("WelcomeSegue", this);
 
             return true;
@@ -104,9 +115,8 @@ namespace MyIdOnMac
         {
             base.AwakeFromNib();
 
-            // Create the Product Table Data Source and populate it
-           
             
+
         }
 
         [Action("add:")]
@@ -143,6 +153,9 @@ namespace MyIdOnMac
                 case "WelcomeSegue":
                     {
                         var dialog = segue.DestinationController as WelcomeController;
+
+                        dialog.Presentor = this;
+                        
                         dialog.DialogOk += (s, e) =>
                         {
                             
@@ -165,7 +178,6 @@ namespace MyIdOnMac
                         {
                             System.Environment.Exit(1);
                         };
-                        dialog.Presentor = this;
                         break;                        
                     }
             }

@@ -111,6 +111,9 @@
     <Compile Include="WelcomeController.designer.cs">
       <DependentUpon>WelcomeController.cs</DependentUpon>
     </Compile>
+    <Compile Include="AppDelegate.designer.cs">
+      <DependentUpon>AppDelegate.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />

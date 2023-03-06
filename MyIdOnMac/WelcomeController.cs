@@ -4,6 +4,7 @@ using System;
 
 using Foundation;
 using AppKit;
+using GameKit;
 
 namespace MyIdOnMac
 {
@@ -25,6 +26,7 @@ namespace MyIdOnMac
             uxDataFile.StringValue = file;
         }
 
+     
         private NSViewController _presentor;
         public NSViewController Presentor
         {
@@ -87,6 +89,39 @@ namespace MyIdOnMac
         {
             if (this.DialogOpen != null)
                 this.DialogOpen(this, EventArgs.Empty);
+        }
+
+        partial void BrowseNewDataFile(NSObject sender)
+        {
+            var panel = new NSSavePanel();
+            //panel.FloatingPanel = true;
+            panel.CanCreateDirectories = true;
+            panel.ReleasedWhenClosed = true;
+
+            panel.Title = "Create new MyId secret file";
+            //panel.NameFieldLabel = "File name:";
+            panel.NameFieldStringValue = System.IO.Path.GetFileName(uxDataFile.StringValue);
+           // panel.Prompt = "Create";
+
+            panel.Directory = KnownFolders.DataDir;
+            panel.AllowedFileTypes = new string[] { "data" };
+            if (!string.IsNullOrWhiteSpace(uxDataFile.StringValue))
+            {
+                string dir = System.IO.Path.GetDirectoryName(uxDataFile.StringValue);
+                if (System.IO.Directory.Exists(dir))
+                    panel.Directory = dir;
+            }
+            panel.BeginSheet(this.View.Window, ret =>
+            {
+                if (ret == 1 && !string.IsNullOrWhiteSpace(panel.Filename))
+                {
+                    uxDataFile.StringValue = panel.Filename;
+
+                }
+            });
+            return;
+            
+            
         }
     }
 }
