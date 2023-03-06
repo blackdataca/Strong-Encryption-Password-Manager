@@ -2,14 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.NetworkInformation;
+//using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using AppKit;
 using Foundation;
-using JavaScriptCore;
-using Microsoft.Win32;
+//using JavaScriptCore;
+//using Microsoft.Win32;
 using Xamarin.Essentials;
 
 namespace MyIdOnMac
@@ -235,15 +235,15 @@ namespace MyIdOnMac
             switch (type)
             {
                 case "IV": //16
-                    {
-                        string hexString = Xamarin.Essentials.Preferences.Get("iv", "");
-                        byte[] iv32 = Hex2Bin(hexString); // (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
-                        if (iv32 == null)
-                            return null;
-                        byte[] iv16 = new byte[16];
-                        Array.Copy(iv32, iv16, 16);
-                        return iv16;
-                    }
+                    //{
+                    //    string hexString = Xamarin.Essentials.Preferences.Get("iv", "");
+                    //    byte[] iv32 = Hex2Bin(hexString); // (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                    //    if (iv32 == null)
+                    //        return null;
+                    //    byte[] iv16 = new byte[16];
+                    //    Array.Copy(iv32, iv16, 16);
+                    //    return iv16;
+                    //}
                 case "Iv2022": //16
                 case "RiKey": //32
                 case "RiIv": //16
@@ -276,7 +276,7 @@ namespace MyIdOnMac
                     return Unprotect(type);
 
                 default:
-                    throw new Exception("error 191");
+                    throw new Exception($"Unknown type: {type}");
             }
         }
 
@@ -316,7 +316,7 @@ namespace MyIdOnMac
                     Protect(type, value);
                     break;
                 default:
-                    throw new Exception("error 237");
+                    throw new Exception($"Unknown type: {type}");
 
             }
         }
