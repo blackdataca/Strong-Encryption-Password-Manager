@@ -5,9 +5,12 @@ using System.IO;
 using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using AppKit;
 using Foundation;
+using JavaScriptCore;
 using Microsoft.Win32;
+using Xamarin.Essentials;
 
 namespace MyIdOnMac
 {
@@ -211,7 +214,7 @@ namespace MyIdOnMac
             return true;
         }
 
-        private byte[] _pinEnc;
+        //private byte[] _pinEnc;
 
         private byte[] Hex2Bin(String hex)
         {
@@ -220,6 +223,11 @@ namespace MyIdOnMac
             for (int i = 0; i < NumberChars; i += 2)
                 bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
             return bytes;
+        }
+
+        private string Bin2Hex(byte[] bytes)
+        {
+            return BitConverter.ToString(bytes).Replace("-", "");
         }
 
         private byte[] GetKeyIv(string type)
@@ -240,47 +248,52 @@ namespace MyIdOnMac
                 case "RiKey": //32
                 case "RiIv": //16
                 case "Salt":
-                    {
-                        string hexString = Xamarin.Essentials.Preferences.Get(type, "");
-                        byte[] data = Hex2Bin(hexString);
+                    //{
+                    //    string hexString = Xamarin.Essentials.Preferences.Get(type, "");
+                    //    byte[] data = Hex2Bin(hexString);
 
-                        //byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
-                        return data;
-                    }
+                    //    //byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
+                    //    return data;
+                    //}
                 case "Key":
-                    {
-                        byte[] iv32 = GetKeyIv("IV");
-                        string hexString = Xamarin.Essentials.Preferences.Get("key", "");
-                        byte[] ciphertext = Hex2Bin(hexString);
+                    //{
+                    //    byte[] iv32 = GetKeyIv("IV");
+                    //    string hexString = Xamarin.Essentials.Preferences.Get("key", "");
+                    //    byte[] ciphertext = Hex2Bin(hexString);
 
-                        //byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
-                        if (ciphertext == null)
-                            return null;
-                        byte[] plaintext = Unprotect(ciphertext, iv32);
+                    //    //byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
+                    //    if (ciphertext == null)
+                    //        return null;
+                    //    byte[] plaintext = Unprotect(ciphertext, iv32);
 
-                        return plaintext;
+                    //    return plaintext;
 
 
-                    }
+                    //}
                 case "Pin":
-                    if (_pinEnc == null)
-                        return null;
-                    return Unprotect(_pinEnc, null);
+                    //if (_pinEnc == null)
+                    //    return null;
+                    return Unprotect(type);
 
                 default:
                     throw new Exception("error 191");
             }
         }
 
-        private byte[] Protect(byte[] userData, byte[] optionalEntropy)
+        private void Protect(string key, byte[] userData)
         {
-            byte[] encryptedData = userData;
-            return encryptedData;
+            string value = Bin2Hex(userData);
+            SecureStorage.SetAsync(key, value).Wait();
+           
+
+            //byte[] encryptedData = userData;
+            //return encryptedData;
         }
 
-        private byte[] Unprotect(byte[] encryptedData, byte[] optionalEntropy)
+        private byte[] Unprotect(string key)
         {
-            byte[] userData = encryptedData;
+            string value = SecureStorage.GetAsync(key).Result;
+            byte[] userData = Hex2Bin(value);
             return userData;
         }
 
@@ -294,12 +307,13 @@ namespace MyIdOnMac
 
                 case "Salt": //32
                     //Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
-                    string valueHex = BitConverter.ToString(value).Replace("-", "");
-                    Xamarin.Essentials.Preferences.Set(type, valueHex);
-                    break;
+                    //string valueHex = Bin2Hex(value); // BitConverter.ToString(value).Replace("-", "");
+                    //Xamarin.Essentials.Preferences.Set(type, valueHex);
+                    
+                    //break;
 
                 case "Pin":
-                    _pinEnc = Protect(value, null);
+                    Protect(type, value);
                     break;
                 default:
                     throw new Exception("error 237");
