@@ -16,8 +16,8 @@ namespace MyIdOnMac
 {
 	public class UxListDataSource: NSTableViewDataSource
     {
+        public NSWindow wndHandle;
         private List<IdItem> _idList = new List<IdItem>();
-        public List<IdItem> IdList { get => _idList; set => _idList = value; }
 
         public UxListDataSource()
 		{
@@ -327,6 +327,172 @@ namespace MyIdOnMac
                     throw new Exception($"Unknown type: {type}");
 
             }
+        }
+
+        public bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
+        {
+
+            _idList.Clear();
+            bool success = false;
+
+            try
+            {
+                using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
+                {
+                    int version = 0;
+                    if (fs.ReadByte() == 0x20 && fs.ReadByte() == 0x22)
+                        version = 2022;
+                    else
+                        // Set the stream position to the beginning of the file.
+                        fs.Seek(0, SeekOrigin.Begin);
+
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    {
+                        myRijndael.KeySize = 256;
+                        myRijndael.BlockSize = 128;
+                        myRijndael.Padding = PaddingMode.PKCS7;
+                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                        myRijndael.Mode = CipherMode.CFB;
+
+                        //byte[] keyBytes = GetKeyIv("Key");
+
+                        if (pPrivateKeyFile != null)
+                        {
+                            if (!LoadPrivateKey(pPrivateKeyFile))
+                            {
+                                //TODO MessageBox.Show("Unable load private key!");
+                                return false;
+                            }
+                        }
+                        if (version == 2022)
+                        {
+                            byte[] pin = UxListDataSource.GetKeyIv("Pin");
+                            byte[] salt = UxListDataSource.GetKeyIv("Salt");
+                            var key = new Rfc2898DeriveBytes(pin, salt, 50000);
+                            myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                            myRijndael.IV = UxListDataSource.GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
+                        }
+                        else
+                        {  //Old verion
+                            byte[] keyBytes;
+                            keyBytes = UxListDataSource.GetKeyIv("Key");
+
+                            //byte[] savedKey = GetKeyIv("Key");
+                            //if (!keyBytes.SequenceEqual(savedKey))
+                            //{
+                            //    MessageBox.Show("Invalid password!");
+                            //    return false;
+                            //}
+
+
+                            if (UxListDataSource.GetKeyIv("RiKey") == null || UxListDataSource.GetKeyIv("RiIv") == null)
+                            {
+                                var alert = new NSAlert()
+                                {
+                                    AlertStyle = NSAlertStyle.Warning,
+                                    InformativeText = "Please import private key and try again",
+                                    MessageText = "Missing private key",
+                                };
+                                alert.BeginSheet(wndHandle);
+                            }
+                            else
+                            {
+                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                                myRijndael.Key = UxListDataSource.GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                                myRijndael.IV = UxListDataSource.GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+                            }
+                        }
+
+                        using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                        {
+                            try
+                            {
+                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                            }
+                            catch (System.Security.Cryptography.CryptographicException)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                //foreach (var idItem in _idList)
+                //{
+                //    AddListItem(idItem);
+                //}
+                //int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
+                //if (col != -1)
+                //{
+                //    lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
+                //    int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
+                //    lvwColumnSorter.Order = (SortOrder)or;
+                //    // Perform the sort with these new sort options.
+                //    uxList.Sort();
+                //}
+                success = true;
+            }
+            catch (System.Security.Cryptography.CryptographicException)
+            {
+                var alert = new NSAlert()
+                {
+                    AlertStyle = NSAlertStyle.Warning,
+                    InformativeText = "Failed to decrypt data. Invalid PIN.",
+                    MessageText = "LoadFromDisk",
+                };
+                alert.BeginSheet(wndHandle);
+                //MessageBox.Show("Failed to decrypt data. Invalid PIN.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //return false;
+            }
+            catch (Exception ex)
+            {
+                var alert = new NSAlert()
+                {
+                    AlertStyle = NSAlertStyle.Warning,
+                    InformativeText = "Access denied: " + ex.ToString(),
+                    MessageText = "Unlock MyId",
+                };
+                alert.BeginSheet(wndHandle);
+
+            }
+
+            //ShowNumberOfItems();
+            return success;
+        }
+
+        private bool LoadPrivateKey(string privateKeyFile)
+        {
+            //string bufferS = File.ReadAllText(privateKeyFile);
+
+            //byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
+
+
+            //if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
+            //{
+            //    int pos = 2;
+            //    //byte[] iv = new byte[16];
+            //    //Array.Copy(buffer, 2, iv, 0, 16);
+            //    //SaveKeyIv("IV", iv);
+
+            //    pos += 16;
+            //    byte[] salt = new byte[32];
+            //    Array.Copy(buffer, pos, salt, 0, 32);
+            //    SaveKeyIv("Salt", salt);
+
+            //    pos += 32;
+            //    byte[] riIv = new byte[16];
+            //    Array.Copy(buffer, pos, riIv, 0, 16);
+            //    SaveKeyIv("Iv2022", riIv);
+
+            //    return true;
+
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Invalid key file");
+            //}
+            return false;
         }
     }
 }
