@@ -897,13 +897,16 @@ Gw
                                     <action selector="copyUser:" target="A8x-eO-c4Q" id="dVA-up-MkW"/>
                                 </connections>
                             </button>
-                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZbK-Ld-s5z">
+                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZbK-Ld-s5z" customClass="CustomButton">
                                 <rect key="frame" x="344" y="199" width="64" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" title="View" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="EBw-la-bAg">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="buttonViewAction:" target="A8x-eO-c4Q" id="JdD-l0-EK6"/>
+                                </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eG2-Rd-Is5">
                                 <rect key="frame" x="401" y="199" width="66" height="32"/>
@@ -938,7 +941,8 @@ Gw
                         </subviews>
                     </view>
                     <connections>
-                        <outlet property="uxMemo" destination="0fJ-Ag-Z1w" id="Z5P-bz-Y2I"/>
+                        <outlet property="buttonView" destination="ZbK-Ld-s5z" id="CAh-cX-h1t"/>
+                        <outlet property="uxMemo" destination="Eol-yV-M6C" id="Xmd-2W-xca"/>
                         <outlet property="uxPassword" destination="8ZN-Zw-d0Z" id="Efl-bi-l88"/>
                         <outlet property="uxSite" destination="hud-zS-QvQ" id="4Cu-bf-xUF"/>
                         <outlet property="uxUser" destination="6dc-wC-e64" id="XhY-Hz-qp6"/>

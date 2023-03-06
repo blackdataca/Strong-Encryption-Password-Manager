@@ -13,6 +13,9 @@ namespace MyIdOnMac
 	partial class EditController
 	{
 		[Outlet]
+		CustomButton buttonView { get; set; }
+
+		[Outlet]
 		AppKit.NSTextField uxMemo { get; set; }
 
 		[Outlet]
@@ -23,6 +26,9 @@ namespace MyIdOnMac
 
 		[Outlet]
 		AppKit.NSTextField uxUser { get; set; }
+
+		[Action ("buttonViewAction:")]
+		partial void buttonViewAction (Foundation.NSObject sender);
 
 		[Action ("CancelDialog:")]
 		partial void CancelDialog (Foundation.NSObject sender);
@@ -56,6 +62,11 @@ namespace MyIdOnMac
 			if (uxUser != null) {
 				uxUser.Dispose ();
 				uxUser = null;
+			}
+
+			if (buttonView != null) {
+				buttonView.Dispose ();
+				buttonView = null;
 			}
 		}
 	}

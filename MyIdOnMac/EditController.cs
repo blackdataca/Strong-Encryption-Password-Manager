@@ -38,7 +38,19 @@ namespace MyIdOnMac
                 //uxHint.ForeColor = Color.Red;
             }
             else
+            {
                 AIdItem = new IdItem();
+                uxSite.PlaceholderString = "Site label";
+                uxUser.PlaceholderString = "User name or sign-in email address";
+                uxMemo.PlaceholderString = "Optional notes";
+            }
+
+            ((CustomButton)buttonView).Pressed += (sender, e) => {
+                Console.WriteLine("Pressed");
+            };
+            ((CustomButton)buttonView).Released += (sender, e) => {
+                Console.WriteLine("Released");
+            };
         }
 
 
