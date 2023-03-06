@@ -27,8 +27,8 @@
     <IncludeMonoRuntime>false</IncludeMonoRuntime>
     <UseSGen>true</UseSGen>
     <UseRefCounting>true</UseRefCounting>
-    <AOTMode></AOTMode>
     <HttpClientHandler></HttpClientHandler>
+    <LinkMode>None</LinkMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -44,7 +44,6 @@
     <UseRefCounting>true</UseRefCounting>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <LinkMode>SdkOnly</LinkMode>
-    <AOTMode></AOTMode>
     <HttpClientHandler></HttpClientHandler>
   </PropertyGroup>
   <ItemGroup>
