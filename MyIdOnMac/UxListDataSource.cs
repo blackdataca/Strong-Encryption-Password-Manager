@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using AppKit;
@@ -12,7 +13,6 @@ namespace MyIdOnMac
 {
 	public class UxListDataSource: NSTableViewDataSource
     {
-		//public List<IdItem> Items = new List<IdItem>();
         private List<IdItem> _idList = new List<IdItem>();
 
         public UxListDataSource()
@@ -158,9 +158,6 @@ namespace MyIdOnMac
 
                 SaveKeyIv("Iv2022", myRijndael.IV); //128 blocksize / 8 = 16
 
-                //SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
-
-
             }
         }
         public bool SaveToDisk(byte[] masterPin = null)
@@ -194,14 +191,10 @@ namespace MyIdOnMac
                 //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                 myRijndael.Mode = CipherMode.CFB;
 
-                // var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                //myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                //myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
 
-                myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                //myRijndael.Key = GetKeyIv("Key");
-                //myRijndael.IV = GetKeyIv("IV");
+
+                myRijndael.Key = key.GetBytes(32); 
+                myRijndael.IV = GetKeyIv("Iv2022");
 
                 using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
                 {
@@ -220,13 +213,23 @@ namespace MyIdOnMac
 
         private byte[] _pinEnc;
 
+        private byte[] Hex2Bin(String hex)
+        {
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
+        }
+
         private byte[] GetKeyIv(string type)
         {
             switch (type)
             {
                 case "IV": //16
                     {
-                        byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                        string hexString = Xamarin.Essentials.Preferences.Get("iv", "");
+                        byte[] iv32 = Hex2Bin(hexString); // (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
                         if (iv32 == null)
                             return null;
                         byte[] iv16 = new byte[16];
@@ -238,68 +241,65 @@ namespace MyIdOnMac
                 case "RiIv": //16
                 case "Salt":
                     {
-                        byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
+                        string hexString = Xamarin.Essentials.Preferences.Get(type, "");
+                        byte[] data = Hex2Bin(hexString);
+
+                        //byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
                         return data;
                     }
                 case "Key":
                     {
-                        byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
-                        byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
+                        byte[] iv32 = GetKeyIv("IV");
+                        string hexString = Xamarin.Essentials.Preferences.Get("key", "");
+                        byte[] ciphertext = Hex2Bin(hexString);
+
+                        //byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
                         if (ciphertext == null)
                             return null;
-                        byte[] plaintext = ProtectedData.Unprotect(ciphertext, iv32, DataProtectionScope.CurrentUser);
+                        byte[] plaintext = Unprotect(ciphertext, iv32);
 
                         return plaintext;
 
-                        //using (SHA256 mySHA256 = SHA256.Create())
-                        //{
-                        //    return mySHA256.ComputeHash(plaintext);
-                        //}
+
                     }
                 case "Pin":
                     if (_pinEnc == null)
                         return null;
-                    return ProtectedData.Unprotect(_pinEnc, null, DataProtectionScope.CurrentUser);
+                    return Unprotect(_pinEnc, null);
 
                 default:
                     throw new Exception("error 191");
             }
         }
-       
+
+        private byte[] Protect(byte[] userData, byte[] optionalEntropy)
+        {
+            byte[] encryptedData = userData;
+            return encryptedData;
+        }
+
+        private byte[] Unprotect(byte[] encryptedData, byte[] optionalEntropy)
+        {
+            byte[] userData = encryptedData;
+            return userData;
+        }
 
         private void SaveKeyIv(string type, byte[] value)
         {
 
             switch (type)
             {
-                //case "IV":
-                //    byte[] random = new byte[32];
 
-                //    //RNGCryptoServiceProvider is an implementation of a random number generator.
-                //    RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                //    rng.GetBytes(random);
-                //    Array.Copy(value, random, 16);
-                //    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", random);
-                //    break;
                 case "Iv2022": //16
-                //case "RiKey":
-                //case "RiIv": //16
+
                 case "Salt": //32
-                    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
+                    //Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
+                    string valueHex = BitConverter.ToString(value).Replace("-", "");
+                    Xamarin.Essentials.Preferences.Set(type, valueHex);
                     break;
-                //case "Key":
-                //    byte[] keyBytes;
-                //    using (SHA256 mySHA256 = SHA256.Create())
-                //    {
-                //        byte[] keyB = value;
-                //        keyBytes = mySHA256.ComputeHash(keyB);
-                //    }
-                //    byte[] iv32 = GetKeyIv("IV");// PIN is only accessible on this computer
-                //    byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
-                //    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
-                //    break;
+
                 case "Pin":
-                    _pinEnc = ProtectedData.Protect(value, null, DataProtectionScope.CurrentUser);
+                    _pinEnc = Protect(value, null);
                     break;
                 default:
                     throw new Exception("error 237");
