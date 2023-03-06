@@ -51,6 +51,7 @@ namespace MyIdOnMac
             return view;
         }
 
+
         /*
         public override bool ShouldSelectRow(NSTableView tableView, nint row)
         {

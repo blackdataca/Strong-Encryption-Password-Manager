@@ -28,10 +28,34 @@ namespace MyIdOnMac
             _idList.Add(idItem);
         }
 
-        public IdItem Get(int index)
+        public IdItem Get(nint index)
         {
-            return _idList[index];
+            return _idList[(int)index];
         }
+
+        public void Set(IdItem idItem)
+        {
+            for (int i = 0;i < _idList.Count; i++)
+            {
+                var item = _idList[i];
+                if (item.Uid == idItem.Uid)
+                    item = idItem;
+            }
+            
+        }
+
+        //public IdItem GetAItem(nint index)
+        //{
+        //    return _idList[(int)index];
+
+        //    //TODO
+        //    //foreach (var item in _idList)
+        //    //{
+        //    //    if (item.Uid.ToString() == uid)
+        //    //        return item;
+        //    //}
+        //    //return null;
+        //}
 
         public override nint GetRowCount(NSTableView tableView)
         {
@@ -495,18 +519,7 @@ namespace MyIdOnMac
             return false;
         }
 
-        public IdItem GetAItem(nint index)
-        {
-            return _idList[(int) index];
-
-            //TODO
-            //foreach (var item in _idList)
-            //{
-            //    if (item.Uid.ToString() == uid)
-            //        return item;
-            //}
-            //return null;
-        }
+        
     }
 }
 

@@ -21,7 +21,7 @@ namespace MyIdOnMac
             var controller = ContentViewController as MainViewController;
 
             uxDeleteItem.Active = controller.ItemCount != 0;
-            
+            uxEditItem.Active = controller.SelectedItemCount > 0;                       
         }
 
         public override void WindowDidLoad()
@@ -43,7 +43,14 @@ namespace MyIdOnMac
         partial void addItem(NSObject sender)
         {
             var controller = ContentViewController as MainViewController;
-            controller.Add(sender);
+            controller.AddItem(sender);
+        }
+
+        partial void editItem(NSObject sender)
+        {
+            var controller = ContentViewController as MainViewController;
+            controller.EditItem(sender);
+           
         }
 
         public override void PrepareForSegue(NSStoryboardSegue segue, NSObject sender)

@@ -124,7 +124,7 @@ namespace MyIdOnMac
         }
 
         [Action("add:")]
-        public void Add(NSObject sender)
+        public void AddItem(NSObject sender)
         {
             // Preform some action when the menu is selected
             Console.WriteLine("Request to add");
@@ -133,10 +133,13 @@ namespace MyIdOnMac
         }
 
         [Action("edit:")]
-        public void Edit(NSObject sender)
+        public void EditItem(NSObject sender)
         {
             Console.WriteLine("Request to edit");
-            PerformSegue("EditSegue", this);
+            if (uxList.SelectedRowCount > 0)
+            {
+                PerformSegue("EditSegue", this);
+            }
         }
 
         public override void PrepareForSegue(NSStoryboardSegue segue, NSObject sender)
@@ -196,13 +199,13 @@ namespace MyIdOnMac
                         if (uxList.SelectedRowCount > 0)
                         {
                             var dialog = segue.DestinationController as EditController;
-                            dialog.AIdItem = _dataSource.GetAItem(uxList.SelectedRow);
+                            dialog.AIdItem = _dataSource.Get(uxList.SelectedRow);
                             dialog.Title = "Edit";
 
                             dialog.DialogAccepted += (s, e) =>
                             {
                                 Console.WriteLine("Dialog accepted");
-                                _dataSource.Add(dialog.AIdItem);
+                                _dataSource.Set(dialog.AIdItem);
                                 uxList.ReloadData();
                                 _dataSource.SaveToDisk();
                             };
@@ -269,6 +272,14 @@ namespace MyIdOnMac
             get
             {
                 return uxList.RowCount;
+            }
+        }
+
+        public nint SelectedItemCount
+        {
+            get
+            {
+                return uxList.SelectedRowCount;
             }
         }
 
