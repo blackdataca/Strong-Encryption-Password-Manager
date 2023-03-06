@@ -17,6 +17,7 @@ namespace MyIdOnMac
 	public class UxListDataSource: NSTableViewDataSource
     {
         private List<IdItem> _idList = new List<IdItem>();
+        public List<IdItem> IdList { get => _idList; set => _idList = value; }
 
         public UxListDataSource()
 		{
@@ -35,6 +36,11 @@ namespace MyIdOnMac
         public override nint GetRowCount(NSTableView tableView)
         {
             return _idList.Count;
+        }
+
+        public void Clear()
+        {
+            _idList.Clear();
         }
 
         public nint Search(string searchString)
@@ -127,6 +133,8 @@ namespace MyIdOnMac
             }
         }
 
+
+
         private byte[] GenerateRandomBytes(int size)
         {
             byte[] data = new byte[size];
@@ -216,7 +224,7 @@ namespace MyIdOnMac
 
         //private byte[] _pinEnc;
 
-        private byte[] Hex2Bin(String hex)
+        private static byte[] Hex2Bin(String hex)
         {
             int NumberChars = hex.Length;
             byte[] bytes = new byte[NumberChars / 2];
@@ -225,12 +233,12 @@ namespace MyIdOnMac
             return bytes;
         }
 
-        private string Bin2Hex(byte[] bytes)
+        private static string Bin2Hex(byte[] bytes)
         {
             return BitConverter.ToString(bytes).Replace("-", "");
         }
 
-        private byte[] GetKeyIv(string type)
+        public static byte[] GetKeyIv(string type)
         {
             switch (type)
             {
@@ -280,7 +288,7 @@ namespace MyIdOnMac
             }
         }
 
-        private void Protect(string key, byte[] userData)
+        private static void Protect(string key, byte[] userData)
         {
             string value = Bin2Hex(userData);
             SecureStorage.SetAsync(key, value).Wait();
@@ -290,14 +298,14 @@ namespace MyIdOnMac
             //return encryptedData;
         }
 
-        private byte[] Unprotect(string key)
+        private static byte[] Unprotect(string key)
         {
             string value = SecureStorage.GetAsync(key).Result;
             byte[] userData = Hex2Bin(value);
             return userData;
         }
 
-        private void SaveKeyIv(string type, byte[] value)
+        public static void SaveKeyIv(string type, byte[] value)
         {
 
             switch (type)

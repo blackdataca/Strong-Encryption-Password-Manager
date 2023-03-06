@@ -27,12 +27,8 @@ namespace MyIdOnMac
         }
 
      
-        private NSViewController _presentor;
-        public NSViewController Presentor
-        {
-            get { return _presentor; }
-            set { _presentor = value; }
-        }
+
+        public NSViewController Presentor;
 
         private void CloseDialog()
         {

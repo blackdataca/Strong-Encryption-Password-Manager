@@ -12,9 +12,21 @@ namespace MyIdOnMac
 	[Register ("SignInViewController")]
 	partial class SignInViewController
 	{
+		[Outlet]
+		AppKit.NSSecureTextField uxPassword { get; set; }
+
+		[Action ("CancelDialog:")]
+		partial void CancelDialog (Foundation.NSObject sender);
+
+		[Action ("OkDialog:")]
+		partial void OkDialog (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (uxPassword != null) {
+				uxPassword.Dispose ();
+				uxPassword = null;
+			}
 		}
 	}
 }

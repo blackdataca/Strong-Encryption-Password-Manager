@@ -42,6 +42,9 @@
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="OkDialog:" target="Vz7-Be-iIR" id="79d-6r-F9t"/>
+                                </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ajy-Fe-NPZ">
                                 <rect key="frame" x="341" y="21" width="76" height="32"/>
@@ -53,9 +56,15 @@
 Gw
 </string>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="CancelDialog:" target="Vz7-Be-iIR" id="naS-rg-KHm"/>
+                                </connections>
                             </button>
                         </subviews>
                     </view>
+                    <connections>
+                        <outlet property="uxPassword" destination="Rcq-fM-jzd" id="0S8-sD-OOO"/>
+                    </connections>
                 </viewController>
                 <customObject id="q7t-mM-pZ1" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>

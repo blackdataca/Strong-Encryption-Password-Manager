@@ -12,12 +12,7 @@ namespace MyIdOnMac
 	{
         public IdItem AIdItem = null;
 
-        private NSViewController _presentor;
-		public NSViewController Presentor
-		{
-			get { return _presentor; }
-			set { _presentor = value; }
-		}
+        public NSViewController Presentor;
 
         
 
@@ -38,10 +33,7 @@ namespace MyIdOnMac
                 AIdItem = new IdItem();
         }
 
-		private void CloseDialog()
-		{
-			Presentor.DismissViewController(this);
-		}
+		
 
         partial void OkDialog(NSObject sender)
         {
@@ -54,6 +46,10 @@ namespace MyIdOnMac
 			CloseDialog();
         }
 
+        private void CloseDialog()
+        {
+            Presentor.DismissViewController(this);
+        }
         partial void CancelDialog(NSObject sender)
         {
 			RaiseDialogCancelled();
