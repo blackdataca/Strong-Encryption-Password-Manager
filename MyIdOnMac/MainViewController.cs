@@ -74,6 +74,16 @@ namespace MyIdOnMac
                     System.Environment.Exit(1);  //First time app run
             }
 
+            uxList.DoubleClick += UxList_DoubleClick;
+            
+        }
+
+
+
+        private void UxList_DoubleClick(object sender, EventArgs e)
+        {
+            if (uxList.SelectedRowCount > 0)
+                PerformSegue("EditSegue", this);
         }
 
         private bool CreateNewFile()
@@ -283,6 +293,22 @@ namespace MyIdOnMac
             }
         }
 
+        [Action("openDocument:")]
+        public void OpenDataFile(NSObject sender)
+        {
+            var alert = new NSAlert()
+            {
+                AlertStyle = NSAlertStyle.Warning,
+                InformativeText = "You will lose access to current data file if private key is not backed up. Do you want to backup private key now?",
+                MessageText = "Backup private key",
+            };
+            alert.AddButton("Yes");
+            alert.AddButton("No");
+            //alert.BeginSheet(this.View.Window);
+            alert.BeginSheetForResponse(this.View.Window, (result) => {
+                Console.WriteLine("Alert Result: {0}", result);
+            });
+        }
 
     }
 }

@@ -11,7 +11,9 @@ namespace MyIdOnMac
 {
 	public partial class MainWindowController : NSWindowController
 	{
-		public MainWindowController (IntPtr handle) : base (handle)
+        //public ActivatableItem UxEditItem { get { return uxEditItem; } }
+
+        public MainWindowController (IntPtr handle) : base (handle)
 		{
 		}
         public override void AwakeFromNib()

@@ -810,7 +810,7 @@ Gw
                                                                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VHk-fR-4b6">
                                                                     <rect key="frame" x="14" y="0.0" width="82" height="41"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageAlignment="top" imageScaling="proportionallyUpOrDown" image="NSActionTemplate" catalog="system" id="tTC-3N-jcI"/>
+                                                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageAlignment="top" imageScaling="proportionallyUpOrDown" image="NSActionTemplate" id="tTC-3N-jcI"/>
                                                                 </imageView>
                                                             </subviews>
                                                             <connections>
@@ -1192,7 +1192,7 @@ Gw
     </inferredMetricsTieBreakers>
     <resources>
         <image name="MyIdInfograph" width="279" height="167"/>
-        <image name="NSActionTemplate" catalog="system" width="15" height="15"/>
+        <image name="NSActionTemplate" width="15" height="15"/>
         <image name="NSTouchBarAddTemplate" width="15" height="13"/>
         <image name="NSTouchBarComposeTemplate" width="16" height="15"/>
         <image name="NSTouchBarDeleteTemplate" width="15" height="17"/>
