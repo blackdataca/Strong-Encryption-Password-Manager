@@ -22,24 +22,24 @@ namespace MyIdOnMac
 
         partial void OkDialog(NSObject sender)
         {
-            byte[] pin = UxListDataSource.GetKeyIv("Pin");
+            //byte[] pin = UxListDataSource.GetKeyIv("Pin");
 
-            string savedPin = Encoding.Unicode.GetString(pin);
-            if (savedPin == uxPassword.StringValue)
-            {
+            //string savedPin = Encoding.Unicode.GetString(pin);
+            //if (savedPin == uxPassword.StringValue)
+            //{
                 RaiseDialogAccepted();
                 CloseDialog();
-            }
-            else
-            {
-                var alert = new NSAlert()
-                {
-                    AlertStyle = NSAlertStyle.Warning,
-                    InformativeText = "Please enter the correct Master PIN and try again",
-                    MessageText = "Incorrect Master PIN",
-                };
-                alert.BeginSheet(this.View.Window);
-            }
+            //}
+            //else
+            //{
+            //    var alert = new NSAlert()
+            //    {
+            //        AlertStyle = NSAlertStyle.Warning,
+            //        InformativeText = "Please enter the correct Master PIN and try again",
+            //        MessageText = "Incorrect Master PIN",
+            //    };
+            //    alert.BeginSheet(this.View.Window);
+            //}
         }
 
         private void CloseDialog()

@@ -252,6 +252,8 @@ namespace MyIdOnMac
 
         private static byte[] Hex2Bin(String hex)
         {
+            if (hex == null)
+                return null;
             int NumberChars = hex.Length;
             byte[] bytes = new byte[NumberChars / 2];
             for (int i = 0; i < NumberChars; i += 2)
@@ -269,55 +271,40 @@ namespace MyIdOnMac
             switch (type)
             {
                 case "IV": //16
-                    //{
-                    //    string hexString = Xamarin.Essentials.Preferences.Get("iv", "");
-                    //    byte[] iv32 = Hex2Bin(hexString); // (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
-                    //    if (iv32 == null)
-                    //        return null;
-                    //    byte[] iv16 = new byte[16];
-                    //    Array.Copy(iv32, iv16, 16);
-                    //    return iv16;
-                    //}
+                    {
+                        //string hexString = Unprotect("iv");
+
+                        byte[] iv32 = Unprotect("iv"); // (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                        if (iv32 == null)
+                            return null;
+                        byte[] iv16 = new byte[16];
+                        Array.Copy(iv32, iv16, 16);
+                        return iv16;
+
+                    }
                 case "Iv2022": //16
                 case "RiKey": //32
                 case "RiIv": //16
                 case "Salt":
-                    //{
-                    //    string hexString = Xamarin.Essentials.Preferences.Get(type, "");
-                    //    byte[] data = Hex2Bin(hexString);
-
-                    //    //byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
-                    //    return data;
-                    //}
-                case "Key":
-                    //{
-                    //    byte[] iv32 = GetKeyIv("IV");
-                    //    string hexString = Xamarin.Essentials.Preferences.Get("key", "");
-                    //    byte[] ciphertext = Hex2Bin(hexString);
-
-                    //    //byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
-                    //    if (ciphertext == null)
-                    //        return null;
-                    //    byte[] plaintext = Unprotect(ciphertext, iv32);
-
-                    //    return plaintext;
-
-
-                    //}
                 case "Pin":
-                    //if (_pinEnc == null)
-                    //    return null;
-                    byte[] ret = null;
-                    try
-                    {
-                        ret = Unprotect(type);
-                    }
-                    catch
-                    {
-                    }
+                    byte[] ret = Unprotect(type);
 
                     return ret;
+                case "Key":
+                    {
+                        byte[] iv32 = GetKeyIv("IV");
 
+                        byte[] ciphertext = Unprotect("key");
+
+                        //byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
+                        if (ciphertext == null)
+                            return null;
+                        byte[] plaintext = ciphertext; //TODO Unprotect(ciphertext, iv32);
+
+                        return plaintext;
+
+
+                    }
                 default:
                     throw new Exception($"Unknown type: {type}");
             }
@@ -407,18 +394,18 @@ namespace MyIdOnMac
                         }
                         if (version == 2022)
                         {
-                            byte[] pin = UxListDataSource.GetKeyIv("Pin");
-                            byte[] salt = UxListDataSource.GetKeyIv("Salt");
+                            byte[] pin = GetKeyIv("Pin");
+                            byte[] salt = GetKeyIv("Salt");
                             var key = new Rfc2898DeriveBytes(pin, salt, 50000);
                             myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                            myRijndael.IV = UxListDataSource.GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
+                            myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
                         }
                         else
                         {  //Old verion
                             byte[] keyBytes;
-                            keyBytes = UxListDataSource.GetKeyIv("Key");
+                            keyBytes = GetKeyIv("Key");
 
-                            if (UxListDataSource.GetKeyIv("RiKey") == null || UxListDataSource.GetKeyIv("RiIv") == null)
+                            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
                             {
                                 var alert = new NSAlert()
                                 {
@@ -442,8 +429,9 @@ namespace MyIdOnMac
                             {
                                 _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
                             }
-                            catch (System.Security.Cryptography.CryptographicException)
+                            catch (System.Security.Cryptography.CryptographicException ex)
                             {
+                                Console.WriteLine(ex.Message);
                                 return false;
                             }
                         }
@@ -465,13 +453,13 @@ namespace MyIdOnMac
                 //}
                 success = true;
             }
-            catch (System.Security.Cryptography.CryptographicException)
+            catch (System.Security.Cryptography.CryptographicException ex)
             {
                 var alert = new NSAlert()
                 {
                     AlertStyle = NSAlertStyle.Warning,
-                    InformativeText = "Failed to decrypt data. Invalid PIN.",
-                    MessageText = "LoadFromDisk",
+                    InformativeText = ex.Message,
+                    MessageText = "Failed to decrypt data. Invalid PIN.",
                 };
                 alert.BeginSheet(wndHandle);
 
@@ -494,35 +482,42 @@ namespace MyIdOnMac
 
         private bool LoadPrivateKey(string privateKeyFile)
         {
-            //string bufferS = File.ReadAllText(privateKeyFile);
+            string bufferS = File.ReadAllText(privateKeyFile);
 
-            //byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
+            byte[] buffer = Hex2Bin(bufferS.Replace(",", "").Trim());
 
 
-            //if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
-            //{
-            //    int pos = 2;
-            //    //byte[] iv = new byte[16];
-            //    //Array.Copy(buffer, 2, iv, 0, 16);
-            //    //SaveKeyIv("IV", iv);
+            if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
+            {
+                int pos = 2;
+                //byte[] iv = new byte[16];
+                //Array.Copy(buffer, 2, iv, 0, 16);
+                //SaveKeyIv("IV", iv);
 
-            //    pos += 16;
-            //    byte[] salt = new byte[32];
-            //    Array.Copy(buffer, pos, salt, 0, 32);
-            //    SaveKeyIv("Salt", salt);
+                pos += 16;
+                byte[] salt = new byte[32];
+                Array.Copy(buffer, pos, salt, 0, 32);
+                SaveKeyIv("Salt", salt);
 
-            //    pos += 32;
-            //    byte[] riIv = new byte[16];
-            //    Array.Copy(buffer, pos, riIv, 0, 16);
-            //    SaveKeyIv("Iv2022", riIv);
+                pos += 32;
+                byte[] riIv = new byte[16];
+                Array.Copy(buffer, pos, riIv, 0, 16);
+                SaveKeyIv("Iv2022", riIv);
 
-            //    return true;
+                return true;
 
-            //}
-            //else
-            //{
-            //    MessageBox.Show("Invalid key file");
-            //}
+            }
+            else
+            {
+                var alert = new NSAlert()
+                {
+                    AlertStyle = NSAlertStyle.Warning,
+                    InformativeText = "Please choose another private key file",
+                    MessageText = "Invalid key file",
+                };
+                alert.BeginSheet(wndHandle);
+                
+            }
             return false;
         }
 

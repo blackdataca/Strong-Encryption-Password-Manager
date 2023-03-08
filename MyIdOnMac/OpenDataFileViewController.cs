@@ -76,6 +76,9 @@ namespace MyIdOnMac
             RaiseDialogCancelled();
             CloseDialog();
         }
+
+       
+
         public EventHandler DialogCanceled;
         internal void RaiseDialogCancelled()
         {

@@ -265,10 +265,7 @@ namespace MyIdOnMac
 
                         dialog.DialogOpen += (s, e) =>
                         {
-                            //if (OpenDataFile())
-                            //{
-                            //    return true;
-                            //}
+                            PerformSegue("OpenDataFileSegue", this);
                         };
 
                         dialog.DialogCanceled += (s, e) =>
