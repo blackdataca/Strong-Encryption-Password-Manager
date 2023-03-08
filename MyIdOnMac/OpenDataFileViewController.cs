@@ -13,6 +13,9 @@ namespace MyIdOnMac
 
         public string DataFile { get { return this.uxDataFile.StringValue; } }
 
+        public bool PrivateKeyOnDisk { get { return uxPriviateKeyOn.State == NSCellStateValue.On; } }
+
+        public string PrivateKeyFile { get { return uxPrivateKeyFile.StringValue; } }
 
         public OpenDataFileViewController (IntPtr handle) : base (handle)
 		{
@@ -45,7 +48,7 @@ namespace MyIdOnMac
                 var alert = new NSAlert()
                 {
                     AlertStyle = NSAlertStyle.Warning,
-                    InformativeText = $"File not found: {uxPrivateKeyFile.StringValue}",
+                    InformativeText = $"File not found: {uxDataFile.StringValue}",
                     MessageText = "Data file not found",
                 };
                 alert.BeginSheet(this.View.Window);

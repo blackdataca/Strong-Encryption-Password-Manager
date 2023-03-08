@@ -53,20 +53,17 @@ namespace MyIdOnMac
 
             if (uxList.Delegate != null)
                 return;
-            // Create the Product Table Data Source and populate it
-            //_dataSource.Add(new IdItem("Xamarin.iOS", "User", "Password", "Allows you to develop native iOS Applications in C#"));
-            //_dataSource.Add(new IdItem("Xamarin.Android", "User", "Password", "Allows you to develop native Android Applications in C#"));
-            //_dataSource.Add(new IdItem("Xamarin.Mac", "User", "Password", "Allows you to develop Mac native Applications in C#"));
 
-            // Populate the Product Table
             _dataSource.wndHandle = this.View.Window;
             uxList.DataSource = _dataSource;
             uxList.Delegate = new UxListDelegate(_dataSource);
 
             if (System.IO.File.Exists(IdFile))
             {
-
-                PerformSegue("SignInSegue", this);
+                var para = new NSDictionary("DataFile", null, "PrivateKeyFile", null);
+ 
+                PerformSegue("SignInSegue", NSObject.FromObject(para));
+                
             }
             else
             {
@@ -165,25 +162,39 @@ namespace MyIdOnMac
         
                         dialog.DialogAccepted += (s, e) =>
                         {
-                            Console.WriteLine("Dialog accepted");
+                            
+                            var dict = sender as NSDictionary;
+                            var dataFile = dict["DataFile"].ToString();
+                            var privateKeyFile = dict["PrivateKeyFile"].ToString();
 
-                            if (!_dataSource.LoadFromDisk(IdFile, null))
+                            if (_dataSource.ValidatePassword(dialog.Password))
                             {
-                                var alert = new NSAlert()
+                                if (dataFile == "<null>")
+                                    dataFile = IdFile;
+                                if (_dataSource.LoadFromDisk(dataFile, privateKeyFile))
+                                    uxList.ReloadData();
+                                else
                                 {
-                                    AlertStyle = NSAlertStyle.Warning,
-                                    InformativeText = "The data file may be corrupted. Please choose a different data file and try again.",
-                                    MessageText = "Access denied",
-                                };
-                                alert.BeginSheet(this.View.Window);
-                                System.Environment.Exit(0);
+                                    var alert = new NSAlert()
+                                    {
+                                        AlertStyle = NSAlertStyle.Warning,
+                                        InformativeText = "Please choose a different data file or private key file and try again.",
+                                        MessageText = "Access denied",
+                                    };
+                                    alert.RunModal();
+                                }
+
                             }
-                            uxList.ReloadData();
+                            
                         };
                         dialog.DialogCanceled += (s, e) =>
                         {
-                            Console.WriteLine("Dialog Cancelled");
-                            System.Environment.Exit(0);
+                            var dict = sender as NSDictionary;
+                            var dataFile = dict["DataFile"].ToString();
+                            var privateKeyFile = dict["PrivateKeyFile"].ToString();
+
+                            if (dataFile == null || dataFile == "<null>")
+                                System.Environment.Exit(0);
                         };
                         dialog.Presentor = this;
                         break;
@@ -269,26 +280,29 @@ namespace MyIdOnMac
 
                 case "OpenDataFileSegue":
                     {
-                        var dialog = segue.DestinationController as OpenDataFileViewController;
+                        var openDataFileBox = segue.DestinationController as OpenDataFileViewController;
 
-                        dialog.Presentor = this;
+                        openDataFileBox.Presentor = this;
 
-                        dialog.DialogOk += (s, e) =>
+                        openDataFileBox.DialogOk += (s, e) =>
                         {
-                            if (System.IO.File.Exists(dialog.DataFile))
-                            {
-                                var alert = new NSAlert()
-                                {
-                                    AlertStyle = NSAlertStyle.Warning,
-                                    InformativeText = $"Data file already exists: {dialog.DataFile}",
 
-                                    MessageText = "Unable to create new data file",
-                                };
-                                alert.AddButton("OK");
-                                alert.RunModal();
-                                System.Environment.Exit(1);
-                            }
-                            IdFile = dialog.DataFile;
+                            string privateKeyFile = null;
+                            if (openDataFileBox.PrivateKeyOnDisk)
+                                privateKeyFile = openDataFileBox.PrivateKeyFile;
+
+
+
+                            var para = new NSDictionary("DataFile", openDataFileBox.DataFile, "PrivateKeyFile", privateKeyFile);
+                                       
+
+                            PerformSegue("SignInSegue", NSObject.FromObject(para));
+
+                            
+
+                                
+                            
+                            
                             //byte[] masterPin = Encoding.Unicode.GetBytes(dialog.MasterPin);
 
 
@@ -303,7 +317,7 @@ namespace MyIdOnMac
                             //}
                         };
 
-                        dialog.DialogCanceled += (s, e) =>
+                        openDataFileBox.DialogCanceled += (s, e) =>
                         {
                             System.Environment.Exit(1);
                         };

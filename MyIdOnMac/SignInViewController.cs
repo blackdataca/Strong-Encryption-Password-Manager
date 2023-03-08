@@ -13,6 +13,9 @@ namespace MyIdOnMac
      
         public NSViewController Presentor;
 
+        public string Password { get { return uxPassword.StringValue; } }
+
+
         public SignInViewController (IntPtr handle) : base (handle)
 		{
 		}

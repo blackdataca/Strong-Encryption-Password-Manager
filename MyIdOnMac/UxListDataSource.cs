@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 //using System.Net.NetworkInformation;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using AppKit;
 using Foundation;
@@ -305,7 +307,16 @@ namespace MyIdOnMac
                 case "Pin":
                     //if (_pinEnc == null)
                     //    return null;
-                    return Unprotect(type);
+                    byte[] ret = null;
+                    try
+                    {
+                        ret = Unprotect(type);
+                    }
+                    catch
+                    {
+                    }
+
+                    return ret;
 
                 default:
                     throw new Exception($"Unknown type: {type}");
@@ -379,13 +390,18 @@ namespace MyIdOnMac
                         //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                         myRijndael.Mode = CipherMode.CFB;
 
-                        //byte[] keyBytes = GetKeyIv("Key");
-
-                        if (pPrivateKeyFile != null)
+                        if (pPrivateKeyFile != null && pPrivateKeyFile != "<null>")
                         {
                             if (!LoadPrivateKey(pPrivateKeyFile))
                             {
-                                //TODO MessageBox.Show("Unable load private key!");
+                                var alert = new NSAlert()
+                                {
+                                    AlertStyle = NSAlertStyle.Warning,
+                                    InformativeText = "Please choose the correct private key file and try again",
+                                    MessageText = "Unable load private key file",
+                                };
+                                alert.BeginSheet(wndHandle);
+                                
                                 return false;
                             }
                         }
@@ -401,14 +417,6 @@ namespace MyIdOnMac
                         {  //Old verion
                             byte[] keyBytes;
                             keyBytes = UxListDataSource.GetKeyIv("Key");
-
-                            //byte[] savedKey = GetKeyIv("Key");
-                            //if (!keyBytes.SequenceEqual(savedKey))
-                            //{
-                            //    MessageBox.Show("Invalid password!");
-                            //    return false;
-                            //}
-
 
                             if (UxListDataSource.GetKeyIv("RiKey") == null || UxListDataSource.GetKeyIv("RiIv") == null)
                             {
@@ -466,8 +474,7 @@ namespace MyIdOnMac
                     MessageText = "LoadFromDisk",
                 };
                 alert.BeginSheet(wndHandle);
-                //MessageBox.Show("Failed to decrypt data. Invalid PIN.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //return false;
+
             }
             catch (Exception ex)
             {
@@ -519,7 +526,44 @@ namespace MyIdOnMac
             return false;
         }
 
-        
+        public bool ValidatePassword(string pass)
+        {
+            //if (GetKeyIv("Salt") != null)
+            byte[] masterPin = Encoding.Unicode.GetBytes(pass);
+            SaveKeyIv("Pin", masterPin);
+            if (GetKeyIv("Salt") == null)
+                CreateNewKey(masterPin);
+            //if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+            //{
+            //    SaveKeyIv("Key", Encoding.Unicode.GetBytes(pass));
+
+            //}
+            if (GetKeyIv("Key") != null)
+            {  //old version
+                byte[] keyBytes;
+                using (SHA256 mySHA256 = SHA256.Create())
+                {
+                    byte[] keyB = Encoding.Unicode.GetBytes(pass);
+                    keyBytes = mySHA256.ComputeHash(keyB);
+                }
+                byte[] savedKey = GetKeyIv("Key");
+                if (!keyBytes.SequenceEqual(savedKey))
+                {
+                    var alert = new NSAlert()
+                    {
+                        AlertStyle = NSAlertStyle.Warning,
+                        InformativeText = "Please enter current Master PIN",
+                        MessageText = "Invalid PIN",
+                    };
+                    alert.BeginSheet(wndHandle);
+                    return false;
+                }
+
+            }
+            return true;
+        }
+
+
     }
 }
 
