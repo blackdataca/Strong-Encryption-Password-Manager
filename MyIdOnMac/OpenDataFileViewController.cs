@@ -25,17 +25,34 @@ namespace MyIdOnMac
 
         partial void okDialog(NSObject sender)
         {
-            if (System.IO.File.Exists(uxDataFile.StringValue))
+            if (uxPriviateKeyOn.State == NSCellStateValue.On)
+            {
+                if (!System.IO.File.Exists(uxPrivateKeyFile.StringValue))
+                {
+                    var alert = new NSAlert()
+                    {
+                        AlertStyle = NSAlertStyle.Warning,
+                        InformativeText = $"File not found: {uxPrivateKeyFile.StringValue}",
+                        MessageText = "Unable to open private key file",
+                    };
+                    alert.BeginSheet(this.View.Window);
+                    return;
+  
+                }
+            }
+            if (!System.IO.File.Exists(uxDataFile.StringValue))
             {
                 var alert = new NSAlert()
                 {
                     AlertStyle = NSAlertStyle.Warning,
-                    InformativeText = $"Data file already exists: {uxDataFile.StringValue}",
-                    MessageText = "Create new data file",
+                    InformativeText = $"File not found: {uxPrivateKeyFile.StringValue}",
+                    MessageText = "Data file not found",
                 };
-                alert.RunModal();
+                alert.BeginSheet(this.View.Window);
                 return;
             }
+            
+                       
             RaiseDialogOk();
             CloseDialog();
         }
