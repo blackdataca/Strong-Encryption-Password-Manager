@@ -266,6 +266,49 @@ namespace MyIdOnMac
                         };
                         break;                        
                     }
+
+                case "OpenDataFileSegue":
+                    {
+                        var dialog = segue.DestinationController as OpenDataFileViewController;
+
+                        dialog.Presentor = this;
+
+                        dialog.DialogOk += (s, e) =>
+                        {
+                            if (System.IO.File.Exists(dialog.DataFile))
+                            {
+                                var alert = new NSAlert()
+                                {
+                                    AlertStyle = NSAlertStyle.Warning,
+                                    InformativeText = $"Data file already exists: {dialog.DataFile}",
+
+                                    MessageText = "Unable to create new data file",
+                                };
+                                alert.AddButton("OK");
+                                alert.RunModal();
+                                System.Environment.Exit(1);
+                            }
+                            IdFile = dialog.DataFile;
+                            //byte[] masterPin = Encoding.Unicode.GetBytes(dialog.MasterPin);
+
+
+                            //_dataSource.SaveToDisk(masterPin);
+                        };
+
+                        //dialog.DialogOpen += (s, e) =>
+                        {
+                            //if (OpenDataFile())
+                            //{
+                            //    return true;
+                            //}
+                        };
+
+                        dialog.DialogCanceled += (s, e) =>
+                        {
+                            System.Environment.Exit(1);
+                        };
+                        break;
+                    }
             }
         }
 
@@ -294,21 +337,32 @@ namespace MyIdOnMac
         }
 
         [Action("openDocument:")]
-        public void OpenDataFile(NSObject sender)
+        public void OpenMenu(NSObject sender)
         {
-            var alert = new NSAlert()
+            if (KnownFolders.DataFile != "")
             {
-                AlertStyle = NSAlertStyle.Warning,
-                InformativeText = "You will lose access to current data file if private key is not backed up. Do you want to backup private key now?",
-                MessageText = "Backup private key",
-            };
-            alert.AddButton("Yes");
-            alert.AddButton("No");
-            //alert.BeginSheet(this.View.Window);
-            alert.BeginSheetForResponse(this.View.Window, (result) => {
-                Console.WriteLine("Alert Result: {0}", result);
-            });
+                var alert = new NSAlert()
+                {
+                    AlertStyle = NSAlertStyle.Warning,
+                    InformativeText = "You will lose access to current data file if private key is not backed up. Do you want to backup private key now?",
+                    MessageText = "Backup private key",
+                };
+                alert.AddButton("Yes");
+                alert.AddButton("No");
+                //alert.BeginSheet(this.View.Window);
+                alert.BeginSheetForResponse(this.View.Window, (result) =>
+                {
+                    //TODO result = 1000 Yes, 1001 No
+
+                    PerformSegue("OpenDataFileSegue", this);
+
+                });
+            }
+            else
+                PerformSegue("OpenDataFileSegue", this);
         }
 
+        
+        
     }
 }

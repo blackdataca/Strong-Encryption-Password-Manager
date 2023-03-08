@@ -122,6 +122,10 @@
     <Compile Include="SignInViewController.designer.cs">
       <DependentUpon>SignInViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="OpenDataFileViewController.cs" />
+    <Compile Include="OpenDataFileViewController.designer.cs">
+      <DependentUpon>OpenDataFileViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="Main.storyboard" />
