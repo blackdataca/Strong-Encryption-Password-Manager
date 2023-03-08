@@ -13,6 +13,9 @@ namespace MyIdOnMac
 	partial class OpenDataFileViewController
 	{
 		[Outlet]
+		AppKit.NSButton uxBrowsePrivateKeyFile { get; set; }
+
+		[Outlet]
 		AppKit.NSTextField uxDataFile { get; set; }
 
 		[Outlet]
@@ -35,12 +38,20 @@ namespace MyIdOnMac
 
 		[Action ("okDialog:")]
 		partial void okDialog (Foundation.NSObject sender);
+
+		[Action ("privateKeySelectionChanged:")]
+		partial void privateKeySelectionChanged (Foundation.NSObject sender);
 		
 		void ReleaseDesignerOutlets ()
 		{
 			if (uxDataFile != null) {
 				uxDataFile.Dispose ();
 				uxDataFile = null;
+			}
+
+			if (uxPrivateKeyFile != null) {
+				uxPrivateKeyFile.Dispose ();
+				uxPrivateKeyFile = null;
 			}
 
 			if (uxPrivateKeyThisComputer != null) {
@@ -53,9 +64,9 @@ namespace MyIdOnMac
 				uxPriviateKeyOn = null;
 			}
 
-			if (uxPrivateKeyFile != null) {
-				uxPrivateKeyFile.Dispose ();
-				uxPrivateKeyFile = null;
+			if (uxBrowsePrivateKeyFile != null) {
+				uxBrowsePrivateKeyFile.Dispose ();
+				uxBrowsePrivateKeyFile = null;
 			}
 		}
 	}

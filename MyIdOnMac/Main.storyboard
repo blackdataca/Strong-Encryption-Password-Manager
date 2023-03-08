@@ -1244,21 +1244,27 @@ Gw
                                     <action selector="browsePrivateKey:" target="m0g-Oi-IeU" id="Lnh-A2-OJd"/>
                                 </connections>
                             </button>
-                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vl5-tZ-L8D">
+                            <button verticalHuggingPriority="750" fixedFrame="YES" tag="1" translatesAutoresizingMaskIntoConstraints="NO" id="Vl5-tZ-L8D">
                                 <rect key="frame" x="18" y="136" width="265" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="radio" title="Use private key saved on this computer" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="uP7-4V-rZs">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="privateKeySelectionChanged:" target="m0g-Oi-IeU" id="fpT-12-AMs"/>
+                                </connections>
                             </button>
-                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wHc-cv-SRt">
+                            <button verticalHuggingPriority="750" fixedFrame="YES" tag="2" translatesAutoresizingMaskIntoConstraints="NO" id="wHc-cv-SRt">
                                 <rect key="frame" x="18" y="86" width="115" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="radio" title="Private key file" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="dHj-Mt-QxF">
+                                <buttonCell key="cell" type="radio" title="Private key file" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="dHj-Mt-QxF">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="privateKeySelectionChanged:" target="m0g-Oi-IeU" id="8pP-kb-6PW"/>
+                                </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ovn-kL-bQ3">
                                 <rect key="frame" x="266" y="13" width="71" height="32"/>
@@ -1288,6 +1294,7 @@ Gw
                         </subviews>
                     </view>
                     <connections>
+                        <outlet property="uxBrowsePrivateKeyFile" destination="YoV-yZ-0ik" id="eaW-hF-X3P"/>
                         <outlet property="uxDataFile" destination="G4P-NN-MyS" id="EFZ-3d-f4Q"/>
                         <outlet property="uxPrivateKeyFile" destination="Kzm-D5-MFy" id="UeY-ll-ZYS"/>
                         <outlet property="uxPrivateKeyThisComputer" destination="Vl5-tZ-L8D" id="8We-nC-v0A"/>

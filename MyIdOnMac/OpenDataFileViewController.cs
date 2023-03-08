@@ -70,8 +70,6 @@ namespace MyIdOnMac
 
             panel.ReleasedWhenClosed = true;
 
-            panel.Title = "Open data file";
-
             string p = uxDataFile.StringValue;
             if (string.IsNullOrWhiteSpace(p))
                 p = System.IO.Path.Combine(KnownFolders.DataDir, "myid_secret.data");
@@ -79,7 +77,7 @@ namespace MyIdOnMac
             panel.NameFieldStringValue = System.IO.Path.GetFileName(p);
             panel.Directory = System.IO.Path.GetDirectoryName(p);
 
-            panel.AllowedFileTypes = new string[] { ".data" };
+            panel.AllowedFileTypes = new string[] { "data" };
 
             panel.BeginSheet(this.View.Window, ret =>
             {
@@ -90,6 +88,42 @@ namespace MyIdOnMac
                 }
             });
 
+
+        }
+
+        partial void browsePrivateKey(NSObject sender)
+        {
+            var panel = new NSOpenPanel();
+
+            panel.ReleasedWhenClosed = true;
+
+            string p = uxPrivateKeyFile.StringValue;
+            if (string.IsNullOrWhiteSpace(p))
+                p = System.IO.Path.Combine(KnownFolders.DataDir, "private.key");
+
+            panel.NameFieldStringValue = System.IO.Path.GetFileName(p);
+            panel.Directory = System.IO.Path.GetDirectoryName(p);
+
+            panel.AllowedFileTypes = new string[] { "key" };
+
+            panel.BeginSheet(this.View.Window, ret =>
+            {
+                if (ret == 1 && !string.IsNullOrWhiteSpace(panel.Filename))
+                {
+                    uxPrivateKeyFile.StringValue = panel.Filename;
+
+                }
+            });
+
+
+        }
+
+        partial void privateKeySelectionChanged(Foundation.NSObject sender)
+        {
+            var check = sender as NSButton;
+
+            uxPrivateKeyFile.Enabled = (check.Tag == 2);
+            uxBrowsePrivateKeyFile.Enabled = (check.Tag == 2);
 
         }
     }
