@@ -96,7 +96,7 @@ namespace MyId
                     //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                     myRijndael.Mode = CipherMode.CFB;
 
-                
+
                     using (var fsCrypt = new FileStream(encFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         if (fsCrypt.ReadByte() == 0x20 && fsCrypt.ReadByte() == 0x22)
@@ -112,9 +112,9 @@ namespace MyId
                             fsCrypt.Seek(0, SeekOrigin.Begin);
                             myRijndael.Key = GetKeyIv("RiKey");
                             myRijndael.IV = GetKeyIv("RiIv");
-                            
+
                         }
-                        
+
 
                         byte[] salt = new byte[32];
                         fsCrypt.Read(salt, 0, salt.Length);
@@ -254,7 +254,7 @@ namespace MyId
                                 {
                                     img = Image.FromStream(st);
                                 }
-                                catch 
+                                catch
                                 {
                                     string f = Path.Combine(KnownFolders.DataDir, encFile.Key);
 
@@ -331,8 +331,8 @@ namespace MyId
                         li.SubItems[2].Text = ShowHint(li, aItem);
                         li.SubItems[3].Text = aItem.ChangedHuman;
                         li.SubItems[4].Text = aItem.Memo;
-                        if (aItem.Images != null && aItem.Images.Count>0)
-                            li.SubItems[4].Text = $"(File{(aItem.Images.Count==1?"":"s")}) {li.SubItems[4].Text}";
+                        if (aItem.Images != null && aItem.Images.Count > 0)
+                            li.SubItems[4].Text = $"(File{(aItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
                         SaveToDisk();
                     }
                 }
@@ -372,7 +372,7 @@ namespace MyId
             li.SubItems[2].Text = ShowHint(li, idItem);
             if (idItem.Images != null && idItem.Images.Count > 0)
             {
-                li.SubItems[4].Text = $"(File{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}"; 
+                li.SubItems[4].Text = $"(File{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
             }
         }
 
@@ -425,7 +425,7 @@ namespace MyId
             var si = new Welcome();
             for (var i = 0; i < 100; i++)
             {
-                
+
                 switch (si.ShowDialog())
                 {
                     case DialogResult.OK:
@@ -504,7 +504,7 @@ namespace MyId
             {
                 myRijndael.KeySize = 256;
                 myRijndael.BlockSize = 128;
-                myRijndael.Padding = PaddingMode.PKCS7;
+                myRijndael.Padding = PaddingMode.ISO10126; // PaddingMode.PKCS7;
                 //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                 myRijndael.Mode = CipherMode.CFB;
 
@@ -514,19 +514,35 @@ namespace MyId
 
                 myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
                 myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                //myRijndael.Key = GetKeyIv("Key");
-                //myRijndael.IV = GetKeyIv("IV");
+                                                   //myRijndael.Key = GetKeyIv("Key");
+                                                   //myRijndael.IV = GetKeyIv("IV");
 
-                using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
+
+                using (var ms = new MemoryStream())
                 {
                     //version 2022
-                    fs.WriteByte(0x20); //file version major
-                    fs.WriteByte(0x22); //file version minor
-                    using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
+                    ms.WriteByte(0x20); //file version major
+                    ms.WriteByte(0x22); //file version minor
+                    using (var cryptoStream = new CryptoStream(ms, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
                     {
                         formatter.Serialize(cryptoStream, _idList);
+
+                        cryptoStream.FlushFinalBlock();
+
+                        ms.Position = 0;
+
+                        using (var bin64 = new CryptoStream(ms, new ToBase64Transform(), CryptoStreamMode.Read))
+                        {
+                            using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
+                            {
+                                bin64.CopyTo(fs);
+
+
+                            }
+
+                        }
+
                     }
-                    fs.Close();
                 }
             }
         }
@@ -538,89 +554,127 @@ namespace MyId
         /// <returns></returns>
         private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
         {
-            
+
             uxList.Items.Clear();
             bool success = false;
 
             try
             {
+
                 using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
                 {
-                    int version = 0;
-                    if (fs.ReadByte() == 0x20 && fs.ReadByte()==0x22)
-                        version = 2022;
-                    else
-                        // Set the stream position to the beginning of the file.
-                        fs.Seek(0, SeekOrigin.Begin);
 
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    using (var bin64 = new CryptoStream(fs, new FromBase64Transform(), CryptoStreamMode.Read))
                     {
-                        myRijndael.KeySize = 256;
-                        myRijndael.BlockSize = 128;
-                        myRijndael.Padding = PaddingMode.PKCS7;
-                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                        myRijndael.Mode = CipherMode.CFB;
-
-                        //byte[] keyBytes = GetKeyIv("Key");
-
-                        if (pPrivateKeyFile != null)
-                        {
-                            if (!LoadPrivateKey(pPrivateKeyFile))
-                            {
-                                MessageBox.Show("Unable load private key!");
-                                return false;
-                            }
-                        }
-                        if (version == 2022)
-                        {
-                            byte[] pin = GetKeyIv("Pin");
-                            byte[] salt = GetKeyIv("Salt");
-                            var key = new Rfc2898DeriveBytes(pin, salt, 50000);
-                            myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                            myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                        }
-                        else
-                        {  //Old verion
-                            byte[] keyBytes;
-                            keyBytes = GetKeyIv("Key");
-
-                            //byte[] savedKey = GetKeyIv("Key");
-                            //if (!keyBytes.SequenceEqual(savedKey))
-                            //{
-                            //    MessageBox.Show("Invalid password!");
-                            //    return false;
-                            //}
-
-
-                            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
-                            {
-                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                //myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
-                                //myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
-
-                                //SaveKeyIv("RiKey", myRijndael.Key);
-                                //SaveKeyIv("RiIv", myRijndael.IV);
-                                MessageBox.Show("Missing private key");
-
-                            }
-                            else
-                            {
-                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                                myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
-                            }
-                        }
-                        
-                        using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                        using (var br = new MemoryStream())
                         {
                             try
                             {
-                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                                bin64.CopyTo(br);
+
                             }
-                            catch (System.Security.Cryptography.CryptographicException)
+                            catch (System.FormatException)
                             {
+                                MessageBox.Show("Please choose the data file created by MyId 2023+");
+
                                 return false;
+                            }
+                            br.Position = 0;
+                            int version = 0;
+                            if (br.ReadByte() == 0x20 && br.ReadByte() == 0x22)
+                                version = 2023;
+                            else if (fs.ReadByte() == 0x20 && fs.ReadByte() == 0x22)
+                                version = 2022;
+                            else
+                                // Set the stream position to the beginning of the file.
+                                fs.Seek(0, SeekOrigin.Begin);
+
+                            BinaryFormatter formatter = new BinaryFormatter();
+                            using (RijndaelManaged myRijndael = new RijndaelManaged())
+                            {
+                                myRijndael.KeySize = 256;
+                                myRijndael.BlockSize = 128;
+                                if (version >= 2023)
+                                    myRijndael.Padding = PaddingMode.ISO10126;
+                                else
+                                    myRijndael.Padding = PaddingMode.PKCS7;
+                                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                                myRijndael.Mode = CipherMode.CFB;
+
+                                //byte[] keyBytes = GetKeyIv("Key");
+
+                                if (pPrivateKeyFile != null)
+                                {
+                                    if (!LoadPrivateKey(pPrivateKeyFile))
+                                    {
+                                        MessageBox.Show("Unable load private key!");
+                                        return false;
+                                    }
+                                }
+                                if (version >= 2022)
+                                {
+                                    byte[] pin = GetKeyIv("Pin");
+                                    byte[] salt = GetKeyIv("Salt");
+                                    var key = new Rfc2898DeriveBytes(pin, salt, 50000);
+                                    myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                                    myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
+                                }
+                                else
+                                {  //Old verion
+                                    byte[] keyBytes;
+                                    keyBytes = GetKeyIv("Key");
+
+                                    //byte[] savedKey = GetKeyIv("Key");
+                                    //if (!keyBytes.SequenceEqual(savedKey))
+                                    //{
+                                    //    MessageBox.Show("Invalid password!");
+                                    //    return false;
+                                    //}
+
+
+                                    if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                                    {
+                                        //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                                        //myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
+                                        //myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
+
+                                        //SaveKeyIv("RiKey", myRijndael.Key);
+                                        //SaveKeyIv("RiIv", myRijndael.IV);
+                                        MessageBox.Show("Missing private key");
+
+                                    }
+                                    else
+                                    {
+                                        //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                                        myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                                        myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+                                    }
+                                }
+                                if (version >= 2023)
+
+                                    using (var cryptoStream = new CryptoStream(br, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                                    {
+                                        try
+                                        {
+                                            _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                                        }
+                                        catch (System.Security.Cryptography.CryptographicException)
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                else
+                                    using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                                    {
+                                        try
+                                        {
+                                            _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                                        }
+                                        catch (System.Security.Cryptography.CryptographicException)
+                                        {
+                                            return false;
+                                        }
+                                    }
                             }
                         }
                     }
@@ -655,7 +709,7 @@ namespace MyId
 #endif
             }
 
-                ShowNumberOfItems();
+            ShowNumberOfItems();
             return success;
         }
 
@@ -685,10 +739,10 @@ namespace MyId
         private bool ValidatePassword(string pass)
         {
             byte[] masterPin = Encoding.Unicode.GetBytes(pass);
-                SaveKeyIv("Pin", masterPin);
-            if (GetKeyIv("Salt")==null)
+            SaveKeyIv("Pin", masterPin);
+            if (GetKeyIv("Salt") == null)
                 CreateNewKey(masterPin);
-            if (GetKeyIv("Key")!= null)
+            if (GetKeyIv("Key") != null)
             {  //old version
                 byte[] keyBytes;
                 using (SHA256 mySHA256 = SHA256.Create())
@@ -723,7 +777,7 @@ namespace MyId
                     var result = si.ShowDialog();
                     if (result == DialogResult.OK)
                     {
- 
+
                         if (ValidatePassword(si.uxPassword.Text))
                         {
                             if (LoadFromDisk(IdFile, null))
@@ -1217,7 +1271,7 @@ namespace MyId
                     {
                         SaveKeyIv("Pin", Encoding.Unicode.GetBytes(si.uxPassword.Text));
                         MessageBox.Show("Private key imported");
-                       
+
                     }
                     else
                         MessageBox.Show("Unknown key file!", "Failed to restore key file", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1233,7 +1287,7 @@ namespace MyId
 
             byte[] buffer = ToByteArray(bufferS.Replace(",", "").Trim());
 
-            
+
             if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
             {
                 int pos = 2;
@@ -1440,7 +1494,7 @@ namespace MyId
         {
             //printDocument1.DefaultPageSettings.Landscape = true;
 
-            if ( printDialog1.ShowDialog() == DialogResult.OK)
+            if (printDialog1.ShowDialog() == DialogResult.OK)
             {
                 // this is were you take the printersettings from the printDialog
 
@@ -1455,7 +1509,7 @@ namespace MyId
             switch (fieldIndex)
             {
                 case 0:
-                    return (itemIndex + 1).ToString() ;
+                    return (itemIndex + 1).ToString();
                 case 1:
                     return _idList[itemIndex].Site;
                 case 2:
@@ -1474,8 +1528,8 @@ namespace MyId
         private void printDocument1_PrintPage(object sender, PrintPageEventArgs ev)
         {
             //float linesPerPage = 0;
-            
-            
+
+
             float leftMargin = ev.MarginBounds.Left;
             float topMargin = ev.MarginBounds.Top;
             float bottomMargin = topMargin + ev.MarginBounds.Height;
@@ -1489,10 +1543,10 @@ namespace MyId
 
 
             var recfs = new RectangleF[6];
-            var fields = new string[] { "#", "Site","User","Password" ,"Changed","Memo" };
+            var fields = new string[] { "#", "Site", "User", "Password", "Changed", "Memo" };
 
             float xPos = 0;
-            for (int i = 0;i<6; i++)
+            for (int i = 0; i < 6; i++)
             {
                 float width;
                 if (i == 0)
@@ -1507,37 +1561,37 @@ namespace MyId
                 //}
                 else
                     width = (float)ev.MarginBounds.Width * 0.2f;
-                recfs[i] = new RectangleF(leftMargin + xPos, topMargin, width , fontHeight);
+                recfs[i] = new RectangleF(leftMargin + xPos, topMargin, width, fontHeight);
                 xPos += width;
                 ev.Graphics.FillRectangle(Brushes.DarkGray, recfs[i]);
                 ev.Graphics.DrawString(fields[i], printFont, Brushes.White, recfs[i]);
             }
 
-            
+
             float yPos = fontHeight; //max. height of a line or bottom of last line
             float maxHeight = fontHeight;
-            
+
             // Iterate over the file, printing each line.
-            while ( printLineNo < _idList.Count)
+            while (printLineNo < _idList.Count)
             {
-                
+
                 var item = _idList[printLineNo];
 
-                for (int i =0;i <6;i++)
+                for (int i = 0; i < 6; i++)
                 {
                     recfs[i].Offset(0, maxHeight);
-                   
+
                 }
 
                 maxHeight = fontHeight;
                 var sizefs = new SizeF[6];
                 for (int i = 0; i < 6; i++)
                 {
-                    sizefs[i] = ev.Graphics.MeasureString(GetItemField(printLineNo,i), printFont, (int)recfs[i].Width);
+                    sizefs[i] = ev.Graphics.MeasureString(GetItemField(printLineNo, i), printFont, (int)recfs[i].Width);
                     if (maxHeight < sizefs[i].Height)
                         maxHeight = sizefs[i].Height;
                 }
-                
+
                 if (yPos + topMargin + maxHeight > bottomMargin)
                     break;
 
@@ -1572,5 +1626,5 @@ namespace MyId
         }
     }
 
-    
+
 }

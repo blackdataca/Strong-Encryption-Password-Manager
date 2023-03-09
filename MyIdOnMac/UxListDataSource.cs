@@ -361,79 +361,112 @@ namespace MyIdOnMac
             {
                 using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
                 {
-                    int version = 0;
-                    if (fs.ReadByte() == 0x20 && fs.ReadByte() == 0x22)
-                        version = 2022;
-                    else
-                        // Set the stream position to the beginning of the file.
-                        fs.Seek(0, SeekOrigin.Begin);
-
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    using (var binStream = new CryptoStream(fs, new FromBase64Transform(), CryptoStreamMode.Read))
                     {
-                        myRijndael.KeySize = 256;
-                        myRijndael.BlockSize = 128;
-                        myRijndael.Padding = PaddingMode.PKCS7;
-                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                        myRijndael.Mode = CipherMode.CFB;
-
-                        if (pPrivateKeyFile != null && pPrivateKeyFile != "<null>")
-                        {
-                            if (!LoadPrivateKey(pPrivateKeyFile))
-                            {
-                                var alert = new NSAlert()
-                                {
-                                    AlertStyle = NSAlertStyle.Warning,
-                                    InformativeText = "Please choose the correct private key file and try again",
-                                    MessageText = "Unable load private key file",
-                                };
-                                alert.BeginSheet(wndHandle);
-                                
-                                return false;
-                            }
-                        }
-                        if (version == 2022)
-                        {
-                            byte[] pin = GetKeyIv("Pin");
-                            byte[] salt = GetKeyIv("Salt");
-                            var key = new Rfc2898DeriveBytes(pin, salt, 50000);
-                            myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                            myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                            
-                        }
-                        else
-                        {  //Old verion
-                            byte[] keyBytes;
-                            keyBytes = GetKeyIv("Key");
-
-                            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
-                            {
-                                var alert = new NSAlert()
-                                {
-                                    AlertStyle = NSAlertStyle.Warning,
-                                    InformativeText = "Please import private key and try again",
-                                    MessageText = "Missing private key",
-                                };
-                                alert.BeginSheet(wndHandle);
-                            }
-                            else
-                            {
-                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                myRijndael.Key = UxListDataSource.GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                                myRijndael.IV = UxListDataSource.GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
-                            }
-                        }
-
-                        using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                        using (var br = new MemoryStream())
                         {
                             try
                             {
-                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                                binStream.CopyTo(br);
+                                
                             }
-                            catch (System.Security.Cryptography.CryptographicException ex)
+                            catch (System.FormatException ex)
                             {
-                                Console.WriteLine(ex.Message);
+                                var alert = new NSAlert()
+                                {
+                                    AlertStyle = NSAlertStyle.Warning,
+                                    InformativeText = "Please choose the data file created by MyId 2023+",
+                                    MessageText = ex.Message,
+                                };
+                                alert.RunModal();
+
                                 return false;
+                            }
+                            int version = 0;
+                            br.Position = 0;
+                            if (br.ReadByte() == 0x20 && br.ReadByte() == 0x22)
+                                version = 2023;
+                            else
+                            {
+                                var alert = new NSAlert()
+                                {
+                                    AlertStyle = NSAlertStyle.Warning,
+                                    InformativeText = "Please choose the data file created by MyId 2023+",
+                                    MessageText = "Unsupported data file",
+                                };
+                                alert.BeginSheet(wndHandle);
+
+                                return false;
+                            }
+
+                            BinaryFormatter formatter = new BinaryFormatter();
+                            using (RijndaelManaged myRijndael = new RijndaelManaged())
+                            {
+                                myRijndael.KeySize = 256;
+                                myRijndael.BlockSize = 128;
+                                myRijndael.Padding = PaddingMode.ISO10126;
+                                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                                myRijndael.Mode = CipherMode.CFB;
+
+                                if (pPrivateKeyFile != null && pPrivateKeyFile != "<null>")
+                                {
+                                    if (!LoadPrivateKey(pPrivateKeyFile))
+                                    {
+                                        var alert = new NSAlert()
+                                        {
+                                            AlertStyle = NSAlertStyle.Warning,
+                                            InformativeText = "Please choose the correct private key file and try again",
+                                            MessageText = "Unable load private key file",
+                                        };
+                                        alert.BeginSheet(wndHandle);
+
+                                        return false;
+                                    }
+                                }
+                                if (version >= 2023)
+                                {
+                                    byte[] pin = GetKeyIv("Pin");
+                                    byte[] salt = GetKeyIv("Salt");
+                                    var key = new Rfc2898DeriveBytes(pin, salt, 50000);
+                                    myRijndael.Key = key.GetBytes(32);
+                                    myRijndael.IV = GetKeyIv("Iv2022");
+
+                                }
+                                else
+                                {  //Old verion
+                                    byte[] keyBytes;
+                                    keyBytes = GetKeyIv("Key");
+
+                                    if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                                    {
+                                        var alert = new NSAlert()
+                                        {
+                                            AlertStyle = NSAlertStyle.Warning,
+                                            InformativeText = "Please import private key and try again",
+                                            MessageText = "Missing private key",
+                                        };
+                                        alert.BeginSheet(wndHandle);
+                                    }
+                                    else
+                                    {
+                                        //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
+                                        myRijndael.Key = UxListDataSource.GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
+                                        myRijndael.IV = UxListDataSource.GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+                                    }
+                                }
+
+                                using (var cryptoStream = new CryptoStream(br, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                                {
+                                    try
+                                    {
+                                        _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                                    }
+                                    catch (System.Security.Cryptography.CryptographicException ex)
+                                    {
+                                        Console.WriteLine(ex.Message);
+                                        return false;
+                                    }
+                                }
                             }
                         }
                     }
