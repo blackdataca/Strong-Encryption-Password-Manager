@@ -1595,20 +1595,7 @@ namespace MyId
             }
         }
 
-        private string uniqid(string prefix, bool more_entropy)
-        {
-            if (string.IsNullOrEmpty(prefix))
-                prefix = string.Empty;
-
-            if (!more_entropy)
-            {
-                return (prefix + System.Guid.NewGuid().ToString().Replace("-","")).Substring(0,13);
-            }
-            else
-            {
-                return (prefix + System.Guid.NewGuid().ToString().Replace("-", "").Substring(0,14)) + "." + System.Guid.NewGuid().ToString().Substring(0, 8);
-            }
-        }
+        
 
 
         private string UcFirst(string input)
@@ -1645,7 +1632,7 @@ namespace MyId
             using (var client = new WebClient())
             {
 
-                var vm = new { UserEmail="test@1225g.com", PassHash= md, RecId = recId, TouchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
+                var vm = new { UserEmail="test@blackdata.ca", PassHash= md, RecId = recId, TouchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
 
                 var dataString = JsonConvert.SerializeObject(vm);
                 

@@ -10,7 +10,7 @@ namespace MyId
     [Serializable]
     public class IdItem
     {
-        public Guid Uid = Guid.NewGuid();
+        public string Uid = RC4Encryption.UniqId("", true); // Guid.NewGuid();
         public string Site;
         public string User;
         public string Password;

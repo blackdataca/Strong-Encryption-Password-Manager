@@ -179,7 +179,23 @@ namespace MyId
             }
             return decodedText;
         }
+
+        public static string UniqId(string prefix, bool more_entropy)
+        {
+            if (string.IsNullOrEmpty(prefix))
+                prefix = string.Empty;
+
+            if (!more_entropy)
+            {
+                return (prefix + System.Guid.NewGuid().ToString().Replace("-", "")).Substring(0, 13);
+            }
+            else
+            {
+                return (prefix + System.Guid.NewGuid().ToString().Replace("-", "").Substring(0, 14)) + "." + System.Guid.NewGuid().ToString().Substring(0, 8);
+            }
+        }
     }
 
+    
 
 }
