@@ -25,6 +25,7 @@ using System.Collections.Specialized;
 using Newtonsoft.Json;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using System.Security.Policy;
+using Newtonsoft.Json.Linq;
 
 namespace MyId
 {
@@ -634,7 +635,7 @@ namespace MyId
                 {
                     if (item.UniqId == null)
                     {
-                        item.UniqId = RC4Encryption.UniqId("", true);
+                        item.UniqId = MyEncryption.UniqId("", true);
                         uniqIdUpdate++;
                     }
                 }
@@ -1586,23 +1587,7 @@ namespace MyId
             page = 0;
         }
 
-        private string CreateMD5(string input)
-        {
-            // Use input string to calculate MD5 hash
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-            {
-                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                // Convert the byte array to hexadecimal string
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("X2"));
-                }
-                return sb.ToString().ToLower();
-            }
-        }
+       
 
         
 
@@ -1621,12 +1606,34 @@ namespace MyId
 
         private void uxToolSync_Click(object sender, EventArgs e)
         {
-            var userEmail = "test@blackdata.ca".ToLower();
+
+            string userEmail = "";
+            string userPassmd5 ="";
+            
+            string webSyncSuccessSaved = Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", 0).ToString();
+            bool webSyncSuccess = (webSyncSuccessSaved == "1");
+            while (true)
+            {
+                userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
+                userEmail = userEmail.ToLower();
+
+                userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+
+                
+                if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5) || !webSyncSuccess)
+                {
+                    WebSync frm = new WebSync();
+                    if (frm.ShowDialog() != DialogResult.OK)
+                        return;
+                    else
+                        webSyncSuccess = true;
+                }
+                else
+                    break;
+            }
 
             
-
-            var userPassmd5 = CreateMD5("test");
-            var md = CreateMD5(userPassmd5 + CreateMD5(UcFirst(userEmail)));
+            var md = MyEncryption.CreateMD5(userPassmd5 + MyEncryption.CreateMD5(UcFirst(userEmail)));
 
             var payloads = new List<object>();
 
@@ -1637,9 +1644,9 @@ namespace MyId
 
                 var json = JsonConvert.SerializeObject(item);
 
-                var rc4 = new RC4Encryption();
+                var myCrypt = new MyEncryption();
 
-                string payload = rc4.MyEncrypt_Field(json, key);
+                string payload = myCrypt.MyEncrypt_Field(json, key);
 
                 var rec = new { RecId = recId, TouchDate = item.Changed, Payload = payload };
  
@@ -1655,17 +1662,27 @@ namespace MyId
                 var dataString = JsonConvert.SerializeObject(vm);
             
                 client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
-
+                string err = "";
                 try
                 {
-                    var response = client.UploadString("https://myid.blackdata.ca:2096/WebSyncUpdate.php", dataString);
-                    MessageBox.Show(response);
+                    
+                    var response = client.UploadString("https://myid-dev.blackdata.ca:2096/WebSyncUpdate.php", dataString);
+                    JObject joResponse = JObject.Parse(response);
+                    err = joResponse["Error"].ToString();
+                    if (err == "0")
+                    {
+                        
+                        MessageBox.Show("Sync successful", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                        MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
-                catch (WebException wex)
+                catch (Exception ex)
                 {
-                    MessageBox.Show(wex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-                
+
+                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0"?1:0);
             }
         }
     }

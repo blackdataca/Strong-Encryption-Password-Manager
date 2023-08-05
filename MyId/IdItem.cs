@@ -11,7 +11,7 @@ namespace MyId
     public class IdItem
     {
         public Guid Uid = Guid.NewGuid();
-        public string UniqId = RC4Encryption.UniqId("", true);
+        public string UniqId = MyEncryption.UniqId("", true);
         public string Site;
         public string User;
         public string Password;
