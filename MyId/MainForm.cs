@@ -19,6 +19,12 @@ using System.Linq;
 using System.Diagnostics;
 using System.Drawing.Printing;
 using System.Drawing.Imaging;
+using System.Net.Http;
+using System.Net;
+using System.Collections.Specialized;
+using Newtonsoft.Json;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using System.Security.Policy;
 
 namespace MyId
 {
@@ -1569,6 +1575,86 @@ namespace MyId
         {
             printLineNo = 0;
             page = 0;
+        }
+
+        private string CreateMD5(string input)
+        {
+            // Use input string to calculate MD5 hash
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                // Convert the byte array to hexadecimal string
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                return sb.ToString().ToLower();
+            }
+        }
+
+        private string uniqid(string prefix, bool more_entropy)
+        {
+            if (string.IsNullOrEmpty(prefix))
+                prefix = string.Empty;
+
+            if (!more_entropy)
+            {
+                return (prefix + System.Guid.NewGuid().ToString().Replace("-","")).Substring(0,13);
+            }
+            else
+            {
+                return (prefix + System.Guid.NewGuid().ToString().Replace("-", "").Substring(0,14)) + "." + System.Guid.NewGuid().ToString().Substring(0, 8);
+            }
+        }
+
+
+        private string UcFirst(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            char firstChar = input[0];
+            string restOfTheString = input.Substring(1);
+
+            // Convert the first character to upper case and concatenate with the rest of the string.
+            return char.ToUpper(firstChar) + restOfTheString;
+        }
+
+        private void uxToolSync_Click(object sender, EventArgs e)
+        {
+            var userEmail = "test@1225g.com".ToLower();
+
+            var jobj = new { Site = "site", Id = "id", Pwd = "test", Memo = "test" };
+            var recId = "64cdd3bf8c6f91.78206355"; // uniqid("", true);
+            var userPassmd5 = CreateMD5("test");
+            var md = CreateMD5(userPassmd5 + CreateMD5(UcFirst(userEmail)));
+            
+            var key = userEmail + userPassmd5 + recId;
+
+            var json = JsonConvert.SerializeObject(jobj);
+            Debug.WriteLine(json);
+
+            var rc4 = new RC4Encryption();
+            string payload = rc4.MyEncrypt_Field(json, key);
+            Debug.WriteLine(key);
+            Debug.WriteLine(payload);
+
+            using (var client = new WebClient())
+            {
+
+                var vm = new { UserEmail="test@1225g.com", PassHash= md, RecId = recId, TouchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
+
+                var dataString = JsonConvert.SerializeObject(vm);
+                
+                client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+
+                var response = client.UploadString("http://192.168.0.123:8000/WebSyncUpdate.php", dataString);
+
+                MessageBox.Show(response);
+            }
         }
     }
 
