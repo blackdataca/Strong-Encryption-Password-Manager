@@ -1656,9 +1656,16 @@ namespace MyId
             
                 client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
 
-                var response = client.UploadString("http://192.168.0.123:8000/WebSyncUpdate.php", dataString);
-
-                MessageBox.Show(response);
+                try
+                {
+                    var response = client.UploadString("https://myid.blackdata.ca:2096/WebSyncUpdate.php", dataString);
+                    MessageBox.Show(response);
+                }
+                catch (WebException wex)
+                {
+                    MessageBox.Show(wex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                }
+                
             }
         }
     }
