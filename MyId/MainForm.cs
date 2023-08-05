@@ -514,14 +514,10 @@ namespace MyId
                 //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                 myRijndael.Mode = CipherMode.CFB;
 
-                // var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                //myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                //myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
 
-                myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                //myRijndael.Key = GetKeyIv("Key");
-                //myRijndael.IV = GetKeyIv("IV");
+                myRijndael.Key = key.GetBytes(32); 
+                myRijndael.IV = GetKeyIv("Iv2022");
+
 
                 using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
                 {
@@ -623,6 +619,7 @@ namespace MyId
                             try
                             {
                                 _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+
                             }
                             catch (System.Security.Cryptography.CryptographicException)
                             {
@@ -631,6 +628,18 @@ namespace MyId
                         }
                     }
                 }
+
+                int uniqIdUpdate = 0;
+                foreach (var item in _idList)
+                {
+                    if (item.UniqId == null)
+                    {
+                        item.UniqId = RC4Encryption.UniqId("", true);
+                        uniqIdUpdate++;
+                    }
+                }
+                if (uniqIdUpdate > 0)
+                    SaveToDisk();
 
                 foreach (var idItem in _idList)
                 {
@@ -1612,30 +1621,39 @@ namespace MyId
 
         private void uxToolSync_Click(object sender, EventArgs e)
         {
-            var userEmail = "test@1225g.com".ToLower();
+            var userEmail = "test@blackdata.ca".ToLower();
 
-            var jobj = new { Site = "site", Id = "id", Pwd = "test", Memo = "test" };
-            var recId = "64cdd3bf8c6f91.78206355"; // uniqid("", true);
+            
+
             var userPassmd5 = CreateMD5("test");
             var md = CreateMD5(userPassmd5 + CreateMD5(UcFirst(userEmail)));
-            
-            var key = userEmail + userPassmd5 + recId;
 
-            var json = JsonConvert.SerializeObject(jobj);
-            Debug.WriteLine(json);
+            var payloads = new List<object>();
 
-            var rc4 = new RC4Encryption();
-            string payload = rc4.MyEncrypt_Field(json, key);
-            Debug.WriteLine(key);
-            Debug.WriteLine(payload);
+            foreach (var item in _idList)
+            {
+                var recId = item.UniqId; 
+                var key = userEmail + userPassmd5 + recId;
+
+                var json = JsonConvert.SerializeObject(item);
+
+                var rc4 = new RC4Encryption();
+
+                string payload = rc4.MyEncrypt_Field(json, key);
+
+                var rec = new { RecId = recId, TouchDate = item.Changed, Payload = payload };
+ 
+                payloads.Add( rec);
+            }
+
 
             using (var client = new WebClient())
             {
 
-                var vm = new { UserEmail="test@blackdata.ca", PassHash= md, RecId = recId, TouchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
+                var vm = new { UserEmail= userEmail, PassHash= md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
-                
+            
                 client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
 
                 var response = client.UploadString("http://192.168.0.123:8000/WebSyncUpdate.php", dataString);
