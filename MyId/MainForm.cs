@@ -28,6 +28,8 @@ using System.Security.Policy;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
 using System.IO.Compression;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MyId
 {
@@ -1593,11 +1595,28 @@ namespace MyId
             return char.ToUpper(firstChar) + restOfTheString;
         }
 
-        private void uxToolSync_Click(object sender, EventArgs e)
+        private void ToolSyncVisual(bool Started)
         {
-            Cursor.Current = Cursors.WaitCursor;
+            if (Started)
+            {
+                Cursor.Current = Cursors.WaitCursor;
+                uxToolSync.Enabled = false;
+                uxToolSync.Text = "Syncing...";
+            }
+            else
+            {
+                Cursor.Current = Cursors.Default;
+                uxToolSync.Enabled = true;
+                uxToolSync.Text = "Sync";
+            }
+        }
+
+        private async void uxToolSync_Click(object sender, EventArgs e)
+        {
+            ToolSyncVisual(true);
             string userEmail = "";
             string userPassmd5 ="";
+
             
             string webSyncSuccessSaved = Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", 0).ToString();
             bool webSyncSuccess = (webSyncSuccessSaved == "1");
@@ -1614,7 +1633,8 @@ namespace MyId
                     WebSync frm = new WebSync();
                     if (frm.ShowDialog() != DialogResult.OK)
                     {
-                        Cursor.Current = Cursors.Default;
+                        ToolSyncVisual(false);
+
                         return;
                     }
                     else
@@ -1645,15 +1665,18 @@ namespace MyId
                 payloads.Add( rec);
             }
 
+            // Ignore SSL certificate validation
+            //ServicePointManager.ServerCertificateValidationCallback += (sender1, certificate, chain, sslPolicyErrors) => true;
 
-            using (var client = new WebClient())
+
+            using (var client = new HttpClient())
             {
 
                 var vm = new { UserEmail= userEmail, PassHash= md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
             
-                client.Headers.Add(HttpRequestHeader.ContentType, "application/octet-stream");
+                //client.Headers.Add(HttpRequestHeader.ContentType, "application/octet-stream");
                 string err = "";
                 try
                 {
@@ -1670,60 +1693,88 @@ namespace MyId
                         }
                         compressedData = ms.ToArray();
                     }
+                    
+
                     Debug.WriteLine($"Uploading {compressedData.Length:N0} bytes");
+
                     var start = new Stopwatch();
                     start.Start();
-                    client.Headers.Add("Content-Encoding", "gzip"); // Inform the server that the data is gzip-compressed
-                    var res = client.UploadData("https://myid-dev.blackdata.ca:2096/WebSync.php", compressedData);
+                    //client.Headers.Add("Content-Encoding", "gzip"); // Inform the server that the data is gzip-compressed
+                                                                    // Prepare the content to send in the request
+                    HttpContent httpContent = new ByteArrayContent(compressedData);
 
+                    // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
+                    httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                    httpContent.Headers.ContentEncoding.Add("gzip");
+                    
+                    // Send the POST request using PostAsync method
+                    HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
 
-                    string response = Encoding.UTF8.GetString(res);
-
-                    Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
-
-                    JObject joResponse = JObject.Parse(response);
-                    err = joResponse["Error"].ToString();
-                    if (err == "0")
+                    // Check if the request was successful
+                    if (res.IsSuccessStatusCode)
                     {
-                        int recNew = 0;
-                        if (joResponse["Return"] != null)
+                        // Read the response content as a string
+                        string response = await res.Content.ReadAsStringAsync();
+                        //Console.WriteLine("Response: " + response);
+
+                        // var res = client.UploadData("https://myid-dev.blackdata.ca:2096/WebSync.php", compressedData);
+
+
+                        //string response = Encoding.UTF8.GetString(res);
+
+                        Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
+
+                        JObject joResponse = JObject.Parse(response);
+                        err = joResponse["Error"].ToString();
+                        if (err == "0")
                         {
-                            foreach (var row in joResponse["Return"])
+                            int recNew = 0;
+                            if (joResponse["Return"] != null)
                             {
-
-                                var recId = row["RecId"].ToString();
-                                var key = userEmail + userPassmd5 + recId;
-                                var myCrypt = new MyEncryption();
-
-                                string payload = myCrypt.MyDecrypt_Field(row["Payload"].ToString(), key);
-
-                                var item = JsonConvert.DeserializeObject<IdItem>(payload);
-
-                                IdItem aItem = GetAItemByRecId(recId);
-                                if (aItem == null)
+                                foreach (var row in joResponse["Return"])
                                 {
-                                    aItem = new IdItem();
-                                    aItem.UniqId = recId;
-                                    _idList.Add(aItem);
+
+                                    var recId = row["RecId"].ToString();
+                                    var key = userEmail + userPassmd5 + recId;
+                                    var myCrypt = new MyEncryption();
+
+                                    string payload = myCrypt.MyDecrypt_Field(row["Payload"].ToString(), key);
+
+                                    var item = JsonConvert.DeserializeObject<IdItem>(payload);
+
+                                    IdItem aItem = GetAItemByRecId(recId);
+                                    if (aItem == null)
+                                    {
+                                        aItem = new IdItem();
+                                        aItem.UniqId = recId;
+                                        _idList.Add(aItem);
+                                    }
+                                    aItem.User = item.User;
+                                    aItem.Password = item.Password;
+                                    aItem.Site = item.Site;
+                                    aItem.Memo = item.Memo;
+                                    aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
+                                    recNew++;
                                 }
-                                aItem.User = item.User;
-                                aItem.Password = item.Password;
-                                aItem.Site = item.Site;
-                                aItem.Memo = item.Memo;
-                                aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
-                                recNew++;
+                                if (recNew > 0)
+                                {
+                                    SaveToDisk();
+                                    ShowNumberOfItems();
+                                    UxSearchBox_TextChanged();
+                                }
                             }
-                            if (recNew > 0)
-                            {
-                                SaveToDisk();
-                                ShowNumberOfItems();
-                                UxSearchBox_TextChanged();
-                            }
+                            MessageBox.Show($"Sync successful {recNew} added", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        MessageBox.Show($"Sync successful {recNew} added", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        else
+                            MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
                     else
-                        MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    {
+                        // Handle unsuccessful response
+                        MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+
+                    
                 }
                 catch (Exception ex)
                 {
@@ -1732,9 +1783,10 @@ namespace MyId
 
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0"?1:0);
             }
-
-            Cursor.Current = Cursors.Default;
+            ToolSyncVisual(false);
         }
+
+
     }
 
     
