@@ -30,7 +30,7 @@ namespace MyId
         {
             Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", uxEmail.Text);
 
-            var userPassmd5 = MyEncryption.CreateMD5(uxPassword.Text);
+            var userPassmd5 = MyEncryption.MyHash(uxPassword.Text);
 
             Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", userPassmd5);
         }

@@ -1673,7 +1673,7 @@ namespace MyId
 
             userEmail = userEmail.ToLower();
 
-            var md = MyEncryption.CreateMD5(userPassmd5 + MyEncryption.CreateMD5(UcFirst(userEmail)));
+            var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(UcFirst(userEmail)));
 
             var payloads = new List<object>();
 
