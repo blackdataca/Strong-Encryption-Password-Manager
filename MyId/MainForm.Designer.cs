@@ -69,7 +69,7 @@
             this.uxSearchBox = new System.Windows.Forms.ToolStripTextBox();
             this.uxClear = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.uxToolSync = new System.Windows.Forms.ToolStripButton();
+            this.uxWebSync = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.uxItemCountStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -340,7 +340,7 @@
             this.uxSearchBox,
             this.uxClear,
             this.toolStripSeparator3,
-            this.uxToolSync});
+            this.uxWebSync});
             this.toolStrip1.Location = new System.Drawing.Point(0, 24);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(719, 39);
@@ -416,14 +416,14 @@
             // 
             // uxToolSync
             // 
-            this.uxToolSync.Image = ((System.Drawing.Image)(resources.GetObject("uxToolSync.Image")));
-            this.uxToolSync.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.uxToolSync.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.uxToolSync.Name = "uxToolSync";
-            this.uxToolSync.Size = new System.Drawing.Size(68, 36);
-            this.uxToolSync.Text = "&Sync";
-            this.uxToolSync.ToolTipText = "Sync  to Cloud";
-            this.uxToolSync.Click += new System.EventHandler(this.uxToolSync_Click);
+            this.uxWebSync.Image = ((System.Drawing.Image)(resources.GetObject("uxToolSync.Image")));
+            this.uxWebSync.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.uxWebSync.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.uxWebSync.Name = "uxToolSync";
+            this.uxWebSync.Size = new System.Drawing.Size(68, 36);
+            this.uxWebSync.Text = "&Sync";
+            this.uxWebSync.ToolTipText = "Sync  to Cloud";
+            this.uxWebSync.Click += new System.EventHandler(this.uxToolSync_Click);
             // 
             // statusStrip1
             // 
@@ -562,7 +562,7 @@
         private System.Windows.Forms.ToolStripMenuItem uxPrint;
         private System.Drawing.Printing.PrintDocument printDocument1;
         private System.Windows.Forms.PrintDialog printDialog1;
-        private System.Windows.Forms.ToolStripButton uxToolSync;
+        private System.Windows.Forms.ToolStripButton uxWebSync;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
     }
 }

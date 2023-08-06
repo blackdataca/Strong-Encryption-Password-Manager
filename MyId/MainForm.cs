@@ -30,6 +30,7 @@ using Newtonsoft.Json.Converters;
 using System.IO.Compression;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace MyId
 {
@@ -318,17 +319,22 @@ namespace MyId
                             Cursor.Current = Cursors.Default;
                         }
 
-                        if (oldPass != aItem.Password)
+                        string memo = aItem.Memo;
+                        if (aItem.Images != null && aItem.Images.Count > 0)
+                            memo = $"(File{(aItem.Images.Count == 1 ? "" : "s")}) {aItem.Memo}";
+
+                        if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != memo)
+                        {
                             aItem.Changed = DateTime.UtcNow;
 
-                        li.Text = aItem.Site;
-                        li.SubItems[1].Text = aItem.User;
-                        li.SubItems[2].Text = ShowHint(li, aItem);
-                        li.SubItems[3].Text = aItem.ChangedHuman;
-                        li.SubItems[4].Text = aItem.Memo;
-                        if (aItem.Images != null && aItem.Images.Count>0)
-                            li.SubItems[4].Text = $"(File{(aItem.Images.Count==1?"":"s")}) {li.SubItems[4].Text}";
-                        SaveToDisk();
+                            li.Text = aItem.Site;
+                            li.SubItems[1].Text = aItem.User;
+                            li.SubItems[2].Text = ShowHint(li, aItem);
+                            li.SubItems[3].Text = aItem.ChangedHuman;
+                            li.SubItems[4].Text = memo;
+                            
+                            SaveToDisk();
+                        }
                     }
                 }
             }
@@ -530,6 +536,7 @@ namespace MyId
                     fs.Close();
                 }
             }
+            _ = WebSync();
         }
 
         /// <summary>
@@ -779,6 +786,9 @@ namespace MyId
                 if (!CreateNewFile())
                     System.Environment.Exit(1);  //First time app run
             }
+
+            string webSyncSuccessSaved = Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", 0).ToString();
+            uxWebSync.Enabled = webSyncSuccessSaved != "1";
         }
 
         private byte[] _pinEnc;
@@ -1595,45 +1605,47 @@ namespace MyId
             return char.ToUpper(firstChar) + restOfTheString;
         }
 
-        private void ToolSyncVisual(bool Started)
+        private void ToolSyncVisual(int syncState)
         {
-            if (Started)
+            switch (syncState)
             {
-                Cursor.Current = Cursors.WaitCursor;
-                uxToolSync.Enabled = false;
-                uxToolSync.Text = "Syncing...";
-            }
-            else
-            {
-                Cursor.Current = Cursors.Default;
-                uxToolSync.Enabled = true;
-                uxToolSync.Text = "Sync";
+                case 0: //syncing
+                    Cursor.Current = Cursors.WaitCursor;
+                    uxWebSync.Enabled = false;
+                    uxWebSync.Text = "Syncing...";
+                    break;
+                case 1: //Synced
+                    Cursor.Current = Cursors.Default;
+                    uxWebSync.Enabled = false;
+                    uxWebSync.Text = "Synced";
+                    break;
+                default: //not synced
+                    Cursor.Current = Cursors.Default;
+                    uxWebSync.Enabled = true;
+                    uxWebSync.Text = "Sync";
+                    break;
             }
         }
 
         private async void uxToolSync_Click(object sender, EventArgs e)
         {
-            ToolSyncVisual(true);
-            string userEmail = "";
-            string userPassmd5 ="";
-
-            
+            ToolSyncVisual(0);
             string webSyncSuccessSaved = Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", 0).ToString();
             bool webSyncSuccess = (webSyncSuccessSaved == "1");
             while (true)
             {
-                userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
+                string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
                 userEmail = userEmail.ToLower();
 
-                userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+                string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
 
-                
+
                 if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5) || !webSyncSuccess)
                 {
                     WebSync frm = new WebSync();
                     if (frm.ShowDialog() != DialogResult.OK)
                     {
-                        ToolSyncVisual(false);
+                        ToolSyncVisual(2);
 
                         return;
                     }
@@ -1644,14 +1656,30 @@ namespace MyId
                     break;
             }
 
-            
+            await WebSync();
+
+
+        }
+
+        private async Task WebSync()
+        {
+            string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
+            string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+
+            if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5))
+                return;
+
+            ToolSyncVisual(0);
+
+            userEmail = userEmail.ToLower();
+
             var md = MyEncryption.CreateMD5(userPassmd5 + MyEncryption.CreateMD5(UcFirst(userEmail)));
 
             var payloads = new List<object>();
 
             foreach (var item in _idList)
             {
-                var recId = item.UniqId; 
+                var recId = item.UniqId;
                 var key = userEmail + userPassmd5 + recId;
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
@@ -1661,21 +1689,17 @@ namespace MyId
                 string payload = myCrypt.MyEncrypt_Field(json, key);
 
                 var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
- 
-                payloads.Add( rec);
+
+                payloads.Add(rec);
             }
-
-            // Ignore SSL certificate validation
-            //ServicePointManager.ServerCertificateValidationCallback += (sender1, certificate, chain, sslPolicyErrors) => true;
-
 
             using (var client = new HttpClient())
             {
 
-                var vm = new { UserEmail= userEmail, PassHash= md, payloads.Count, Payloads = payloads };
+                var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
-            
+
                 //client.Headers.Add(HttpRequestHeader.ContentType, "application/octet-stream");
                 string err = "";
                 try
@@ -1693,20 +1717,20 @@ namespace MyId
                         }
                         compressedData = ms.ToArray();
                     }
-                    
+
 
                     Debug.WriteLine($"Uploading {compressedData.Length:N0} bytes");
 
                     var start = new Stopwatch();
                     start.Start();
                     //client.Headers.Add("Content-Encoding", "gzip"); // Inform the server that the data is gzip-compressed
-                                                                    // Prepare the content to send in the request
+                    // Prepare the content to send in the request
                     HttpContent httpContent = new ByteArrayContent(compressedData);
 
                     // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
                     httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
                     httpContent.Headers.ContentEncoding.Add("gzip");
-                    
+
                     // Send the POST request using PostAsync method
                     HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
 
@@ -1763,7 +1787,8 @@ namespace MyId
                                     UxSearchBox_TextChanged();
                                 }
                             }
-                            MessageBox.Show($"Sync successful {recNew} added", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            //ToolSyncVisual(1);
+                            //MessageBox.Show($"Sync successful {recNew} added", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                             MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -1774,16 +1799,17 @@ namespace MyId
                         MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
 
-                    
+
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
 
-                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0"?1:0);
+                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);
+                ToolSyncVisual(err == "0" ? 1 : 2);
             }
-            ToolSyncVisual(false);
+            
         }
 
 
