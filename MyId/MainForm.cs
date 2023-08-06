@@ -26,6 +26,7 @@ using Newtonsoft.Json;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using System.Security.Policy;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Converters;
 
 namespace MyId
 {
@@ -64,11 +65,7 @@ namespace MyId
             Application.AddMessageFilter(this);
         }
 
-        //private void Application_OnIdle(object sender, EventArgs e)
-        //{
-        //    // keep track of the last time we went idle
-        //    _wentIdle = DateTime.Now;
-        //}
+
 
         private byte[] GenerateRandomBytes(int size)
         {
@@ -218,19 +215,7 @@ namespace MyId
                     fsPlain.Close();
                 }
             }
-            //for (int i = 0; i < 5; i++)
-            //{
-            //try
-            //{
-            //    File.Delete(imageFile);
-            //    //break;
-            //}
-            //catch (IOException ex)
-            //{
-            //    MessageBox.Show(string.Format("Error delete file {0}: {1}", imageFile, ex.Message), this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //}
-            //Thread.Sleep(1000);
-            //}
+
             return encFileNameOnly;
         }
 
@@ -331,7 +316,7 @@ namespace MyId
                         }
 
                         if (oldPass != aItem.Password)
-                            aItem.Changed = DateTime.Now;
+                            aItem.Changed = DateTime.UtcNow;
 
                         li.Text = aItem.Site;
                         li.SubItems[1].Text = aItem.User;
@@ -576,7 +561,6 @@ namespace MyId
                         //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                         myRijndael.Mode = CipherMode.CFB;
 
-                        //byte[] keyBytes = GetKeyIv("Key");
 
                         if (pPrivateKeyFile != null)
                         {
@@ -591,38 +575,27 @@ namespace MyId
                             byte[] pin = GetKeyIv("Pin");
                             byte[] salt = GetKeyIv("Salt");
                             var key = new Rfc2898DeriveBytes(pin, salt, 50000);
-                            myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                            myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
+                            myRijndael.Key = key.GetBytes(32); 
+                            myRijndael.IV = GetKeyIv("Iv2022");
                         }
                         else
                         {  //Old verion
                             byte[] keyBytes;
                             keyBytes = GetKeyIv("Key");
 
-                            //byte[] savedKey = GetKeyIv("Key");
-                            //if (!keyBytes.SequenceEqual(savedKey))
-                            //{
-                            //    MessageBox.Show("Invalid password!");
-                            //    return false;
-                            //}
 
 
                             if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
                             {
-                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                //myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
-                                //myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
-
-                                //SaveKeyIv("RiKey", myRijndael.Key);
-                                //SaveKeyIv("RiIv", myRijndael.IV);
+ 
                                 MessageBox.Show("Missing private key");
 
                             }
                             else
                             {
-                                //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                                myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+
+                                myRijndael.Key = GetKeyIv("RiKey");
+                                myRijndael.IV = GetKeyIv("RiIv");
                             }
                         }
                         
@@ -655,7 +628,8 @@ namespace MyId
 
                 foreach (var idItem in _idList)
                 {
-                    AddListItem(idItem);
+                    if (ShowDeleted(idItem.Deleted))
+                        AddListItem(idItem);
                 }
                 int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
                 if (col != -1)
@@ -736,7 +710,7 @@ namespace MyId
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            toolStripStatusLabel2.Text = "©2019-" + DateTime.Now.Year.ToString() + " BlackData";
             uxExport.Visible = true;
             uxVersion.Text = Application.ProductVersion;
             if (File.Exists(IdFile))
@@ -1001,7 +975,9 @@ namespace MyId
                     IdItem eachItem = _idList[i - 1];
                     if (removeList.Contains(eachItem.Uid.ToString()))
                     {
-                        _idList.Remove(eachItem);
+                        eachItem.Deleted = true;
+                        eachItem.Changed = DateTime.UtcNow;
+                        //_idList.Remove(eachItem);
                         noOfItems++;
                     }
                 }
@@ -1074,10 +1050,10 @@ namespace MyId
                 uxList.Items.Clear();
                 foreach (var idItem in _idList)
                 {
-                    if (idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                    if ((idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                         idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                         idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0
-                        )
+                        ) && ShowDeleted(idItem.Deleted))
                     {
                         AddListItem(idItem);
                     }
@@ -1086,6 +1062,10 @@ namespace MyId
             }
         }
 
+        private bool ShowDeleted(bool deleted)
+        {
+            return !deleted;
+        }
         private void UxSearchBox_TextChanged(object sender, EventArgs e)
         {
             UxSearchBox_TextChanged();
@@ -1386,10 +1366,7 @@ namespace MyId
             if (isUserInput(m))
             {
                 _wentIdle = DateTime.Now;
-                //_wentIdle = DateTime.MaxValue;
-                //_idleTicks = 0;
 
-                //_statusLbl.Text = "We Are NOT idle!";
             }
 
             return false;
@@ -1656,13 +1633,13 @@ namespace MyId
                 var recId = item.UniqId; 
                 var key = userEmail + userPassmd5 + recId;
 
-                var json = JsonConvert.SerializeObject(item);
+                var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
 
                 var myCrypt = new MyEncryption();
 
                 string payload = myCrypt.MyEncrypt_Field(json, key);
 
-                var rec = new { RecId = recId, LastUpdate = item.Changed, Payload = payload };
+                var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
  
                 payloads.Add( rec);
             }
@@ -1699,8 +1676,6 @@ namespace MyId
 
                             var item =  JsonConvert.DeserializeObject<IdItem>(payload);
 
-                            Debug.WriteLine(payload);
-
                             IdItem aItem = GetAItemByRecId(recId);
                             if (aItem == null)
                             {
@@ -1712,6 +1687,7 @@ namespace MyId
                             aItem.Password = item.Password;
                             aItem.Site = item.Site;
                             aItem.Memo = item.Memo;
+                            aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
                             recNew++;
                         }
                         if (recNew > 0)

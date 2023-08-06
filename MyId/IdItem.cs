@@ -1,5 +1,6 @@
 ﻿// MIT License - Copyright (c) 2019 Black Data
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,16 +17,17 @@ namespace MyId
         public string User;
         public string Password;
         public string Memo;
-        public DateTime Changed = DateTime.Now;
-        //public List<string> Images = new List<string>();
-        //encrypted file name, original name
-        public Dictionary<string,string> Images = new Dictionary<string, string>(); 
 
+        public DateTime Changed = DateTime.UtcNow;
+
+        //encrypted file name, original name
+        public Dictionary<string,string> Images = new Dictionary<string, string>();
+        public bool Deleted;
         public string ChangedHuman
         {
             get
             {
-                return Changed.ToString("yyyy-MM-dd HH:mm:ss");
+                return Changed.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
             }
         }
         public string PasswordTip
@@ -34,10 +36,7 @@ namespace MyId
             {
                 if (Password != null && Password.Length > 0)
                 {
-                    //if (Changed.AddYears(1) < DateTime.Now)
-                    //    return string.Format("This password is {0} years old.", Math.Round((DateTime.Now - Changed).TotalDays / 365));
-                    //if (Changed.AddMonths(3) < DateTime.Now)
-                    //    return string.Format("This password is {0} months old.", Math.Round((DateTime.Now - Changed).TotalDays / 30));
+
                     if (Password.Length < 8)
                         return "Too short, 8 characters minimum.";
 

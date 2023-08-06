@@ -22,7 +22,8 @@ namespace MyId
         {
             
             uxEmail.Text = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
-            
+            if (!string.IsNullOrEmpty(uxEmail.Text))
+                uxPassword.Select();
         }
 
         private void uxOk_Click(object sender, EventArgs e)
