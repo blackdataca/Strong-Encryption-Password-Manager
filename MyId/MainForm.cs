@@ -407,6 +407,16 @@ namespace MyId
             }
             return null;
         }
+
+        private IdItem GetAItemByRecId(string recId)
+        {
+            foreach (var item in _idList)
+            {
+                if (item.UniqId == recId)
+                    return item;
+            }
+            return null;
+        }
         private void UxList_DoubleClick(object sender, EventArgs e)
         {
             uxEdit.PerformClick();
@@ -543,6 +553,7 @@ namespace MyId
         {
             
             uxList.Items.Clear();
+
             bool success = false;
 
             try
@@ -1606,7 +1617,7 @@ namespace MyId
 
         private void uxToolSync_Click(object sender, EventArgs e)
         {
-
+            Cursor.Current = Cursors.WaitCursor;
             string userEmail = "";
             string userPassmd5 ="";
             
@@ -1624,7 +1635,10 @@ namespace MyId
                 {
                     WebSync frm = new WebSync();
                     if (frm.ShowDialog() != DialogResult.OK)
+                    {
+                        Cursor.Current = Cursors.Default;
                         return;
+                    }
                     else
                         webSyncSuccess = true;
                 }
@@ -1648,7 +1662,7 @@ namespace MyId
 
                 string payload = myCrypt.MyEncrypt_Field(json, key);
 
-                var rec = new { RecId = recId, TouchDate = item.Changed, Payload = payload };
+                var rec = new { RecId = recId, LastUpdate = item.Changed, Payload = payload };
  
                 payloads.Add( rec);
             }
@@ -1666,12 +1680,46 @@ namespace MyId
                 try
                 {
                     
-                    var response = client.UploadString("https://myid-dev.blackdata.ca:2096/WebSyncUpdate.php", dataString);
+                    var response = client.UploadString("https://myid-dev.blackdata.ca:2096/WebSync.php", dataString);
+
+                    Debug.WriteLine(response);
                     JObject joResponse = JObject.Parse(response);
                     err = joResponse["Error"].ToString();
                     if (err == "0")
                     {
-                        
+                        int recNew = 0;
+                        foreach (var row in joResponse["Return"])
+                        {
+
+                            var recId = row["RecId"].ToString();
+                            var key = userEmail + userPassmd5 + recId;
+                            var myCrypt = new MyEncryption();
+
+                            string payload = myCrypt.MyDecrypt_Field(row["Payload"].ToString(), key);
+
+                            var item =  JsonConvert.DeserializeObject<IdItem>(payload);
+
+                            Debug.WriteLine(payload);
+
+                            IdItem aItem = GetAItemByRecId(recId);
+                            if (aItem == null)
+                            {
+                                aItem = new IdItem();
+                                aItem.UniqId = recId;
+                                _idList.Add(aItem);
+                            }
+                            aItem.User = item.User;
+                            aItem.Password = item.Password;
+                            aItem.Site = item.Site;
+                            aItem.Memo = item.Memo;
+                            recNew++;
+                        }
+                        if (recNew > 0)
+                        {
+                            SaveToDisk();
+                            ShowNumberOfItems();
+                            UxSearchBox_TextChanged();
+                        }
                         MessageBox.Show("Sync successful", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
@@ -1684,6 +1732,8 @@ namespace MyId
 
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0"?1:0);
             }
+
+            Cursor.Current = Cursors.Default;
         }
     }
 

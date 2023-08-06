@@ -32,7 +32,7 @@ namespace MyId
         {
             get
             {
-                if (Password.Length > 0)
+                if (Password != null && Password.Length > 0)
                 {
                     //if (Changed.AddYears(1) < DateTime.Now)
                     //    return string.Format("This password is {0} years old.", Math.Round((DateTime.Now - Changed).TotalDays / 365));
