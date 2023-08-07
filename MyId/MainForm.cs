@@ -742,6 +742,7 @@ namespace MyId
                                 //password match
                                 success = true;
                                 timer1.Enabled = true;
+                                _ = WebSync();
                                 break;
                             }
                             else
