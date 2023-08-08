@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyId", "MyId\MyId.csproj", "{39E3ECA2-698A-4318-862A-94BD42C95D9C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdForWin", "MyId\MyIdForWin.csproj", "{39E3ECA2-698A-4318-862A-94BD42C95D9C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2D649FBB-1125-4996-BB09-A30036D28F53}"
 	ProjectSection(SolutionItems) = preProject
@@ -15,7 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		mainscreen.PNG = mainscreen.PNG
 		README.md = README.md
+		Copy2Apps.png = Copy2Apps.png
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdOnMac", "MyIdOnMac\MyIdOnMac.csproj", "{5F18BD50-1E21-4BA0-99C9-614C08930FA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +42,18 @@ Global
 		{39E3ECA2-698A-4318-862A-94BD42C95D9C}.Release|x64.Build.0 = Release|Any CPU
 		{39E3ECA2-698A-4318-862A-94BD42C95D9C}.Release|x86.ActiveCfg = Release|Any CPU
 		{39E3ECA2-698A-4318-862A-94BD42C95D9C}.Release|x86.Build.0 = Release|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Debug|x64.Build.0 = Debug|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Debug|x86.Build.0 = Debug|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Release|x64.ActiveCfg = Release|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Release|x64.Build.0 = Release|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Release|x86.ActiveCfg = Release|Any CPU
+		{5F18BD50-1E21-4BA0-99C9-614C08930FA1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

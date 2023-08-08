@@ -127,12 +127,6 @@ namespace MyId
                             img = WindowsThumbnailProvider.GetThumbnail(inFile, 64, 64, ThumbnailOptions.None);
                         }
 
-
-                        //using (Bitmap thumbnail = WindowsThumbnailProvider.GetThumbnail(inFile, 64, 64, ThumbnailOptions.None))
-                        //{
-
-                        //    imageList1.Images.Add(idx, thumbnail);
-                        //}
                         if (img != null)
                         {
                             string idx = imageList1.Images.Count.ToString();

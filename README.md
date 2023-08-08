@@ -1,8 +1,18 @@
-#  Strong Encryption Password Manager
+#  This is Not a fully functional branch
+
+Work in progress. Things will change. 
 
 Defend your passwords in depths with MyID
 
 ![](https://github.com/blackdataca/myid/blob/master/mainscreen.PNG)
+
+## Installation
+
+1. Compile with VS 2022 for Mac
+
+2. Drag "My ID on Mac.app" into Application folder
+
+![](https://github.com/blackdataca/Strong-Encryption-Password-Manager/blob/MyID-on-Mac/Copy2Apps.png?raw=true)
 
 ## Industry standard algorithm
 
