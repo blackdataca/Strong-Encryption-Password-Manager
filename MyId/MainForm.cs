@@ -505,7 +505,7 @@ namespace MyId
             }
         }
 
-        private void SaveToDisk()
+        private void SaveToDisk(bool webSync = true)
         {
             byte[] pin = GetKeyIv("Pin");
             var key = new Rfc2898DeriveBytes(pin, GetKeyIv("Salt"), 50000);
@@ -536,7 +536,8 @@ namespace MyId
                     fs.Close();
                 }
             }
-            _ = WebSync();
+            if (webSync)
+                _ = WebSync();
         }
 
         /// <summary>
@@ -634,7 +635,7 @@ namespace MyId
                     }
                 }
                 if (uniqIdUpdate > 0)
-                    SaveToDisk();
+                    SaveToDisk(false);
 
                 foreach (var idItem in _idList)
                 {
@@ -1685,9 +1686,9 @@ namespace MyId
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
 
-                var myCrypt = new MyEncryption();
 
-                string payload = myCrypt.MyEncrypt_Field(json, key);
+
+                string payload = MyEncryption.EncryptString(json, key, recId);
 
                 var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
 
@@ -1701,7 +1702,6 @@ namespace MyId
 
                 var dataString = JsonConvert.SerializeObject(vm);
 
-                //client.Headers.Add(HttpRequestHeader.ContentType, "application/octet-stream");
                 string err = "";
                 try
                 {
@@ -1724,7 +1724,6 @@ namespace MyId
 
                     var start = new Stopwatch();
                     start.Start();
-                    //client.Headers.Add("Content-Encoding", "gzip"); // Inform the server that the data is gzip-compressed
                     // Prepare the content to send in the request
                     HttpContent httpContent = new ByteArrayContent(compressedData);
 
@@ -1740,12 +1739,7 @@ namespace MyId
                     {
                         // Read the response content as a string
                         string response = await res.Content.ReadAsStringAsync();
-                        //Console.WriteLine("Response: " + response);
 
-                        // var res = client.UploadData("https://myid-dev.blackdata.ca:2096/WebSync.php", compressedData);
-
-
-                        //string response = Encoding.UTF8.GetString(res);
 
                         Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
 
@@ -1761,9 +1755,8 @@ namespace MyId
 
                                     var recId = row["RecId"].ToString();
                                     var key = userEmail + userPassmd5 + recId;
-                                    var myCrypt = new MyEncryption();
 
-                                    string payload = myCrypt.MyDecrypt_Field(row["Payload"].ToString(), key);
+                                    string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
 
                                     var item = JsonConvert.DeserializeObject<IdItem>(payload);
 
@@ -1783,20 +1776,22 @@ namespace MyId
                                 }
                                 if (recNew > 0)
                                 {
-                                    SaveToDisk();
+                                    SaveToDisk(false);
                                     ShowNumberOfItems();
                                     UxSearchBox_TextChanged();
                                 }
                             }
-                            //ToolSyncVisual(1);
-                            //MessageBox.Show($"Sync successful {recNew} added", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                         }
                         else
+                        {
                             MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        }
                     }
                     else
                     {
                         // Handle unsuccessful response
+                        Debug.WriteLine(res.ToString());
                         MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
 

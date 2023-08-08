@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,173 +13,124 @@ namespace MyId
 
     public class MyEncryption
     {
-        private byte[] S = new byte[256];
-        private byte[] K = new byte[256];
-
-        public void HexToBin(string hexData, out byte[] binData)
+        public static string EncryptString(string plainText, string key, string iv)
         {
-            binData = new byte[hexData.Length / 2];
-            for (int i = 0; i < hexData.Length; i += 2)
-            {
-                binData[i / 2] = Convert.ToByte(hexData.Substring(i, 2), 16);
-            }
-        }
+            // Instantiate a new Aes object to perform string symmetric encryption
+            Aes encryptor = Aes.Create();
 
-        public void RCInitKey(string myKey)
-        {
-            int mkeyLen = myKey.Length;
-            for (int i = 0; i < 256; i++)
+            encryptor.Mode = CipherMode.CBC;
+            //encryptor.KeySize = 256;
+            //encryptor.BlockSize = 128;
+            //encryptor.Padding = PaddingMode.Zeros;
+            byte[] key32;
+            using (var shaManaged = new SHA256Managed())
             {
-                S[i] = (byte)i;
-                K[i] = (byte)myKey[i % mkeyLen];
+                key32 = shaManaged.ComputeHash(Encoding.ASCII.GetBytes(key));
             }
 
-            int j = 0;
-            for (int i = 0; i < 256; i++)
+            // Set key and IV
+            encryptor.Key = key32;
+
+            byte[] iv16 = Md5(Encoding.ASCII.GetBytes(iv));
+
+
+            encryptor.IV = iv16;
+
+            // Instantiate a new MemoryStream object to contain the encrypted bytes
+            MemoryStream memoryStream = new MemoryStream();
+
+            // Instantiate a new encryptor from our Aes object
+            ICryptoTransform aesEncryptor = encryptor.CreateEncryptor();
+
+            // Instantiate a new CryptoStream object to process the data and write it to the 
+            // memory stream
+            CryptoStream cryptoStream = new CryptoStream(memoryStream, aesEncryptor, CryptoStreamMode.Write);
+
+            // Convert the plainText string into a byte array
+            byte[] plainBytes = Encoding.ASCII.GetBytes(plainText);
+
+            // Encrypt the input plaintext string
+            cryptoStream.Write(plainBytes, 0, plainBytes.Length);
+
+            // Complete the encryption process
+            cryptoStream.FlushFinalBlock();
+
+            // Convert the encrypted data from a MemoryStream to a byte array
+            byte[] cipherBytes = memoryStream.ToArray();
+
+            // Close both the MemoryStream and the CryptoStream
+            memoryStream.Close();
+            cryptoStream.Close();
+
+            // Convert the encrypted byte array to a base64 encoded string
+            string cipherText = Convert.ToBase64String(cipherBytes, 0, cipherBytes.Length);
+
+            // Return the encrypted data as a string
+            return cipherText;
+        }
+
+        public static string DecryptString(string cipherText, string key, string iv)
+        {
+            // Instantiate a new Aes object to perform string symmetric encryption
+            Aes encryptor = Aes.Create();
+
+            encryptor.Mode = CipherMode.CBC;
+            //encryptor.KeySize = 256;
+            //encryptor.BlockSize = 128;
+            //encryptor.Padding = PaddingMode.Zeros;
+            byte[] key32;
+            using (var shaManaged = new SHA256Managed())
             {
-                j = (j + S[i] + K[i]) % 256;
-                byte t = S[i];
-                S[i] = S[j];
-                S[j] = t;
+                key32 = shaManaged.ComputeHash(Encoding.ASCII.GetBytes(key));
             }
-        }
 
-        public byte[] A2C(byte[] input)
-        {
-            byte[] c = new byte[input.Length / 2];
-            for (int i = 0; i < input.Length; i += 2)
+            // Set key and IV
+            encryptor.Key = key32;
+
+            byte[] iv16 =  MyEncryption.Md5(Encoding.ASCII.GetBytes(iv));
+
+
+            encryptor.IV = iv16;
+
+            // Instantiate a new MemoryStream object to contain the encrypted bytes
+            MemoryStream memoryStream = new MemoryStream();
+
+            // Instantiate a new encryptor from our Aes object
+            ICryptoTransform aesDecryptor = encryptor.CreateDecryptor();
+
+            // Instantiate a new CryptoStream object to process the data and write it to the 
+            // memory stream
+            CryptoStream cryptoStream = new CryptoStream(memoryStream, aesDecryptor, CryptoStreamMode.Write);
+
+            // Will contain decrypted plaintext
+            string plainText = String.Empty;
+
+            try
             {
-                c[i / 2] = (byte)(input[i] + input[i + 1] * 256);
-            }
-            return c;
-        }
+                // Convert the ciphertext string into a byte array
+                byte[] cipherBytes = Convert.FromBase64String(cipherText);
 
-        public byte[] A2C_ANSI(byte[] input)
-        {
-            byte[] c = new byte[input.Length];
-            for (int i = 0; i < input.Length; i++)
+                // Decrypt the input ciphertext string
+                cryptoStream.Write(cipherBytes, 0, cipherBytes.Length);
+
+                // Complete the decryption process
+                cryptoStream.FlushFinalBlock();
+
+                // Convert the decrypted data from a MemoryStream to a byte array
+                byte[] plainBytes = memoryStream.ToArray();
+
+                // Convert the decrypted byte array to string
+                plainText = Encoding.ASCII.GetString(plainBytes, 0, plainBytes.Length);
+            }
+            finally
             {
-                c[i] = (byte)input[i];
+                // Close both the MemoryStream and the CryptoStream
+                memoryStream.Close();
+                cryptoStream.Close();
             }
-            return c;
-        }
 
-        public byte[] RC(byte[] input, string myKey)
-        {
-            RCInitKey(myKey);
-            int i = 0;
-            int j = 0;
-            byte[] tempstr = new byte[input.Length];
-            byte[] e_text = new byte[input.Length];
-            for (int n = 0; n < input.Length; n++)
-            {
-                i = (i + 1) % 256;
-                j = (j + S[i]) % 256;
-                byte t = S[i];
-                S[i] = S[j];
-                S[j] = t;
-                t = (byte)((S[i] + S[j]) % 256);
-                int xorIndex = S[t];
-                tempstr[n] = (byte)(input[n] ^ xorIndex);
-            }
-            e_text = A2C(tempstr);
-            return e_text;
-        }
-
-        public byte[] RC_ANSI(byte[] input, string myKey)
-        {
-            RCInitKey(myKey);
-            int i = 0;
-            int j = 0;
-            byte[] tempstr = new byte[input.Length];
-            byte[] e_text = new byte[input.Length];
-            for (int n = 0; n < input.Length; n++)
-            {
-                i = (i + 1) % 256;
-                j = (j + S[i]) % 256;
-                byte t = S[i];
-                S[i] = S[j];
-                S[j] = t;
-                t = (byte)((S[i] + S[j]) % 256);
-                int xorIndex = S[t];
-                tempstr[n] = (byte)(input[n] ^ xorIndex);
-            }
-            e_text = A2C_ANSI(tempstr);
-            return e_text;
-        }
-        public string Bin2Hex(byte[] input)
-        {
-            return BitConverter.ToString(input).Replace("-", "").ToLower();
-        }
-
-        public string MyEncrypt(string input, string myKey)
-        {
-            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-            byte[] e_text = RC(inputBytes, myKey);
-            string hexString = BitConverter.ToString(e_text).Replace("-", "");
-            return hexString.ToLower();
-        }
-
-        public string MyDecrypt(string input, string myKey)
-        {
-            byte[] tempstr;
-            HexToBin(input, out tempstr);
-            byte[] p_text = RC(tempstr, myKey);
-            return Encoding.ASCII.GetString(p_text);
-        }
-
-        public string MyEncrypt_ANSI(string input, string key)
-        {
-            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-            byte[] e_text = RC_ANSI(inputBytes, key);
-            string hexString = BitConverter.ToString(e_text).Replace("-", "");
-            return "<enc>" + hexString.ToLower() + "</enc>";
-        }
-
-        public string MyDecrypt_ANSI(string input, string key)
-        {
-            if (input.StartsWith("<enc>"))
-            {
-                input = input.Substring(5, input.Length - 11);
-                byte[] tempstr;
-                HexToBin(input, out tempstr);
-                byte[] p_text = RC_ANSI(tempstr, key);
-                return Encoding.ASCII.GetString(p_text);
-            }
-            else
-            {
-                return input;
-            }
-        }
-
-        public string MyEncrypt_Field(string input, string key)
-        {
-            if (input.Length < 8)
-            {
-                input += (char)129;
-                input = input.PadRight(8, ' ');
-            }
-            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-            byte[] e_text = RC_ANSI(inputBytes, key);
-            string hexString = BitConverter.ToString(e_text).Replace("-", "");
-            return hexString.ToLower();
-        }
-
-        public string MyDecrypt_Field(string input, string key)
-        {
-            byte[] tempstr;
-            HexToBin(input, out tempstr);
-            byte[] p_text = RC_ANSI(tempstr, key);
-            string decodedText = Encoding.ASCII.GetString(p_text);
-            if (decodedText.Length == 8)
-            {
-                int pos = decodedText.LastIndexOf((char)129);
-                if (pos >= 0)
-                {
-                    decodedText = decodedText.Substring(0, pos);
-                }
-            }
-            return decodedText;
+            // Return the decrypted data as a string
+            return plainText;
         }
 
         public static string UniqId(string prefix, bool more_entropy)
@@ -205,6 +157,50 @@ namespace MyId
                 string hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
 
                 return hashString;
+            }
+        }
+
+        public static byte[] Md5(byte[] inputBytes)
+        {
+            // Use input string to calculate MD5 hash
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                return hashBytes;
+
+                //return Convert.ToHexString(hashBytes); // .NET 5 +
+
+                // Convert the byte array to hexadecimal string prior to .NET 5
+                // StringBuilder sb = new System.Text.StringBuilder();
+                // for (int i = 0; i < hashBytes.Length; i++)
+                // {
+                //     sb.Append(hashBytes[i].ToString("X2"));
+                // }
+                // return sb.ToString();
+            }
+        }
+
+        public static byte[] MyHash(byte[] input)
+        {
+            using (SHA512 shaManaged = new SHA512Managed())
+            {
+                byte[] hash = shaManaged.ComputeHash(input);
+                return hash;
+            }
+        }
+
+        public string Bin2Hex(byte[] input)
+        {
+            return BitConverter.ToString(input).Replace("-", "").ToLower();
+        }
+
+        public void HexToBin(string hexData, out byte[] binData)
+        {
+            binData = new byte[hexData.Length / 2];
+            for (int i = 0; i < hexData.Length; i += 2)
+            {
+                binData[i / 2] = Convert.ToByte(hexData.Substring(i, 2), 16);
             }
         }
     }
