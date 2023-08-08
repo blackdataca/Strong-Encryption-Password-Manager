@@ -527,9 +527,9 @@ namespace MyId
                 using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
                 {
                     //version 2022
-                    ms.WriteByte(0x20); //file version major
-                    ms.WriteByte(0x22); //file version minor
-                    using (var cryptoStream = new CryptoStream(ms, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
+                    fs.WriteByte(0x20); //file version major
+                    fs.WriteByte(0x22); //file version minor
+                    using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
                     {
                         formatter.Serialize(cryptoStream, _idList);
                     }
