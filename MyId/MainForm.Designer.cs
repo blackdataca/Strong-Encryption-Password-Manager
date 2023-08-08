@@ -68,6 +68,8 @@
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             this.uxSearchBox = new System.Windows.Forms.ToolStripTextBox();
             this.uxClear = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.uxWebSync = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.uxItemCountStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -336,7 +338,9 @@
             this.toolStripSeparator1,
             this.toolStripLabel1,
             this.uxSearchBox,
-            this.uxClear});
+            this.uxClear,
+            this.toolStripSeparator3,
+            this.uxWebSync});
             this.toolStrip1.Location = new System.Drawing.Point(0, 24);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(719, 39);
@@ -382,8 +386,8 @@
             // toolStripLabel1
             // 
             this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(78, 36);
-            this.toolStripLabel1.Text = "&Quick search:";
+            this.toolStripLabel1.Size = new System.Drawing.Size(33, 36);
+            this.toolStripLabel1.Text = "&Find:";
             // 
             // uxSearchBox
             // 
@@ -404,6 +408,22 @@
             this.uxClear.Text = "&Clear";
             this.uxClear.ToolTipText = "Clear search";
             this.uxClear.Click += new System.EventHandler(this.UxClear_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 39);
+            // 
+            // uxToolSync
+            // 
+            this.uxWebSync.Image = ((System.Drawing.Image)(resources.GetObject("uxToolSync.Image")));
+            this.uxWebSync.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.uxWebSync.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.uxWebSync.Name = "uxToolSync";
+            this.uxWebSync.Size = new System.Drawing.Size(68, 36);
+            this.uxWebSync.Text = "&Sync";
+            this.uxWebSync.ToolTipText = "Sync  to Cloud";
+            this.uxWebSync.Click += new System.EventHandler(this.uxToolSync_Click);
             // 
             // statusStrip1
             // 
@@ -542,6 +562,8 @@
         private System.Windows.Forms.ToolStripMenuItem uxPrint;
         private System.Drawing.Printing.PrintDocument printDocument1;
         private System.Windows.Forms.PrintDialog printDialog1;
+        private System.Windows.Forms.ToolStripButton uxWebSync;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
     }
 }
 

@@ -19,6 +19,18 @@ using System.Linq;
 using System.Diagnostics;
 using System.Drawing.Printing;
 using System.Drawing.Imaging;
+using System.Net.Http;
+using System.Net;
+using System.Collections.Specialized;
+using Newtonsoft.Json;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using System.Security.Policy;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Converters;
+using System.IO.Compression;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace MyId
 {
@@ -57,11 +69,7 @@ namespace MyId
             Application.AddMessageFilter(this);
         }
 
-        //private void Application_OnIdle(object sender, EventArgs e)
-        //{
-        //    // keep track of the last time we went idle
-        //    _wentIdle = DateTime.Now;
-        //}
+
 
         private byte[] GenerateRandomBytes(int size)
         {
@@ -211,19 +219,7 @@ namespace MyId
                     fsPlain.Close();
                 }
             }
-            //for (int i = 0; i < 5; i++)
-            //{
-            //try
-            //{
-            //    File.Delete(imageFile);
-            //    //break;
-            //}
-            //catch (IOException ex)
-            //{
-            //    MessageBox.Show(string.Format("Error delete file {0}: {1}", imageFile, ex.Message), this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //}
-            //Thread.Sleep(1000);
-            //}
+
             return encFileNameOnly;
         }
 
@@ -323,17 +319,22 @@ namespace MyId
                             Cursor.Current = Cursors.Default;
                         }
 
-                        if (oldPass != aItem.Password)
-                            aItem.Changed = DateTime.Now;
-
-                        li.Text = aItem.Site;
-                        li.SubItems[1].Text = aItem.User;
-                        li.SubItems[2].Text = ShowHint(li, aItem);
-                        li.SubItems[3].Text = aItem.ChangedHuman;
-                        li.SubItems[4].Text = aItem.Memo;
+                        string memo = aItem.Memo;
                         if (aItem.Images != null && aItem.Images.Count > 0)
-                            li.SubItems[4].Text = $"(File{(aItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
-                        SaveToDisk();
+                            memo = $"(File{(aItem.Images.Count == 1 ? "" : "s")}) {aItem.Memo}";
+
+                        if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != memo)
+                        {
+                            aItem.Changed = DateTime.UtcNow;
+
+                            li.Text = aItem.Site;
+                            li.SubItems[1].Text = aItem.User;
+                            li.SubItems[2].Text = ShowHint(li, aItem);
+                            li.SubItems[3].Text = aItem.ChangedHuman;
+                            li.SubItems[4].Text = memo;
+                            
+                            SaveToDisk();
+                        }
                     }
                 }
             }
@@ -396,6 +397,16 @@ namespace MyId
             foreach (var item in _idList)
             {
                 if (item.Uid.ToString() == uid)
+                    return item;
+            }
+            return null;
+        }
+
+        private IdItem GetAItemByRecId(string recId)
+        {
+            foreach (var item in _idList)
+            {
+                if (item.UniqId == recId)
                     return item;
             }
             return null;
@@ -504,21 +515,16 @@ namespace MyId
             {
                 myRijndael.KeySize = 256;
                 myRijndael.BlockSize = 128;
-                myRijndael.Padding = PaddingMode.ISO10126; // PaddingMode.PKCS7;
+                myRijndael.Padding = PaddingMode.PKCS7;
                 //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
                 myRijndael.Mode = CipherMode.CFB;
 
-                // var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                //myRijndael.Key = key.GetBytes(myRijndael.KeySize / 8);
-                //myRijndael.IV = key.GetBytes(myRijndael.BlockSize / 8);
 
-                myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                                                   //myRijndael.Key = GetKeyIv("Key");
-                                                   //myRijndael.IV = GetKeyIv("IV");
+                myRijndael.Key = key.GetBytes(32); 
+                myRijndael.IV = GetKeyIv("Iv2022");
 
 
-                using (var ms = new MemoryStream())
+                using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
                 {
                     //version 2022
                     ms.WriteByte(0x20); //file version major
@@ -526,25 +532,11 @@ namespace MyId
                     using (var cryptoStream = new CryptoStream(ms, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
                     {
                         formatter.Serialize(cryptoStream, _idList);
-
-                        cryptoStream.FlushFinalBlock();
-
-                        ms.Position = 0;
-
-                        using (var bin64 = new CryptoStream(ms, new ToBase64Transform(), CryptoStreamMode.Read))
-                        {
-                            using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
-                            {
-                                bin64.CopyTo(fs);
-
-
-                            }
-
-                        }
-
                     }
+                    fs.Close();
                 }
             }
+            _ = WebSync();
         }
 
         /// <summary>
@@ -554,135 +546,100 @@ namespace MyId
         /// <returns></returns>
         private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
         {
-
+            
             uxList.Items.Clear();
+
             bool success = false;
 
             try
             {
-
                 using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
                 {
+                    int version = 0;
+                    if (fs.ReadByte() == 0x20 && fs.ReadByte()==0x22)
+                        version = 2022;
+                    else
+                        // Set the stream position to the beginning of the file.
+                        fs.Seek(0, SeekOrigin.Begin);
 
-                    using (var bin64 = new CryptoStream(fs, new FromBase64Transform(), CryptoStreamMode.Read))
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    using (RijndaelManaged myRijndael = new RijndaelManaged())
                     {
-                        using (var br = new MemoryStream())
+                        myRijndael.KeySize = 256;
+                        myRijndael.BlockSize = 128;
+                        myRijndael.Padding = PaddingMode.PKCS7;
+                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                        myRijndael.Mode = CipherMode.CFB;
+
+
+                        if (pPrivateKeyFile != null)
+                        {
+                            if (!LoadPrivateKey(pPrivateKeyFile))
+                            {
+                                MessageBox.Show("Unable load private key!");
+                                return false;
+                            }
+                        }
+                        if (version == 2022)
+                        {
+                            byte[] pin = GetKeyIv("Pin");
+                            byte[] salt = GetKeyIv("Salt");
+                            var key = new Rfc2898DeriveBytes(pin, salt, 50000);
+                            myRijndael.Key = key.GetBytes(32); 
+                            myRijndael.IV = GetKeyIv("Iv2022");
+                        }
+                        else
+                        {  //Old verion
+                            byte[] keyBytes;
+                            keyBytes = GetKeyIv("Key");
+
+
+
+                            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                            {
+ 
+                                MessageBox.Show("Missing private key");
+
+                            }
+                            else
+                            {
+
+                                myRijndael.Key = GetKeyIv("RiKey");
+                                myRijndael.IV = GetKeyIv("RiIv");
+                            }
+                        }
+                        
+                        using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
                         {
                             try
                             {
-                                bin64.CopyTo(br);
+                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
 
                             }
-                            catch (System.FormatException)
+                            catch (System.Security.Cryptography.CryptographicException)
                             {
-                                MessageBox.Show("Please choose the data file created by MyId 2023+");
-
                                 return false;
-                            }
-                            br.Position = 0;
-                            int version = 0;
-                            if (br.ReadByte() == 0x20 && br.ReadByte() == 0x22)
-                                version = 2023;
-                            else if (fs.ReadByte() == 0x20 && fs.ReadByte() == 0x22)
-                                version = 2022;
-                            else
-                                // Set the stream position to the beginning of the file.
-                                fs.Seek(0, SeekOrigin.Begin);
-
-                            BinaryFormatter formatter = new BinaryFormatter();
-                            using (RijndaelManaged myRijndael = new RijndaelManaged())
-                            {
-                                myRijndael.KeySize = 256;
-                                myRijndael.BlockSize = 128;
-                                if (version >= 2023)
-                                    myRijndael.Padding = PaddingMode.ISO10126;
-                                else
-                                    myRijndael.Padding = PaddingMode.PKCS7;
-                                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                                myRijndael.Mode = CipherMode.CFB;
-
-                                //byte[] keyBytes = GetKeyIv("Key");
-
-                                if (pPrivateKeyFile != null)
-                                {
-                                    if (!LoadPrivateKey(pPrivateKeyFile))
-                                    {
-                                        MessageBox.Show("Unable load private key!");
-                                        return false;
-                                    }
-                                }
-                                if (version >= 2022)
-                                {
-                                    byte[] pin = GetKeyIv("Pin");
-                                    byte[] salt = GetKeyIv("Salt");
-                                    var key = new Rfc2898DeriveBytes(pin, salt, 50000);
-                                    myRijndael.Key = key.GetBytes(32); // GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                                    myRijndael.IV = GetKeyIv("Iv2022");// key.GetBytes(myRijndael.BlockSize / 8);
-                                }
-                                else
-                                {  //Old verion
-                                    byte[] keyBytes;
-                                    keyBytes = GetKeyIv("Key");
-
-                                    //byte[] savedKey = GetKeyIv("Key");
-                                    //if (!keyBytes.SequenceEqual(savedKey))
-                                    //{
-                                    //    MessageBox.Show("Invalid password!");
-                                    //    return false;
-                                    //}
-
-
-                                    if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
-                                    {
-                                        //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                        //myRijndael.Key = key.GetBytes(32); // myRijndael.KeySize / 8);
-                                        //myRijndael.IV = key.GetBytes(16); // myRijndael.BlockSize / 8);
-
-                                        //SaveKeyIv("RiKey", myRijndael.Key);
-                                        //SaveKeyIv("RiIv", myRijndael.IV);
-                                        MessageBox.Show("Missing private key");
-
-                                    }
-                                    else
-                                    {
-                                        //var key = new Rfc2898DeriveBytes(keyBytes, GetKeyIv("IV"), 50000);
-                                        myRijndael.Key = GetKeyIv("RiKey");// key.GetBytes(myRijndael.KeySize / 8);
-                                        myRijndael.IV = GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
-                                    }
-                                }
-                                if (version >= 2023)
-
-                                    using (var cryptoStream = new CryptoStream(br, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
-                                    {
-                                        try
-                                        {
-                                            _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
-                                        }
-                                        catch (System.Security.Cryptography.CryptographicException)
-                                        {
-                                            return false;
-                                        }
-                                    }
-                                else
-                                    using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
-                                    {
-                                        try
-                                        {
-                                            _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
-                                        }
-                                        catch (System.Security.Cryptography.CryptographicException)
-                                        {
-                                            return false;
-                                        }
-                                    }
                             }
                         }
                     }
                 }
 
+                int uniqIdUpdate = 0;
+                foreach (var item in _idList)
+                {
+                    if (item.UniqId == null)
+                    {
+                        item.UniqId = MyEncryption.UniqId("", true);
+                        uniqIdUpdate++;
+                    }
+                }
+                if (uniqIdUpdate > 0)
+                    SaveToDisk();
+
                 foreach (var idItem in _idList)
                 {
-                    AddListItem(idItem);
+                    if (ShowDeleted(idItem.Deleted))
+                        AddListItem(idItem);
                 }
                 int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
                 if (col != -1)
@@ -763,7 +720,7 @@ namespace MyId
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            toolStripStatusLabel2.Text = "©2019-" + DateTime.Now.Year.ToString() + " BlackData";
             uxExport.Visible = true;
             uxVersion.Text = Application.ProductVersion;
             if (File.Exists(IdFile))
@@ -785,6 +742,7 @@ namespace MyId
                                 //password match
                                 success = true;
                                 timer1.Enabled = true;
+                                _ = WebSync();
                                 break;
                             }
                             else
@@ -829,6 +787,9 @@ namespace MyId
                 if (!CreateNewFile())
                     System.Environment.Exit(1);  //First time app run
             }
+
+            string webSyncSuccessSaved = Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", 0).ToString();
+            uxWebSync.Enabled = webSyncSuccessSaved != "1";
         }
 
         private byte[] _pinEnc;
@@ -1028,7 +989,9 @@ namespace MyId
                     IdItem eachItem = _idList[i - 1];
                     if (removeList.Contains(eachItem.Uid.ToString()))
                     {
-                        _idList.Remove(eachItem);
+                        eachItem.Deleted = true;
+                        eachItem.Changed = DateTime.UtcNow;
+                        //_idList.Remove(eachItem);
                         noOfItems++;
                     }
                 }
@@ -1101,10 +1064,10 @@ namespace MyId
                 uxList.Items.Clear();
                 foreach (var idItem in _idList)
                 {
-                    if (idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                    if ((idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                         idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                         idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0
-                        )
+                        ) && ShowDeleted(idItem.Deleted))
                     {
                         AddListItem(idItem);
                     }
@@ -1113,6 +1076,10 @@ namespace MyId
             }
         }
 
+        private bool ShowDeleted(bool deleted)
+        {
+            return !deleted;
+        }
         private void UxSearchBox_TextChanged(object sender, EventArgs e)
         {
             UxSearchBox_TextChanged();
@@ -1413,10 +1380,7 @@ namespace MyId
             if (isUserInput(m))
             {
                 _wentIdle = DateTime.Now;
-                //_wentIdle = DateTime.MaxValue;
-                //_idleTicks = 0;
 
-                //_statusLbl.Text = "We Are NOT idle!";
             }
 
             return false;
@@ -1624,6 +1588,232 @@ namespace MyId
             printLineNo = 0;
             page = 0;
         }
+
+       
+
+        
+
+
+        private string UcFirst(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            char firstChar = input[0];
+            string restOfTheString = input.Substring(1);
+
+            // Convert the first character to upper case and concatenate with the rest of the string.
+            return char.ToUpper(firstChar) + restOfTheString;
+        }
+
+        private void ToolSyncVisual(int syncState)
+        {
+            switch (syncState)
+            {
+                case 0: //syncing
+                    Cursor.Current = Cursors.WaitCursor;
+                    uxWebSync.Enabled = false;
+                    uxWebSync.Text = "Syncing...";
+                    break;
+                case 1: //Synced
+                    Cursor.Current = Cursors.Default;
+                    uxWebSync.Enabled = false;
+                    uxWebSync.Text = "Synced";
+                    break;
+                default: //not synced
+                    Cursor.Current = Cursors.Default;
+                    uxWebSync.Enabled = true;
+                    uxWebSync.Text = "Sync";
+                    break;
+            }
+        }
+
+        private async void uxToolSync_Click(object sender, EventArgs e)
+        {
+            ToolSyncVisual(0);
+            string webSyncSuccessSaved = Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", 0).ToString();
+            bool webSyncSuccess = (webSyncSuccessSaved == "1");
+            while (true)
+            {
+                string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
+                userEmail = userEmail.ToLower();
+
+                string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+
+
+                if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5) || !webSyncSuccess)
+                {
+                    WebSync frm = new WebSync();
+                    if (frm.ShowDialog() != DialogResult.OK)
+                    {
+                        ToolSyncVisual(2);
+
+                        return;
+                    }
+                    else
+                        webSyncSuccess = true;
+                }
+                else
+                    break;
+            }
+
+            await WebSync();
+
+
+        }
+
+        private async Task WebSync()
+        {
+            string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
+            string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+
+            if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5))
+                return;
+
+            ToolSyncVisual(0);
+
+            userEmail = userEmail.ToLower();
+
+            var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(UcFirst(userEmail)));
+
+            var payloads = new List<object>();
+
+            foreach (var item in _idList)
+            {
+                var recId = item.UniqId;
+                var key = userEmail + userPassmd5 + recId;
+
+                var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
+
+                var myCrypt = new MyEncryption();
+
+                string payload = myCrypt.MyEncrypt_Field(json, key);
+
+                var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
+
+                payloads.Add(rec);
+            }
+
+            using (var client = new HttpClient())
+            {
+
+                var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
+
+                var dataString = JsonConvert.SerializeObject(vm);
+
+                //client.Headers.Add(HttpRequestHeader.ContentType, "application/octet-stream");
+                string err = "";
+                try
+                {
+                    Debug.WriteLine($"Comprssing {dataString.Length:N0} bytes");
+
+                    // Compress the data using gzip
+                    byte[] compressedData;
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using (GZipStream gzipStream = new GZipStream(ms, CompressionMode.Compress))
+                        using (StreamWriter writer = new StreamWriter(gzipStream))
+                        {
+                            writer.Write(dataString);
+                        }
+                        compressedData = ms.ToArray();
+                    }
+
+
+                    Debug.WriteLine($"Uploading {compressedData.Length:N0} bytes");
+
+                    var start = new Stopwatch();
+                    start.Start();
+                    //client.Headers.Add("Content-Encoding", "gzip"); // Inform the server that the data is gzip-compressed
+                    // Prepare the content to send in the request
+                    HttpContent httpContent = new ByteArrayContent(compressedData);
+
+                    // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
+                    httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                    httpContent.Headers.ContentEncoding.Add("gzip");
+
+                    // Send the POST request using PostAsync method
+                    HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
+
+                    // Check if the request was successful
+                    if (res.IsSuccessStatusCode)
+                    {
+                        // Read the response content as a string
+                        string response = await res.Content.ReadAsStringAsync();
+                        //Console.WriteLine("Response: " + response);
+
+                        // var res = client.UploadData("https://myid-dev.blackdata.ca:2096/WebSync.php", compressedData);
+
+
+                        //string response = Encoding.UTF8.GetString(res);
+
+                        Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
+
+                        JObject joResponse = JObject.Parse(response);
+                        err = joResponse["Error"].ToString();
+                        if (err == "0")
+                        {
+                            int recNew = 0;
+                            if (joResponse["Return"] != null)
+                            {
+                                foreach (var row in joResponse["Return"])
+                                {
+
+                                    var recId = row["RecId"].ToString();
+                                    var key = userEmail + userPassmd5 + recId;
+                                    var myCrypt = new MyEncryption();
+
+                                    string payload = myCrypt.MyDecrypt_Field(row["Payload"].ToString(), key);
+
+                                    var item = JsonConvert.DeserializeObject<IdItem>(payload);
+
+                                    IdItem aItem = GetAItemByRecId(recId);
+                                    if (aItem == null)
+                                    {
+                                        aItem = new IdItem();
+                                        aItem.UniqId = recId;
+                                        _idList.Add(aItem);
+                                    }
+                                    aItem.User = item.User;
+                                    aItem.Password = item.Password;
+                                    aItem.Site = item.Site;
+                                    aItem.Memo = item.Memo;
+                                    aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
+                                    recNew++;
+                                }
+                                if (recNew > 0)
+                                {
+                                    SaveToDisk();
+                                    ShowNumberOfItems();
+                                    UxSearchBox_TextChanged();
+                                }
+                            }
+                            //ToolSyncVisual(1);
+                            //MessageBox.Show($"Sync successful {recNew} added", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                            MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+                    else
+                    {
+                        // Handle unsuccessful response
+                        MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);
+                ToolSyncVisual(err == "0" ? 1 : 2);
+            }
+            
+        }
+
+
     }
 
 
