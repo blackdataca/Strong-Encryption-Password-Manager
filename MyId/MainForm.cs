@@ -1771,6 +1771,7 @@ namespace MyId
                                     aItem.Password = item.Password;
                                     aItem.Site = item.Site;
                                     aItem.Memo = item.Memo;
+                                    aItem.Deleted = item.Deleted;
                                     aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
                                     recNew++;
                                 }
