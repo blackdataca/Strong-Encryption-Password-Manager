@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MyIdMobile.Views.WelcomePage">
+    <ContentPage.Content>
+        <StackLayout>
+            <Label Text="Welcome to MyID!" FontSize="Medium"
+                HorizontalOptions="CenterAndExpand" />
+            <Label Text="Create a password to encrypt data"/>
+            <Entry Text="{Binding Password}" Placeholder="Password" IsPassword="True" />
+            <Label Text="Verify your new password"/>
+            <Entry Text="{Binding VerifyPassword}" Placeholder="Enter password again" IsPassword="True" />
+            <Button VerticalOptions="Center" Text="Create" Command="{Binding CreateCommand}"/>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

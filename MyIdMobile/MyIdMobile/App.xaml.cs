@@ -14,8 +14,8 @@ namespace MyIdMobile
             InitializeComponent();
 
             DependencyService.Register<MockDataStore>();
-            //MainPage = new AppShell();
-            MainPage = new LoginPage();
+            //MainPage = new LoginPage();
+            MainPage = new WelcomePage();
         }
 
         protected override void OnStart()

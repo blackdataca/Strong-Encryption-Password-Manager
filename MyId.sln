@@ -24,7 +24,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdMobile.Android", "MyIdM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdMobile.iOS", "MyIdMobile\MyIdMobile.iOS\MyIdMobile.iOS.csproj", "{7B75C9E6-B317-4C8C-96EB-F8C66D22A643}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdMobile", "MyIdMobile\MyIdMobile\MyIdMobile.csproj", "{94290C5E-92AC-478C-A956-C5E04B307FDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdMobile", "MyIdMobile\MyIdMobile\MyIdMobile.csproj", "{94290C5E-92AC-478C-A956-C5E04B307FDC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -110,7 +110,6 @@ Global
 		{64C446C3-17B9-4583-8041-85494CD5D2AF}.Release|x86.Build.0 = Release|Any CPU
 		{64C446C3-17B9-4583-8041-85494CD5D2AF}.Release|x86.Deploy.0 = Release|Any CPU
 		{7B75C9E6-B317-4C8C-96EB-F8C66D22A643}.Debug|Any CPU.ActiveCfg = Debug|iPhoneSimulator
-		{7B75C9E6-B317-4C8C-96EB-F8C66D22A643}.Debug|Any CPU.Build.0 = Debug|iPhoneSimulator
 		{7B75C9E6-B317-4C8C-96EB-F8C66D22A643}.Debug|iPhone.ActiveCfg = Debug|iPhone
 		{7B75C9E6-B317-4C8C-96EB-F8C66D22A643}.Debug|iPhone.Build.0 = Debug|iPhone
 		{7B75C9E6-B317-4C8C-96EB-F8C66D22A643}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
@@ -154,7 +153,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		VisualSVNWorkingCopyRoot = .
 		SolutionGuid = {3142D2AD-47B6-4B37-8B5F-138310A77CAC}
+		VisualSVNWorkingCopyRoot = .
 	EndGlobalSection
 EndGlobal
