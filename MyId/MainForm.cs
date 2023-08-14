@@ -1595,17 +1595,7 @@ namespace MyId
         
 
 
-        private string UcFirst(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-                return input;
-
-            char firstChar = input[0];
-            string restOfTheString = input.Substring(1);
-
-            // Convert the first character to upper case and concatenate with the rest of the string.
-            return char.ToUpper(firstChar) + restOfTheString;
-        }
+       
 
         private void ToolSyncVisual(int syncState)
         {
@@ -1675,7 +1665,7 @@ namespace MyId
 
             userEmail = userEmail.ToLower();
 
-            var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(UcFirst(userEmail)));
+            var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(MyEncryption.UcFirst(userEmail)));
 
             var payloads = new List<object>();
 
@@ -1771,6 +1761,7 @@ namespace MyId
                                     aItem.Password = item.Password;
                                     aItem.Site = item.Site;
                                     aItem.Memo = item.Memo;
+                                    aItem.Deleted = item.Deleted;
                                     aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
                                     recNew++;
                                 }

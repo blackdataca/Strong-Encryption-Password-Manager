@@ -203,6 +203,18 @@ namespace MyId
                 binData[i / 2] = Convert.ToByte(hexData.Substring(i, 2), 16);
             }
         }
+
+        public static string UcFirst(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            char firstChar = input[0];
+            string restOfTheString = input.Substring(1);
+
+            // Convert the first character to upper case and concatenate with the rest of the string.
+            return char.ToUpper(firstChar) + restOfTheString;
+        }
     }
 
     
