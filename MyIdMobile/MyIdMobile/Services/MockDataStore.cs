@@ -2,10 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using Xamarin.Essentials;
 
 namespace MyIdMobile.Services
 {
+    [Serializable]
     public class MockDataStore : IDataStore<Item>
     {
         readonly List<Item> items;
@@ -56,5 +60,26 @@ namespace MyIdMobile.Services
         {
             return await Task.FromResult(items);
         }
+
+        //public static void SaveKeyIv(string type, string value)
+        //{
+
+        //    switch (type)
+        //    {
+
+        //        case "Iv2022": //16
+
+        //        case "Salt": //32
+        //            Preferences.Set(type, value);
+        //            break;
+                
+        //        case "Pin":
+        //            _pinEnc = ProtectedData.Protect(Encoding.Unicode.GetBytes(value), null, DataProtectionScope.CurrentUser);
+        //            break;
+        //        default:
+        //            throw new Exception("error 237");
+
+        //    }
+        //}
     }
 }

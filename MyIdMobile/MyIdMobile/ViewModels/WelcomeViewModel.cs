@@ -1,6 +1,8 @@
-﻿using MyIdMobile.Views;
+﻿using MyIdMobile.Services;
+using MyIdMobile.Views;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 using Xamarin.Essentials;
 using Xamarin.Forms;
@@ -25,6 +27,16 @@ namespace MyIdMobile.ViewModels
             }
             else if ( Password == VerifyPassword)
             {
+
+                
+                byte[] masterPin = Encoding.Unicode.GetBytes(Password);
+                await MyEncryption.SaveKeyIvAsync("Pin", masterPin);
+
+                await MyEncryption.CreateNewKeyAsync(masterPin);
+
+                var newList = new MockDataStore();
+                await MyEncryption.SaveToDiskAsync(newList);
+
                 Preferences.Set("isLogin", true);
                 Application.Current.MainPage = new AppShell();
                 // Prefixing with `//` switches to a different navigation stack instead of pushing to the active one

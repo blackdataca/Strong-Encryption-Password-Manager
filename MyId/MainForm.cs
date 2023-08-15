@@ -451,21 +451,6 @@ namespace MyId
                         byte[] masterPin = Encoding.Unicode.GetBytes(si.uxMasterPin.Text);
                         SaveKeyIv("Pin", masterPin);
                         CreateNewKey(masterPin);
-
-                        //Create private key
-
-                        //var key = new Rfc2898DeriveBytes(Encoding.Unicode.GetBytes(masterPin), salt, 50000);
-                        //var riKey = key.GetBytes(32);  //256 bits = 32 bytes
-                        //var riIv = key.GetBytes(16);  //128 bits = 16 bytes
-
-                        //SaveKeyIv("RiKey", riKey);
-                        //SaveKeyIv("RiIv", riIv);
-
-                        //if (si.uxSavePrivateKeyTo.Checked)
-                        //{  //save to disk
-                        //    SavePrivateKey(si.uxPrivateKeyFile.Text);
-                        //}
-
                         SaveToDisk();
                         return true;
                     case DialogResult.Retry:
