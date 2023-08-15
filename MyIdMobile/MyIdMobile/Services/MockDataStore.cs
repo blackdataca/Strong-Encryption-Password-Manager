@@ -61,25 +61,6 @@ namespace MyIdMobile.Services
             return await Task.FromResult(items);
         }
 
-        //public static void SaveKeyIv(string type, string value)
-        //{
-
-        //    switch (type)
-        //    {
-
-        //        case "Iv2022": //16
-
-        //        case "Salt": //32
-        //            Preferences.Set(type, value);
-        //            break;
-                
-        //        case "Pin":
-        //            _pinEnc = ProtectedData.Protect(Encoding.Unicode.GetBytes(value), null, DataProtectionScope.CurrentUser);
-        //            break;
-        //        default:
-        //            throw new Exception("error 237");
-
-        //    }
-        //}
+        
     }
 }

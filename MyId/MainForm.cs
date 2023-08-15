@@ -805,7 +805,7 @@ namespace MyId
                     }
                 case "Key":
                     {
-                        byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                        byte[] iv32 = GetKeyIv("IV");
                         byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
                         if (ciphertext == null)
                             return null;
@@ -813,10 +813,7 @@ namespace MyId
 
                         return plaintext;
 
-                        //using (SHA256 mySHA256 = SHA256.Create())
-                        //{
-                        //    return mySHA256.ComputeHash(plaintext);
-                        //}
+
                     }
                 case "Pin":
 
