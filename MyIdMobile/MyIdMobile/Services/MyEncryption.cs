@@ -302,7 +302,7 @@ namespace MyIdMobile.Services
             }
         }
 
-        private static async Task<byte[]> GetKeyIvAsync(string type)
+        public static async Task<byte[]> GetKeyIvAsync(string type)
         {
             switch (type)
             {
@@ -327,46 +327,7 @@ namespace MyIdMobile.Services
             }
         }
 
-        public static async Task SaveToDiskAsync(MockDataStore data, bool webSync = true)
-        {
-            byte[] pin = await GetKeyIvAsync("Pin");
-            var key = new Rfc2898DeriveBytes(pin, await GetKeyIvAsync("Salt"), 50000);
-
-            BinaryFormatter formatter = new BinaryFormatter();
-            using (RijndaelManaged myRijndael = new RijndaelManaged())
-            {
-                myRijndael.KeySize = 256;
-                myRijndael.BlockSize = 128;
-                myRijndael.Padding = PaddingMode.PKCS7;
-                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                myRijndael.Mode = CipherMode.CFB;
-
-
-                myRijndael.Key = key.GetBytes(32);
-                myRijndael.IV = await GetKeyIvAsync("Iv2022");
-
-                
-
-                using (var ms = new MemoryStream())
-                {
-                    //version 2022
-                    ms.WriteByte(0x20); //file version major
-                    ms.WriteByte(0x22); //file version minor
-                    using (var cryptoStream = new CryptoStream(ms, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
-                    {
-                        formatter.Serialize(cryptoStream, data);
-                    }
-                    ms.Close();
-
-                    string encData = Bin2Hex(ms.ToArray());
-                    await SecureStorage.SetAsync("Data", encData);
-                }
-
-                
-            }
-            //if (webSync)
-            //    _ = WebSync();
-        }
+       
     }
 
     
