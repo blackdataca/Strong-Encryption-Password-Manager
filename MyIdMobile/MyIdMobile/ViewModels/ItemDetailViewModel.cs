@@ -44,9 +44,9 @@ namespace MyIdMobile.ViewModels
             try
             {
                 var item = await DataStore.GetItemAsync(itemId);
-                Id = item.Id;
-                Text = item.Text;
-                Description = item.Description;
+                Id = item.UniqId;
+                Text = item.Site;
+                Description = item.User;
             }
             catch (Exception)
             {

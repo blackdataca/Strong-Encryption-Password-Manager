@@ -51,9 +51,8 @@ namespace MyIdMobile.ViewModels
         {
             Item newItem = new Item()
             {
-                Id = Guid.NewGuid().ToString(),
-                Text = Text,
-                Description = Description
+                Site = Text,
+                User = Description
             };
 
             await DataStore.AddItemAsync(newItem);

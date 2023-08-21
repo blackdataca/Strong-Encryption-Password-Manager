@@ -1,4 +1,5 @@
 ﻿using MyIdMobile.Models;
+using MyIdMobile.Services;
 using MyIdMobile.Views;
 using System;
 using System.Collections.ObjectModel;
@@ -35,6 +36,9 @@ namespace MyIdMobile.ViewModels
             try
             {
                 Items.Clear();
+
+                //await DataStore.LoadFromDiskAsync();
+
                 var items = await DataStore.GetItemsAsync(true);
                 foreach (var item in items)
                 {
@@ -55,6 +59,7 @@ namespace MyIdMobile.ViewModels
         {
             IsBusy = true;
             SelectedItem = null;
+            _ = ExecuteLoadItemsCommand();
         }
 
         public Item SelectedItem
@@ -70,6 +75,7 @@ namespace MyIdMobile.ViewModels
         private async void OnAddItem(object obj)
         {
             await Shell.Current.GoToAsync(nameof(NewItemPage));
+            
         }
 
         async void OnItemSelected(Item item)
@@ -78,7 +84,7 @@ namespace MyIdMobile.ViewModels
                 return;
 
             // This will push the ItemDetailPage onto the navigation stack
-            await Shell.Current.GoToAsync($"{nameof(ItemDetailPage)}?{nameof(ItemDetailViewModel.ItemId)}={item.Id}");
+            await Shell.Current.GoToAsync($"{nameof(ItemDetailPage)}?{nameof(ItemDetailViewModel.ItemId)}={item.UniqId}");
         }
     }
 }

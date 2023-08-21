@@ -14,19 +14,11 @@ namespace MyIdMobile.Services
     [Serializable]
     public class MockDataStore : IDataStore<Item>
     {
-        readonly List<Item> items;
+        private List<Item> items = new List<Item>();
 
         public MockDataStore()
         {
-            items = new List<Item>()
-            {
-                //new Item { Id = Guid.NewGuid().ToString(), Text = "First item", Description="This is an item description." },
-                //new Item { Id = Guid.NewGuid().ToString(), Text = "Second item", Description="This is an item description." },
-                //new Item { Id = Guid.NewGuid().ToString(), Text = "Third item", Description="This is an item description." },
-                //new Item { Id = Guid.NewGuid().ToString(), Text = "Fourth item", Description="This is an item description." },
-                //new Item { Id = Guid.NewGuid().ToString(), Text = "Fifth item", Description="This is an item description." },
-                //new Item { Id = Guid.NewGuid().ToString(), Text = "Sixth item", Description="This is an item description." }
-            };
+
         }
 
         public async Task SaveToDiskAsync(bool webSync = true)
@@ -70,37 +62,192 @@ namespace MyIdMobile.Services
             //    _ = WebSync();
         }
 
+
+        public async Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null)
+        {
+
+            items.Clear(); 
+
+            bool success = false;
+
+            try
+            {
+                //using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
+                using (var ms = new MemoryStream())
+                {
+                    //string encData = MyEncryption.Bin2Hex(ms.ToArray());
+                    string encString = await SecureStorage.GetAsync("Data");
+                    byte[] endData = MyEncryption.Hex2Bin(encString);
+                    ms.Write(endData, 0, endData.Length);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    int version = 0;
+                    if (ms.ReadByte() == 0x20 && ms.ReadByte() == 0x22)
+                        version = 2022;
+                    else
+                    {
+                        await App.Current.MainPage.DisplayAlert("Load Data", "Wrong data version", "OK");
+                        return false;
+                    }
+                        // Set the stream position to the beginning of the file.
+                        //ms.Seek(0, SeekOrigin.Begin);
+
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    {
+                        myRijndael.KeySize = 256;
+                        myRijndael.BlockSize = 128;
+                        myRijndael.Padding = PaddingMode.PKCS7;
+                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                        myRijndael.Mode = CipherMode.CFB;
+
+
+                        if (pPrivateKeyFile != null)
+                        {
+                            if (!await LoadPrivateKeyAsync(pPrivateKeyFile))
+                            {
+                                //MessageBox.Show("Unable load private key!");
+                                await App.Current.MainPage.DisplayAlert("Load Data", "Unable load private key!", "OK");
+                                return false;
+                            }
+                        }
+                        if (version == 2022)
+                        {
+                            byte[] pin = await MyEncryption.GetKeyIvAsync("Pin");
+                            byte[] salt = await MyEncryption.GetKeyIvAsync("Salt");
+                            var key = new Rfc2898DeriveBytes(pin, salt, 50000);
+                            myRijndael.Key = key.GetBytes(32);
+                            myRijndael.IV = await MyEncryption.GetKeyIvAsync("Iv2022");
+                        }
+                        else
+                        {  //Old verion
+                            await App.Current.MainPage.DisplayAlert("Load Data", "Unknown data file version!", "OK");
+                            return false;
+                        }
+
+                        using (var cryptoStream = new CryptoStream(ms, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                        {
+                            try
+                            {
+                                items = (List<Item>)formatter.Deserialize(cryptoStream);
+
+                            }
+                            catch (System.Security.Cryptography.CryptographicException)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                int uniqIdUpdate = 0;
+                foreach (var item in items)
+                {
+                    if (item.UniqId == null)
+                    {
+                        item.UniqId = MyEncryption.UniqId("", true);
+                        uniqIdUpdate++;
+                    }
+                }
+                if (uniqIdUpdate > 0)
+                    await SaveToDiskAsync(false);
+
+                //foreach (var idItem in _idList)
+                //{
+                //    if (ShowDeleted(idItem.Deleted))
+                //        AddListItem(idItem);
+                //}
+                //int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
+                //if (col != -1)
+                //{
+                //    lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
+                //    int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
+                //    lvwColumnSorter.Order = (SortOrder)or;
+                //    // Perform the sort with these new sort options.
+                //    uxList.Sort();
+                //}
+                success = true;
+            }
+            catch (System.Security.Cryptography.CryptographicException cex)
+            {
+                //MessageBox.Show("Failed to decrypt data. Invalid PIN.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                await App.Current.MainPage.DisplayAlert("Failed to decrypt data", cex.Message, "OK");
+                return false;
+            }
+            catch (Exception ex)
+            {
+
+                await App.Current.MainPage.DisplayAlert("Load Data", "Access denied: " + ex.ToString(), "OK");
+            }
+
+            //ShowNumberOfItems();
+            return success;
+        }
+
+        private async Task<bool> LoadPrivateKeyAsync(string privateKeyFile)
+        {
+            string bufferS = File.ReadAllText(privateKeyFile);
+
+            byte[] buffer = MyEncryption.ToByteArray(bufferS.Replace(",", "").Trim());
+
+
+            if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
+            {
+                int pos = 2;
+
+                pos += 16;
+                byte[] salt = new byte[32];
+                Array.Copy(buffer, pos, salt, 0, 32);
+                await MyEncryption.SaveKeyIvAsync("Salt", salt);
+
+                pos += 32;
+                byte[] riIv = new byte[16];
+                Array.Copy(buffer, pos, riIv, 0, 16);
+                await MyEncryption.SaveKeyIvAsync("Iv2022", riIv);
+
+                return true;
+
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("LoadPrivateKey", "Invalid key file", "OK");
+            }
+            return false;
+        }
+
+
         public async Task<bool> AddItemAsync(Item item)
         {
             items.Add(item);
-
+            await SaveToDiskAsync();
             return await Task.FromResult(true);
         }
 
         public async Task<bool> UpdateItemAsync(Item item)
         {
-            var oldItem = items.Where((Item arg) => arg.Id == item.Id).FirstOrDefault();
+            var oldItem = items.Where((Item arg) => arg.UniqId == item.UniqId).FirstOrDefault();
             items.Remove(oldItem);
             items.Add(item);
-
+            await SaveToDiskAsync();
             return await Task.FromResult(true);
         }
 
         public async Task<bool> DeleteItemAsync(string id)
         {
-            var oldItem = items.Where((Item arg) => arg.Id == id).FirstOrDefault();
+            var oldItem = items.Where((Item arg) => arg.UniqId == id).FirstOrDefault();
             items.Remove(oldItem);
-
+            await SaveToDiskAsync();
             return await Task.FromResult(true);
         }
 
         public async Task<Item> GetItemAsync(string id)
         {
-            return await Task.FromResult(items.FirstOrDefault(s => s.Id == id));
+            return await Task.FromResult(items.FirstOrDefault(s => s.UniqId == id));
         }
 
         public async Task<IEnumerable<Item>> GetItemsAsync(bool forceRefresh = false)
         {
+            await LoadFromDiskAsync();
             return await Task.FromResult(items);
         }
 

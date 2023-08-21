@@ -13,6 +13,7 @@ namespace MyIdMobile.ViewModels
 
         public LoginViewModel()
         {
+            
             LoginCommand = new Command(OnLoginClicked);
         }
 
