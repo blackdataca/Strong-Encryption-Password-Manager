@@ -66,7 +66,7 @@ namespace MyIdMobile.Services
         public async Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null)
         {
 
-            items.Clear(); 
+            items = null;
 
             bool success = false;
 
@@ -171,13 +171,14 @@ namespace MyIdMobile.Services
             catch (System.Security.Cryptography.CryptographicException cex)
             {
                 //MessageBox.Show("Failed to decrypt data. Invalid PIN.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                await App.Current.MainPage.DisplayAlert("Failed to decrypt data", cex.Message, "OK");
+                await App.Current.MainPage.DisplayAlert(cex.Message, "Please try again with correct Master Password" , "OK");
                 return false;
             }
             catch (Exception ex)
             {
 
                 await App.Current.MainPage.DisplayAlert("Load Data", "Access denied: " + ex.ToString(), "OK");
+                return false;
             }
 
             //ShowNumberOfItems();

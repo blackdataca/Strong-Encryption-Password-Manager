@@ -40,14 +40,23 @@ namespace MyIdMobile.ViewModels
                 //await DataStore.LoadFromDiskAsync();
 
                 var items = await DataStore.GetItemsAsync(true);
-                foreach (var item in items)
+                if (items == null)
                 {
-                    Items.Add(item);
+                    Application.Current.MainPage = new AppShell();
+                    // Prefixing with `//` switches to a different navigation stack instead of pushing to the active one
+                    await Shell.Current.GoToAsync($"//{nameof(LoginPage)}");
+                }
+                else
+                {
+                    foreach (var item in items)
+                    {
+                        Items.Add(item);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex);
+                await App.Current.MainPage.DisplayAlert("View Items", ex.ToString(), "OK");
             }
             finally
             {
