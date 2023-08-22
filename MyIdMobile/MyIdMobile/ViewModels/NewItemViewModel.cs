@@ -72,19 +72,22 @@ namespace MyIdMobile.ViewModels
 
         private async void OnSave()
         {
+            Item newItem = new Item()
+            {
+                Site = Site,
+                User = User
+            };
             if (string.IsNullOrEmpty(ItemId))
             {
-                Item newItem = new Item()
-                {
-                    Site = Site,
-                    User = User
-                };
+                
 
                 await DataStore.AddItemAsync(newItem);
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("TODO", "Save Item", "OK");
+                newItem.UniqId = ItemId;
+
+                await DataStore.UpdateItemAsync(newItem);
             }
             // This will pop the current page off the navigation stack
             await Shell.Current.GoToAsync("..");
