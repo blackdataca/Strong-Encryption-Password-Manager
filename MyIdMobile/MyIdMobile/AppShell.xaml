@@ -3,7 +3,7 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:local="clr-namespace:MyIdMobile.Views"
        Title="MyIdMobile"
-       x:Class="MyIdMobile.AppShell">
+       x:Class="MyIdMobile.AppShell"  FlyoutBackgroundColor="{AppThemeBinding Dark=Black}">
 
     <!--
         The overall app visual hierarchy is defined here, along with navigation.

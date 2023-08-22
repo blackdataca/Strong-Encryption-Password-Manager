@@ -5,7 +5,7 @@
              Title="Browse"
              xmlns:local="clr-namespace:MyIdMobile.ViewModels"  
              xmlns:model="clr-namespace:MyIdMobile.Models"  
-             x:Name="BrowseItemsPage">
+             x:Name="BrowseItemsPage" BackgroundColor="{AppThemeBinding Dark=Black}">
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Add" Command="{Binding AddItemCommand}" />
@@ -17,7 +17,7 @@
     <RefreshView x:DataType="local:ItemsViewModel" Command="{Binding LoadItemsCommand}" IsRefreshing="{Binding IsBusy, Mode=TwoWay}">
         <CollectionView x:Name="ItemsListView"
                 ItemsSource="{Binding VisibleItems}"
-                SelectionMode="None">
+                SelectionMode="None"  >
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <StackLayout Padding="10" x:DataType="model:Item">
