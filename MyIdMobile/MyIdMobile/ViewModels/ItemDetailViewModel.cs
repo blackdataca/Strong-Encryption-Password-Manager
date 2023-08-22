@@ -3,6 +3,7 @@ using MyIdMobile.Views;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace MyIdMobile.ViewModels
@@ -10,12 +11,13 @@ namespace MyIdMobile.ViewModels
     [QueryProperty(nameof(ItemId), nameof(ItemId))]
     public class ItemDetailViewModel : BaseViewModel
     {
-        private string itemId;
+        private string _itemId;
         private string _site;
         private string _user;
         
 
         public Command EditItemCommand { get; }
+        public Command<string> TapCommand { get; }
 
         public string Site
         {
@@ -47,26 +49,27 @@ namespace MyIdMobile.ViewModels
         {
             get
             {
-                return itemId;
+                return _itemId;
             }
             set
             {
-                itemId = value;
-                LoadItemId(value);
+                _itemId = value;
+                LoadItemId();
             }
         }
 
         public ItemDetailViewModel()
         {
             EditItemCommand = new Command(OnEditItem);
+            TapCommand = new Command<string>(OnTap);
         }
 
 
-        public async void LoadItemId(string itemId)
+        public async void LoadItemId()
         {
             try
             {
-                var item = await DataStore.GetItemAsync(itemId);
+                var item = await DataStore.GetItemAsync(_itemId);
                 
                 Site = item.Site;
                 User = item.User;
@@ -85,14 +88,39 @@ namespace MyIdMobile.ViewModels
 
         async void OnEditItem()
         {
-            if (itemId == null)
+            if (_itemId == null)
                 return;
 
             // This will push the ItemDetailPage onto the navigation stack
-            await Shell.Current.GoToAsync($"{nameof(NewItemPage)}?{nameof(NewItemViewModel.ItemId)}={itemId}");
+            await Shell.Current.GoToAsync($"{nameof(NewItemPage)}?{nameof(NewItemViewModel.ItemId)}={_itemId}");
 
 
 
+        }
+
+        async void OnTap(string para)
+        {
+            switch (para)
+            {
+                case "Site":
+                    await Clipboard.SetTextAsync(Site);
+                    break;
+                case "User":
+                    await Clipboard.SetTextAsync(User);
+                    break;
+                case "Password":
+                    var item = await DataStore.GetItemAsync(_itemId);
+
+                    await Clipboard.SetTextAsync(item.Password);
+                    break;
+                case "Memo":
+                    await Clipboard.SetTextAsync(Memo);
+                    break;
+                default:
+                    await App.Current.MainPage.DisplayAlert("Unknown para", para, "OK");
+                    break;
+            }
+            DependencyService.Get<Services.IMessage>().ShortAlert("Copied");
         }
     }
 }

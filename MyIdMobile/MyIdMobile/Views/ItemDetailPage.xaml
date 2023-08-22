@@ -9,17 +9,33 @@
 
     <StackLayout Spacing="20" Padding="15" BackgroundColor="{AppThemeBinding Dark=Black}">
         <Label Text="Site:" FontSize="Medium" />
-        <Label Text="{Binding Site}" FontSize="Small"/>
-        
+        <Label Text="{Binding Site}" FontSize="Small">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="Site" />
+            </Label.GestureRecognizers>
+        </Label>
+
         <Label Text="User:" FontSize="Medium" />
-        <Label Text="{Binding User}" FontSize="Small"/>
+        <Label Text="{Binding User}" FontSize="Small">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="User" />
+            </Label.GestureRecognizers>
+        </Label>
 
 
         <Label Text="Password:" FontSize="Medium" />
-        <Label Text="{Binding Password}" FontSize="Small" />
+        <Label Text="{Binding Password}" FontSize="Small" >
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="Password" />
+            </Label.GestureRecognizers>
+        </Label>
 
         <Label Text="Memo:" FontSize="Medium" />
-        <Label Text="{Binding Memo}" FontSize="Small"/>
+        <Label Text="{Binding Memo}" FontSize="Small">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="Memo" />
+            </Label.GestureRecognizers>
+        </Label>
 
     </StackLayout>
     
