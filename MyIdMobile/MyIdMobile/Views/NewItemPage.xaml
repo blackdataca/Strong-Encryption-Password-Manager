@@ -16,6 +16,7 @@
                 <Button Text="Cancel" Command="{Binding CancelCommand}" HorizontalOptions="FillAndExpand"></Button>
                 <Button Text="Save" Command="{Binding SaveCommand}" HorizontalOptions="FillAndExpand"></Button>
             </StackLayout>
+            <Button Text="Delete" Command="{Binding DeleteCommand}" HorizontalOptions="FillAndExpand" BackgroundColor="Red" IsVisible="{Binding DeleteVisible, Mode=TwoWay}"></Button>
         </StackLayout>
     </ContentPage.Content>
     

@@ -16,7 +16,7 @@
     -->
     <RefreshView x:DataType="local:ItemsViewModel" Command="{Binding LoadItemsCommand}" IsRefreshing="{Binding IsBusy, Mode=TwoWay}">
         <CollectionView x:Name="ItemsListView"
-                ItemsSource="{Binding Items}"
+                ItemsSource="{Binding VisibleItems}"
                 SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate>

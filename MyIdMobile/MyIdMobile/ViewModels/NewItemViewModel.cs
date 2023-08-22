@@ -1,4 +1,5 @@
 ﻿using MyIdMobile.Models;
+using MyIdMobile.Views;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,6 +14,10 @@ namespace MyIdMobile.ViewModels
         private string site;
         private string user;
         private string itemId;
+        public Command SaveCommand { get; }
+        public Command CancelCommand { get; }
+        public Command DeleteCommand { get; }
+
 
         public NewItemViewModel()
         {
@@ -20,6 +25,9 @@ namespace MyIdMobile.ViewModels
             CancelCommand = new Command(OnCancel);
             this.PropertyChanged +=
                 (_, __) => SaveCommand.ChangeCanExecute();
+            DeleteCommand = new Command(OnDelete);
+
+            DeleteVisible = "False";
         }
         public string ItemId
         {
@@ -34,6 +42,13 @@ namespace MyIdMobile.ViewModels
             }
         }
 
+        private string _deleteVisible;
+        public string DeleteVisible {
+            get => _deleteVisible;
+            set => SetProperty(ref _deleteVisible, value);
+        }
+
+            
         public async void LoadItemId(string itemId)
         {
 
@@ -41,6 +56,8 @@ namespace MyIdMobile.ViewModels
             Site = item.Site;
             User = item.User;
 
+            //Device.BeginInvokeOnMainThread(() => { DeleteVisible = "True";  });
+            DeleteVisible = "True";
         }
 
         private bool ValidateSave()
@@ -60,9 +77,6 @@ namespace MyIdMobile.ViewModels
             get => user;
             set => SetProperty(ref user, value);
         }
-
-        public Command SaveCommand { get; }
-        public Command CancelCommand { get; }
 
         private async void OnCancel()
         {
@@ -91,6 +105,14 @@ namespace MyIdMobile.ViewModels
             }
             // This will pop the current page off the navigation stack
             await Shell.Current.GoToAsync("..");
+        }
+
+        private async void OnDelete()
+        {
+
+            await DataStore.DeleteItemAsync(ItemId);
+            // This will pop the current page off the navigation stack
+            await Shell.Current.GoToAsync($"//{nameof(ItemsPage)}");
         }
     }
 }

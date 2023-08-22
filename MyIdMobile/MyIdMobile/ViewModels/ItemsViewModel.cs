@@ -13,7 +13,7 @@ namespace MyIdMobile.ViewModels
     {
         private Item _selectedItem;
 
-        public ObservableCollection<Item> Items { get; }
+        public ObservableCollection<Item> VisibleItems { get; }
         public Command LoadItemsCommand { get; }
         public Command AddItemCommand { get; }
         public Command<Item> ItemTapped { get; }
@@ -21,7 +21,7 @@ namespace MyIdMobile.ViewModels
         public ItemsViewModel()
         {
 
-            Items = new ObservableCollection<Item>();
+            VisibleItems = new ObservableCollection<Item>();
             LoadItemsCommand = new Command(async () => await ExecuteLoadItemsCommand());
 
             ItemTapped = new Command<Item>(OnItemSelected);
@@ -35,7 +35,7 @@ namespace MyIdMobile.ViewModels
 
             try
             {
-                Items.Clear();
+                VisibleItems.Clear();
 
                 //await DataStore.LoadFromDiskAsync();
 
@@ -50,7 +50,8 @@ namespace MyIdMobile.ViewModels
                 {
                     foreach (var item in items)
                     {
-                        Items.Add(item);
+                        if (!item.Deleted)
+                            VisibleItems.Add(item);
                     }
                 }
             }
@@ -70,6 +71,7 @@ namespace MyIdMobile.ViewModels
             SelectedItem = null;
             _ = ExecuteLoadItemsCommand();
         }
+
 
         public Item SelectedItem
         {

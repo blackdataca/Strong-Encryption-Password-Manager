@@ -10,7 +10,7 @@
         <StackLayout Padding="10,0,10,0" VerticalOptions="Center">
             <Entry Text="{Binding Password}" Placeholder="Master Password" IsPassword="True" />
             <Button VerticalOptions="Center" Text="Unlock" Command="{Binding LoginCommand}"/>
-            <Button VerticalOptions="Center" Text="Reset all data" Command="{Binding ResetCommand}"/>
+            <Button VerticalOptions="Center" Text="Reset all data" Command="{Binding ResetCommand}" BackgroundColor="Red" />
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

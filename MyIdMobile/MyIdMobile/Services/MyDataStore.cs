@@ -14,7 +14,7 @@ namespace MyIdMobile.Services
     [Serializable]
     public class MyDataStore : IDataStore<Item>
     {
-        private List<Item> items = new List<Item>();
+        private List<Item> _allItems = new List<Item>();
 
         public MyDataStore()
         {
@@ -48,7 +48,7 @@ namespace MyIdMobile.Services
                     ms.WriteByte(0x22); //file version minor
                     using (var cryptoStream = new CryptoStream(ms, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
                     {
-                        formatter.Serialize(cryptoStream, items);
+                        formatter.Serialize(cryptoStream, _allItems);
                     }
                     ms.Close();
 
@@ -66,7 +66,7 @@ namespace MyIdMobile.Services
         public async Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null)
         {
 
-            items = null;
+            _allItems = null;
 
             bool success = false;
 
@@ -129,7 +129,7 @@ namespace MyIdMobile.Services
                         {
                             try
                             {
-                                items = (List<Item>)formatter.Deserialize(cryptoStream);
+                                _allItems = (List<Item>)formatter.Deserialize(cryptoStream);
 
                             }
                             catch (System.Security.Cryptography.CryptographicException)
@@ -141,7 +141,7 @@ namespace MyIdMobile.Services
                 }
 
                 int uniqIdUpdate = 0;
-                foreach (var item in items)
+                foreach (var item in _allItems)
                 {
                     if (item.UniqId == null)
                     {
@@ -219,37 +219,38 @@ namespace MyIdMobile.Services
 
         public async Task<bool> AddItemAsync(Item item)
         {
-            items.Add(item);
+            _allItems.Add(item);
             await SaveToDiskAsync();
             return await Task.FromResult(true);
         }
 
         public async Task<bool> UpdateItemAsync(Item item)
         {
-            var oldItem = items.Where((Item arg) => arg.UniqId == item.UniqId).FirstOrDefault();
-            items.Remove(oldItem);
-            items.Add(item);
+            var oldItem = _allItems.Where((Item arg) => arg.UniqId == item.UniqId).FirstOrDefault();
+            _allItems.Remove(oldItem);
+            _allItems.Add(item);
             await SaveToDiskAsync();
             return await Task.FromResult(true);
         }
 
         public async Task<bool> DeleteItemAsync(string id)
         {
-            var oldItem = items.Where((Item arg) => arg.UniqId == id).FirstOrDefault();
-            items.Remove(oldItem);
+            var oldItem = _allItems.Where((Item arg) => arg.UniqId == id).FirstOrDefault();
+            oldItem.Deleted = true;
+            //items.Remove(oldItem);
             await SaveToDiskAsync();
             return await Task.FromResult(true);
         }
 
         public async Task<Item> GetItemAsync(string id)
         {
-            return await Task.FromResult(items.FirstOrDefault(s => s.UniqId == id));
+            return await Task.FromResult(_allItems.FirstOrDefault(s => s.UniqId == id));
         }
 
         public async Task<IEnumerable<Item>> GetItemsAsync(bool forceRefresh = false)
         {
             await LoadFromDiskAsync();
-            return await Task.FromResult(items);
+            return await Task.FromResult(_allItems);
         }
 
         
