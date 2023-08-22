@@ -100,6 +100,7 @@
     -->
     <TabBar>
         <ShellContent Route="LoginPage" ContentTemplate="{DataTemplate local:LoginPage}" />
+        <ShellContent Route="WelcomePage" ContentTemplate="{DataTemplate local:WelcomePage}" />
     </TabBar>
 
     <!-- Optional Templates 

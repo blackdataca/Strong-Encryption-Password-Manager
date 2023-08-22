@@ -15,7 +15,7 @@ namespace MyIdMobile
         {
             InitializeComponent();
 
-            DependencyService.Register<MockDataStore>();
+            DependencyService.Register<MyDataStore>();
             //MainPage = new LoginPage();
             _ = LoadScreenAsync();
         }

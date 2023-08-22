@@ -34,7 +34,7 @@ namespace MyIdMobile.ViewModels
 
                 await MyEncryption.CreateNewKeyAsync(masterPin);
 
-                var newList = new MockDataStore();
+                var newList = new MyDataStore();
                 await newList.SaveToDiskAsync();
 
                 Preferences.Set("isLogin", true);

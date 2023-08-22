@@ -10,20 +10,20 @@ namespace MyIdMobile.ViewModels
     public class ItemDetailViewModel : BaseViewModel
     {
         private string itemId;
-        private string text;
-        private string description;
+        private string _site;
+        private string _user;
         public string Id { get; set; }
 
-        public string Text
+        public string Site
         {
-            get => text;
-            set => SetProperty(ref text, value);
+            get => _site;
+            set => SetProperty(ref _site, value);
         }
 
-        public string Description
+        public string User
         {
-            get => description;
-            set => SetProperty(ref description, value);
+            get => _user;
+            set => SetProperty(ref _user, value);
         }
 
         public string ItemId
@@ -45,8 +45,8 @@ namespace MyIdMobile.ViewModels
             {
                 var item = await DataStore.GetItemAsync(itemId);
                 Id = item.UniqId;
-                Text = item.Site;
-                Description = item.User;
+                Site = item.Site;
+                User = item.User;
             }
             catch (Exception)
             {

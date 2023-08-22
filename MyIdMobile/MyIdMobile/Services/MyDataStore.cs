@@ -12,11 +12,11 @@ using Xamarin.Essentials;
 namespace MyIdMobile.Services
 {
     [Serializable]
-    public class MockDataStore : IDataStore<Item>
+    public class MyDataStore : IDataStore<Item>
     {
         private List<Item> items = new List<Item>();
 
-        public MockDataStore()
+        public MyDataStore()
         {
 
         }
