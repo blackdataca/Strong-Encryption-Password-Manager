@@ -7,10 +7,12 @@ using Xamarin.Forms;
 
 namespace MyIdMobile.ViewModels
 {
+    [QueryProperty(nameof(ItemId), nameof(ItemId))]
     public class NewItemViewModel : BaseViewModel
     {
-        private string text;
-        private string description;
+        private string site;
+        private string user;
+        private string itemId;
 
         public NewItemViewModel()
         {
@@ -19,23 +21,44 @@ namespace MyIdMobile.ViewModels
             this.PropertyChanged +=
                 (_, __) => SaveCommand.ChangeCanExecute();
         }
+        public string ItemId
+        {
+            get
+            {
+                return itemId;
+            }
+            set
+            {
+                itemId = value;
+                LoadItemId(value);
+            }
+        }
+
+        public async void LoadItemId(string itemId)
+        {
+
+            var item = await DataStore.GetItemAsync(itemId);
+            Site = item.Site;
+            User = item.User;
+
+        }
 
         private bool ValidateSave()
         {
-            return !String.IsNullOrWhiteSpace(text)
-                && !String.IsNullOrWhiteSpace(description);
+            return !String.IsNullOrWhiteSpace(site)
+                && !String.IsNullOrWhiteSpace(user);
         }
 
-        public string Text
+        public string Site
         {
-            get => text;
-            set => SetProperty(ref text, value);
+            get => site;
+            set => SetProperty(ref site, value);
         }
 
-        public string Description
+        public string User
         {
-            get => description;
-            set => SetProperty(ref description, value);
+            get => user;
+            set => SetProperty(ref user, value);
         }
 
         public Command SaveCommand { get; }
@@ -49,14 +72,20 @@ namespace MyIdMobile.ViewModels
 
         private async void OnSave()
         {
-            Item newItem = new Item()
+            if (string.IsNullOrEmpty(ItemId))
             {
-                Site = Text,
-                User = Description
-            };
+                Item newItem = new Item()
+                {
+                    Site = Site,
+                    User = User
+                };
 
-            await DataStore.AddItemAsync(newItem);
-
+                await DataStore.AddItemAsync(newItem);
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("TODO", "Save Item", "OK");
+            }
             // This will pop the current page off the navigation stack
             await Shell.Current.GoToAsync("..");
         }

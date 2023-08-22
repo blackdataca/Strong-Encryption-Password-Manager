@@ -1,4 +1,5 @@
 ﻿using MyIdMobile.Models;
+using MyIdMobile.Views;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -12,7 +13,9 @@ namespace MyIdMobile.ViewModels
         private string itemId;
         private string _site;
         private string _user;
-        public string Id { get; set; }
+        
+
+        public Command EditItemCommand { get; }
 
         public string Site
         {
@@ -39,19 +42,37 @@ namespace MyIdMobile.ViewModels
             }
         }
 
+        public ItemDetailViewModel()
+        {
+            EditItemCommand = new Command(OnEditItem);
+        }
+
+
         public async void LoadItemId(string itemId)
         {
             try
             {
                 var item = await DataStore.GetItemAsync(itemId);
-                Id = item.UniqId;
+                
                 Site = item.Site;
                 User = item.User;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Debug.WriteLine("Failed to Load Item");
+                await App.Current.MainPage.DisplayAlert("Failed to Load Item", ex.ToString(), "OK");
             }
+        }
+
+        async void OnEditItem()
+        {
+            if (itemId == null)
+                return;
+
+            // This will push the ItemDetailPage onto the navigation stack
+            await Shell.Current.GoToAsync($"{nameof(NewItemPage)}?{nameof(NewItemViewModel.ItemId)}={itemId}");
+
+
+
         }
     }
 }
