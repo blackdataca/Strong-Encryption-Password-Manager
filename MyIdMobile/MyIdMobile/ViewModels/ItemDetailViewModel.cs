@@ -29,6 +29,20 @@ namespace MyIdMobile.ViewModels
             set => SetProperty(ref _user, value);
         }
 
+        private string _password;
+        public string Password
+        {
+            get =>  _password;
+            set => SetProperty(ref _password, value);
+        }
+
+        private string _memo;
+        public string Memo
+        {
+            get => _memo;
+            set => SetProperty(ref _memo, value);
+        }
+
         public string ItemId
         {
             get
@@ -56,6 +70,12 @@ namespace MyIdMobile.ViewModels
                 
                 Site = item.Site;
                 User = item.User;
+                if (!string.IsNullOrEmpty(item.Password))
+                {
+                    int len = item.Password.Length;
+                    Password = new string('●', len);
+                }
+                Memo = item.Memo;
             }
             catch (Exception ex)
             {

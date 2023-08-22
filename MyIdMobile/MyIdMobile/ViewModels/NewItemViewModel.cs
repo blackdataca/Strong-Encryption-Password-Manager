@@ -55,6 +55,8 @@ namespace MyIdMobile.ViewModels
             var item = await DataStore.GetItemAsync(itemId);
             Site = item.Site;
             User = item.User;
+            Password = item.Password;
+            Memo = item.Memo;
 
             //Device.BeginInvokeOnMainThread(() => { DeleteVisible = "True";  });
             DeleteVisible = "True";
@@ -78,6 +80,20 @@ namespace MyIdMobile.ViewModels
             set => SetProperty(ref user, value);
         }
 
+        private string _password;
+        public string Password
+        {
+            get => _password;
+            set => SetProperty(ref _password, value);
+        }
+
+        private string _memo;
+        public string Memo
+        {
+            get => _memo;
+            set => SetProperty(ref _memo, value);
+        }
+
         private async void OnCancel()
         {
             // This will pop the current page off the navigation stack
@@ -89,7 +105,9 @@ namespace MyIdMobile.ViewModels
             Item newItem = new Item()
             {
                 Site = Site,
-                User = User
+                User = User,
+                Password = Password,
+                Memo = Memo,
             };
             if (string.IsNullOrEmpty(ItemId))
             {

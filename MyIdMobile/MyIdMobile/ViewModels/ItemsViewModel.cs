@@ -29,6 +29,14 @@ namespace MyIdMobile.ViewModels
             AddItemCommand = new Command(OnAddItem);
         }
 
+        private string _title;
+        public string Title
+        {
+            get => _title; 
+            //set { _title = value; OnPropertyChanged(); }
+            set => SetProperty(ref _title, value); 
+        }
+
         async Task ExecuteLoadItemsCommand()
         {
             IsBusy = true;
@@ -53,6 +61,8 @@ namespace MyIdMobile.ViewModels
                         if (!item.Deleted)
                             VisibleItems.Add(item);
                     }
+
+                    Title = $"{VisibleItems.Count:N0} items";
                 }
             }
             catch (Exception ex)

@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MyIdMobile.Views.ItemsPage"
-             Title="Browse"
+             Title="{Binding Title}"
              xmlns:local="clr-namespace:MyIdMobile.ViewModels"  
              xmlns:model="clr-namespace:MyIdMobile.Models"  
              x:Name="BrowseItemsPage" BackgroundColor="{AppThemeBinding Dark=Black}">

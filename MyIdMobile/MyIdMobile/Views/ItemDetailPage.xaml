@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MyIdMobile.Views.ItemDetailPage"
-             Title="{Binding Title}">
+             >
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Edit" Command="{Binding EditItemCommand}" />
     </ContentPage.ToolbarItems>
@@ -10,8 +10,17 @@
     <StackLayout Spacing="20" Padding="15" BackgroundColor="{AppThemeBinding Dark=Black}">
         <Label Text="Site:" FontSize="Medium" />
         <Label Text="{Binding Site}" FontSize="Small"/>
+        
         <Label Text="User:" FontSize="Medium" />
         <Label Text="{Binding User}" FontSize="Small"/>
+
+
+        <Label Text="Password:" FontSize="Medium" />
+        <Label Text="{Binding Password}" FontSize="Small" />
+
+        <Label Text="Memo:" FontSize="Medium" />
+        <Label Text="{Binding Memo}" FontSize="Small"/>
+
     </StackLayout>
     
 </ContentPage>
