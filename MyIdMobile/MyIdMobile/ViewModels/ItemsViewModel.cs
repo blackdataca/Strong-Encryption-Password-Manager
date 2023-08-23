@@ -77,9 +77,9 @@ namespace MyIdMobile.ViewModels
 
         public void OnAppearing()
         {
-            IsBusy = true;
+            //IsBusy = true;
             SelectedItem = null;
-            _ = ExecuteLoadItemsCommand();
+            //_ = ExecuteLoadItemsCommand();
         }
 
 
