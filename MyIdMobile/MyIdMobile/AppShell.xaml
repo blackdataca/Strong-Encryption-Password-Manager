@@ -103,6 +103,7 @@
     <TabBar>
         <ShellContent Route="LoginPage" ContentTemplate="{DataTemplate local:LoginPage}" />
         <ShellContent Route="WelcomePage" ContentTemplate="{DataTemplate local:WelcomePage}" />
+        <ShellContent Route="SyncPage" ContentTemplate="{DataTemplate local:SyncPage}" />
     </TabBar>
 
     <!-- Optional Templates 

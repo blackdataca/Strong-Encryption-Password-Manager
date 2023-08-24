@@ -39,6 +39,7 @@ namespace MyIdMobile.ViewModels
 
         async Task ExecuteLoadItemsCommand()
         {
+
             IsBusy = true;
 
             try
@@ -79,7 +80,8 @@ namespace MyIdMobile.ViewModels
         {
             //IsBusy = true;
             SelectedItem = null;
-            //_ = ExecuteLoadItemsCommand();
+            if (!IsBusy)
+                _ = ExecuteLoadItemsCommand();
         }
 
 
