@@ -2,6 +2,7 @@
 using MyIdMobile.Views;
 using System;
 using System.Collections.Generic;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace MyIdMobile
@@ -22,8 +23,16 @@ namespace MyIdMobile
         }
         private async void OnMenuSyncClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//SyncPage");
-            //DependencyService.Get<Services.IMessage>().ShortAlert("Synced");
+
+            string email = await SecureStorage.GetAsync("WebSyncEmail");
+            if (string.IsNullOrEmpty(email))
+                await Shell.Current.GoToAsync("//SyncPage");
+            else
+            {
+                string url = $"//{nameof(SyncPage)}?{nameof(SyncViewModel.Email)}={email}";
+                //await Shell.Current.GoToAsync("//SyncPage");
+                await Shell.Current.GoToAsync(url);
+            }
         }
     }
 }

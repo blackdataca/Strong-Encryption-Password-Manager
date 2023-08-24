@@ -1,8 +1,14 @@
 ﻿using MyIdMobile.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
@@ -253,6 +259,167 @@ namespace MyIdMobile.Services
             return await Task.FromResult(_allItems);
         }
 
-        
+
+        public async Task<bool> WebSync()
+        {
+            string userEmail = await SecureStorage.GetAsync("WebSyncEmail");
+            string userPassmd5 = await SecureStorage.GetAsync("WebSyncHash");
+
+            if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5))
+            {
+                await App.Current.MainPage.DisplayAlert("WebSync", "Require credential", "OK");
+                return false;
+            }
+            //ToolSyncVisual(0);
+
+            userEmail = userEmail.ToLower();
+
+            var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(MyEncryption.UcFirst(userEmail)));
+
+            var payloads = new List<object>();
+
+            foreach (var item in _allItems)
+            {
+                var recId = item.UniqId;
+                var key = userEmail + userPassmd5 + recId;
+
+                var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
+
+
+
+                string payload = MyEncryption.EncryptString(json, key, recId);
+
+                var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
+
+                payloads.Add(rec);
+            }
+            HttpClientHandler handler = new HttpClientHandler();
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+            {
+                return true;
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+
+                var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
+
+                var dataString = JsonConvert.SerializeObject(vm);
+
+                string err = "";
+                try
+                {
+                    Debug.WriteLine($"Comprssing {dataString.Length:N0} bytes");
+
+                    // Compress the data using gzip
+                    byte[] compressedData;
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using (GZipStream gzipStream = new GZipStream(ms, CompressionMode.Compress))
+                        using (StreamWriter writer = new StreamWriter(gzipStream))
+                        {
+                            writer.Write(dataString);
+                        }
+                        compressedData = ms.ToArray();
+                    }
+
+
+                    Debug.WriteLine($"Uploading {compressedData.Length:N0} bytes");
+
+                    var start = new Stopwatch();
+                    start.Start();
+                    // Prepare the content to send in the request
+                    HttpContent httpContent = new ByteArrayContent(compressedData);
+
+                    // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
+                    httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                    httpContent.Headers.ContentEncoding.Add("gzip");
+
+                    // Send the POST request using PostAsync method
+                    HttpResponseMessage res = await client.PostAsync("https://192.168.0.68:8443/WebSync.php", httpContent);
+
+                    // Check if the request was successful
+                    if (res.IsSuccessStatusCode)
+                    {
+                        // Read the response content as a string
+                        string response = await res.Content.ReadAsStringAsync();
+
+
+                        Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
+
+                        JObject joResponse = JObject.Parse(response);
+                        err = joResponse["Error"].ToString();
+                        if (err == "0")
+                        {
+                            int recNew = 0;
+                            if (joResponse["Return"] != null)
+                            {
+                                foreach (var row in joResponse["Return"])
+                                {
+
+                                    var recId = row["RecId"].ToString();
+                                    var key = userEmail + userPassmd5 + recId;
+
+                                    string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
+
+                                    var item = JsonConvert.DeserializeObject<Item>(payload);
+
+                                    var aItem = await GetItemAsync(recId);
+                                    if (aItem == null)
+                                    {
+                                        aItem = new Item();
+                                        aItem.UniqId = recId;
+                                        _allItems.Add(aItem);
+                                    }
+                                    aItem.User = item.User;
+                                    aItem.Password = item.Password;
+                                    aItem.Site = item.Site;
+                                    aItem.Memo = item.Memo;
+                                    aItem.Deleted = item.Deleted;
+                                    aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
+                                    recNew++;
+                                }
+                                if (recNew > 0)
+                                {
+                                    await SaveToDiskAsync(false);
+                                    //SaveToDisk(false);
+                                    //ShowNumberOfItems();
+                                    //UxSearchBox_TextChanged();
+                                }
+                            }
+
+                            
+                        }
+                        else
+                        {
+                            //MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            await App.Current.MainPage.DisplayAlert("WebSync", err, "OK");
+                        }
+                    }
+                    else
+                    {
+                        // Handle unsuccessful response
+                        Debug.WriteLine(res.ToString());
+                        //MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        await App.Current.MainPage.DisplayAlert("WebSync", $"Error: {res.StatusCode}", "OK");
+                    }
+
+
+                }
+                catch (Exception ex)
+                {
+                    //MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    await App.Current.MainPage.DisplayAlert("WebSync", ex.Message, "OK");
+                }
+
+                Preferences.Set("WebSyncSuccess", err == "0" ? 1 : 0);
+
+                return err == "0";
+                //Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);
+                //ToolSyncVisual(err == "0" ? 1 : 2);
+            }
+
+        }
+
     }
 }

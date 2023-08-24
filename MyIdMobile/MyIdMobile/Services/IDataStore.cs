@@ -14,5 +14,6 @@ namespace MyIdMobile.Services
 
         Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null);
         Task SaveToDiskAsync(bool webSync = true);
+        Task<bool> WebSync();
     }
 }
