@@ -2,8 +2,11 @@
 using MyIdMobile.Services;
 using MyIdMobile.Views;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data.Common;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 
@@ -13,7 +16,7 @@ namespace MyIdMobile.ViewModels
     {
         private Item _selectedItem;
 
-        public ObservableCollection<Item> VisibleItems { get; }
+        public ObservableCollection<Item> VisibleItems { get; set; }
         public Command LoadItemsCommand { get; }
         public Command AddItemCommand { get; }
         public Command<Item> ItemTapped { get; }
@@ -108,6 +111,26 @@ namespace MyIdMobile.ViewModels
 
             // This will push the ItemDetailPage onto the navigation stack
             await Shell.Current.GoToAsync($"{nameof(ItemDetailPage)}?{nameof(ItemDetailViewModel.ItemId)}={item.UniqId}");
+        }
+
+        public void SearchBar_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            List<Item> items;
+            if (string.IsNullOrEmpty(e.NewTextValue))
+                items = DataStore.AllItems;
+            else
+                items = DataStore.AllItems.Where(s => 
+                (s.Site != null && s.Site.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (s.User != null && s.User.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (s.Password != null && s.Password.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (s.Memo != null && s.Memo.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0)
+                ).ToList();
+            VisibleItems.Clear();
+            foreach (var item in items)
+            {
+                if (!item.Deleted)
+                    VisibleItems.Add(item);
+            }
         }
     }
 }

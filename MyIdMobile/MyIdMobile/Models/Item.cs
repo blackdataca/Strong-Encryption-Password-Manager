@@ -8,10 +8,10 @@ namespace MyIdMobile.Models
     {
         public Guid Uid = Guid.NewGuid();
         public string UniqId = MyIdMobile.Services.MyEncryption.UniqId("", true);
-        private string site;
-        private string user;
-        public string Password;
-        public string Memo;
+        private string site = "";
+        private string user = "";
+        public string Password = "";
+        public string Memo ="";
 
         public DateTime Changed = DateTime.UtcNow;
 

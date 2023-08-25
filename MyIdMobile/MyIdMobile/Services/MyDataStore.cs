@@ -22,6 +22,8 @@ namespace MyIdMobile.Services
     {
         private List<Item> _allItems = new List<Item>();
 
+        public List<Item> AllItems { get => _allItems; set => _allItems = value; }
+
         public MyDataStore()
         {
 

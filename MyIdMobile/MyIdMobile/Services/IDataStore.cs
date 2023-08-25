@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyIdMobile.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -15,5 +16,7 @@ namespace MyIdMobile.Services
         Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null);
         Task SaveToDiskAsync(bool webSync = true);
         Task<bool> WebSync();
+
+        List<Item> AllItems { get; set; }
     }
 }
