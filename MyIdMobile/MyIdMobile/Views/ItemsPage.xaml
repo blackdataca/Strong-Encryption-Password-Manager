@@ -15,7 +15,7 @@
       https://docs.microsoft.com/xamarin/xamarin-forms/app-fundamentals/data-binding/compiled-bindings
     -->
     <StackLayout>
-        <SearchBar Placeholder="Search" TextChanged="SearchBar_TextChanged"/>
+        <SearchBar Placeholder="Search" TextChanged="SearchBar_TextChanged" PlaceholderColor="{AppThemeBinding Dark=Silver}" TextColor="{AppThemeBinding Dark=Silver}" CancelButtonColor="{AppThemeBinding Dark=Silver}" />
         <RefreshView x:DataType="local:ItemsViewModel" Command="{Binding LoadItemsCommand}" IsRefreshing="{Binding IsBusy, Mode=TwoWay}">
         <CollectionView x:Name="ItemsListView"
                 ItemsSource="{Binding VisibleItems}"
