@@ -13,10 +13,10 @@ namespace MyId
     {
         public Guid Uid = Guid.NewGuid();
         public string UniqId = MyEncryption.UniqId("", true);
-        public string Site;
-        public string User;
-        public string Password;
-        public string Memo;
+        public string Site = "";
+        public string User ="";
+        public string Password="";
+        public string Memo="";
 
         public DateTime Changed = DateTime.UtcNow;
 

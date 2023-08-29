@@ -23,6 +23,8 @@
             <Label Text="Files" FontSize="Medium" />
             <Entry Placeholder="TODO" Text="{Binding Files, Mode=TwoWay}" FontSize="Medium"  ClearButtonVisibility="WhileEditing"  />
             
+            
+            
             <StackLayout Orientation="Horizontal" VerticalOptions="Start">
                 <Button Text="Cancel" Command="{Binding CancelCommand}" HorizontalOptions="FillAndExpand"></Button>
                 <Button Text="Save" Command="{Binding SaveCommand}" HorizontalOptions="FillAndExpand"></Button>

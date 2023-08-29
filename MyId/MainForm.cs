@@ -323,7 +323,7 @@ namespace MyId
 
                         string memo = aItem.Memo;
                         if (aItem.Images != null && aItem.Images.Count > 0)
-                            memo = $"(File{(aItem.Images.Count == 1 ? "" : "s")}) {aItem.Memo}";
+                            memo = $"({aItem.Images.Count} file{(aItem.Images.Count == 1 ? "" : "s")}) {aItem.Memo}";
 
                         if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != memo)
                         {
@@ -375,7 +375,7 @@ namespace MyId
             li.SubItems[2].Text = ShowHint(li, idItem);
             if (idItem.Images != null && idItem.Images.Count > 0)
             {
-                li.SubItems[4].Text = $"(File{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
+                li.SubItems[4].Text = $"({idItem.Images.Count} file{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
             }
         }
 
@@ -1049,9 +1049,10 @@ namespace MyId
                 uxList.Items.Clear();
                 foreach (var idItem in _idList)
                 {
-                    if ((idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                        idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                        idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0
+                    if ((
+                        (idItem.Site != null && idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0) ||
+                        (idItem.User != null && idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0) ||
+                        (idItem.Memo != null && idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0)
                         ) && ShowDeleted(idItem.Deleted))
                     {
                         AddListItem(idItem);
@@ -1660,8 +1661,6 @@ namespace MyId
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
 
-
-
                 string payload = MyEncryption.EncryptString(json, key, recId);
 
                 var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
@@ -1669,10 +1668,15 @@ namespace MyId
                 payloads.Add(rec);
             }
 
+
+
             using (var client = new HttpClient())
             {
+                string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userEmail}:{md}"));
 
-                var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+                var vm = new {payloads.Count, Payloads = payloads };
+                //var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
 
@@ -1726,7 +1730,7 @@ namespace MyId
                             {
                                 foreach (var row in joResponse["Return"])
                                 {
-
+                              
                                     var recId = row["RecId"].ToString();
                                     var key = userEmail + userPassmd5 + recId;
 
@@ -1736,10 +1740,34 @@ namespace MyId
 
                                     IdItem aItem = GetAItemByRecId(recId);
                                     if (aItem == null)
-                                    {
+                                    {   //new record from server
                                         aItem = new IdItem();
                                         aItem.UniqId = recId;
                                         _idList.Add(aItem);
+
+                                        //TODO download files from server
+                                    }
+                                    else
+                                    {  //updated records from app, upload files
+
+                                        var formData = new MultipartFormDataContent();
+
+                                        // Add each file to the FormData
+                                        foreach (var file in aItem.Images)
+                                        {
+                                            string f = Path.Combine(KnownFolders.DataDir, file.Key);
+                                            var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(f));
+                                            formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
+                                        }
+
+                                        Debug.WriteLine($"Uploading {aItem.Images.Count} files...");
+
+                                        var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
+                                       
+                                        string responseBody = await uploadResponse.Content.ReadAsStringAsync();
+                                        int statusCode = (int)uploadResponse.StatusCode;
+
+                                        Debug.WriteLine($"Upload Response ({statusCode}): {responseBody}");
                                     }
                                     aItem.User = item.User;
                                     aItem.Password = item.Password;
@@ -1783,7 +1811,67 @@ namespace MyId
             
         }
 
+        static async Task Main(string[] args)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var formData = new MultipartFormDataContent();
 
+                // Add each file to the FormData
+                var files = new string[] { "file1.txt", "file2.txt" };
+                foreach (var file in files)
+                {
+                    var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(file));
+                    formData.Add(fileContent, "files[]", file); // 'files[]' is the name of the PHP input field
+                }
+
+                var response = await httpClient.PostAsync("https://your-php-server/upload.php", formData);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Files uploaded successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Upload failed.");
+                }
+            }
+        }
+
+        private async Task<string> GetTokenAsync(string uid, string pwd)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("cache-control", "no-cache");
+                client.DefaultRequestHeaders.Add("content-type", "application/x-www-form-urlencoded");
+         
+                var form = new Dictionary<string, string>
+                {
+                    {"grant_type", "client_credentials"},
+                    {"client_id", uid},
+                    {"client_secret", pwd},
+                };
+                try
+                {
+                    HttpResponseMessage tokenResponse = await client.PostAsync("https://192.168.0.68:8443/token.php", new FormUrlEncodedContent(form));
+                    if (tokenResponse.IsSuccessStatusCode)
+                    {
+                        var jsonContent = await tokenResponse.Content.ReadAsStringAsync();
+                        var jobj = JsonConvert.DeserializeObject<JObject>(jsonContent);
+                        return jobj["access_token"].ToString();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Token request failed: {tokenResponse.StatusCode}", "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            return null;
+        }
     }
 
 
