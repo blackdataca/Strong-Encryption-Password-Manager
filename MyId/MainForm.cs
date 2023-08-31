@@ -524,7 +524,7 @@ namespace MyId
                 }
             }
             if (webSync)
-                _ = WebSync();
+                _ = WebSync(false);
         }
 
         /// <summary>
@@ -730,7 +730,7 @@ namespace MyId
                                 //password match
                                 success = true;
                                 timer1.Enabled = true;
-                                _ = WebSync();
+                                _ = WebSync(false);
                                 break;
                             }
                             else
@@ -1633,12 +1633,12 @@ namespace MyId
                     break;
             }
 
-            await WebSync();
+            await WebSync(true);
 
 
         }
 
-        private async Task WebSync()
+        private async Task WebSync(bool fromMemu)
         {
             string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
             string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
@@ -1660,7 +1660,7 @@ namespace MyId
                 var key = userEmail + userPassmd5 + recId;
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
-
+                
                 string payload = MyEncryption.EncryptString(json, key, recId);
 
                 var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
@@ -1760,14 +1760,17 @@ namespace MyId
                                             formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
                                         }
 
-                                        Debug.WriteLine($"Uploading {aItem.Images.Count} files...");
+                                        if (formData.Count() > 0)
+                                        {
+                                            Debug.WriteLine($"Uploading {aItem.Images.Count} files...");
 
-                                        var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
-                                       
-                                        string responseBody = await uploadResponse.Content.ReadAsStringAsync();
-                                        int statusCode = (int)uploadResponse.StatusCode;
+                                            var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
 
-                                        Debug.WriteLine($"Upload Response ({statusCode}): {responseBody}");
+                                            string responseBody = await uploadResponse.Content.ReadAsStringAsync();
+                                            int statusCode = (int)uploadResponse.StatusCode;
+
+                                            Debug.WriteLine($"Upload Response ({statusCode}): {responseBody}");
+                                        }
                                     }
                                     aItem.User = item.User;
                                     aItem.Password = item.Password;
@@ -1788,21 +1791,29 @@ namespace MyId
                         }
                         else
                         {
-                            MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            if (fromMemu)
+                                MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            else
+                                uxItemCountStatus.Text = err;
                         }
                     }
                     else
                     {
                         // Handle unsuccessful response
-                        Debug.WriteLine(res.ToString());
-                        MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        if (fromMemu)
+                            MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        else
+                            uxItemCountStatus.Text = $"Error: {res.StatusCode}";
                     }
 
 
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (fromMemu)
+                        MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    else
+                        uxItemCountStatus.Text = ex.Message;
                 }
 
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);

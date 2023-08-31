@@ -303,8 +303,11 @@ namespace MyIdMobile.Services
 
             using (var client = new HttpClient(handler))
             {
+                string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userEmail}:{md}"));
 
-                var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+
+                var vm = new { payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
 
@@ -372,6 +375,37 @@ namespace MyIdMobile.Services
                                         aItem = new Item();
                                         aItem.UniqId = recId;
                                         _allItems.Add(aItem);
+
+                                        //TODO download files from server
+                                    }
+                                    else
+                                    {
+                                        //updated records from app, upload files
+
+                                        var formData = new MultipartFormDataContent();
+
+                                        // Add each file to the FormData
+                                        foreach (var file in aItem.Images)
+                                        {
+                                            string f = await SecureStorage.GetAsync( file.Key);
+                                            if (!string.IsNullOrEmpty(f))
+                                            {
+                                                var fileContent = new ByteArrayContent(Convert.FromBase64String(f));
+                                                formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
+                                            }
+                                        }
+
+                                        if (formData.Count() > 0)
+                                        {
+                                            Debug.WriteLine($"Uploading {aItem.Images.Count} files...");
+
+                                            var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
+
+                                            string responseBody = await uploadResponse.Content.ReadAsStringAsync();
+                                            int statusCode = (int)uploadResponse.StatusCode;
+
+                                            Debug.WriteLine($"Upload Response ({statusCode}): {responseBody}");
+                                        }
                                     }
                                     aItem.User = item.User;
                                     aItem.Password = item.Password;
