@@ -18,6 +18,22 @@ namespace MyId
         public string Password="";
         public string Memo="";
 
+        public string Memo1Line
+        {
+            get
+            {
+
+                string memo = "";
+                if (!string.IsNullOrWhiteSpace(Memo))
+                {
+                    return Memo.Replace("\n", " ");
+                }
+                if (Images != null && Images.Count > 0)
+                    memo = $"({Images.Count} file{(Images.Count == 1 ? "" : "s")}) {memo}";
+                return memo;
+            }
+        }
+
         public DateTime Changed = DateTime.UtcNow;
 
         //encrypted file name, original name

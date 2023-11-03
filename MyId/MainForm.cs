@@ -321,11 +321,7 @@ namespace MyId
                             Cursor.Current = Cursors.Default;
                         }
 
-                        string memo = aItem.Memo;
-                        if (aItem.Images != null && aItem.Images.Count > 0)
-                            memo = $"({aItem.Images.Count} file{(aItem.Images.Count == 1 ? "" : "s")}) {aItem.Memo}";
-
-                        if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != memo)
+                        if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != aItem.Memo1Line)
                         {
                             aItem.Changed = DateTime.UtcNow;
 
@@ -333,7 +329,7 @@ namespace MyId
                             li.SubItems[1].Text = aItem.User;
                             li.SubItems[2].Text = ShowHint(li, aItem);
                             li.SubItems[3].Text = aItem.ChangedHuman;
-                            li.SubItems[4].Text = memo;
+                            li.SubItems[4].Text = aItem.Memo1Line;
                             
                             SaveToDisk();
                         }
@@ -369,14 +365,11 @@ namespace MyId
         private void AddListItem(IdItem idItem)
         {
 
-            var item = new ListViewItem(new string[] { idItem.Site, idItem.User, "*****", idItem.ChangedHuman, idItem.Memo });
+            var item = new ListViewItem(new string[] { idItem.Site, idItem.User, "*****", idItem.ChangedHuman, idItem.Memo1Line });
             ListViewItem li = uxList.Items.Add(item);
             li.Tag = idItem.Uid.ToString();
             li.SubItems[2].Text = ShowHint(li, idItem);
-            if (idItem.Images != null && idItem.Images.Count > 0)
-            {
-                li.SubItems[4].Text = $"({idItem.Images.Count} file{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
-            }
+           
         }
 
         private string ShowHint(ListViewItem li, IdItem idItem)
