@@ -67,6 +67,8 @@ namespace MyId
             // watch for idle events and any message that might break idle
             //Application.Idle += new EventHandler(Application_OnIdle);
             Application.AddMessageFilter(this);
+
+            ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
         }
 
 
@@ -319,11 +321,7 @@ namespace MyId
                             Cursor.Current = Cursors.Default;
                         }
 
-                        string memo = aItem.Memo;
-                        if (aItem.Images != null && aItem.Images.Count > 0)
-                            memo = $"(File{(aItem.Images.Count == 1 ? "" : "s")}) {aItem.Memo}";
-
-                        if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != memo)
+                        if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != aItem.Memo1Line)
                         {
                             aItem.Changed = DateTime.UtcNow;
 
@@ -331,7 +329,7 @@ namespace MyId
                             li.SubItems[1].Text = aItem.User;
                             li.SubItems[2].Text = ShowHint(li, aItem);
                             li.SubItems[3].Text = aItem.ChangedHuman;
-                            li.SubItems[4].Text = memo;
+                            li.SubItems[4].Text = aItem.Memo1Line;
                             
                             SaveToDisk();
                         }
@@ -367,14 +365,11 @@ namespace MyId
         private void AddListItem(IdItem idItem)
         {
 
-            var item = new ListViewItem(new string[] { idItem.Site, idItem.User, "*****", idItem.ChangedHuman, idItem.Memo });
+            var item = new ListViewItem(new string[] { idItem.Site, idItem.User, "*****", idItem.ChangedHuman, idItem.Memo1Line });
             ListViewItem li = uxList.Items.Add(item);
             li.Tag = idItem.Uid.ToString();
             li.SubItems[2].Text = ShowHint(li, idItem);
-            if (idItem.Images != null && idItem.Images.Count > 0)
-            {
-                li.SubItems[4].Text = $"(File{(idItem.Images.Count == 1 ? "" : "s")}) {li.SubItems[4].Text}";
-            }
+           
         }
 
         private string ShowHint(ListViewItem li, IdItem idItem)
@@ -449,21 +444,6 @@ namespace MyId
                         byte[] masterPin = Encoding.Unicode.GetBytes(si.uxMasterPin.Text);
                         SaveKeyIv("Pin", masterPin);
                         CreateNewKey(masterPin);
-
-                        //Create private key
-
-                        //var key = new Rfc2898DeriveBytes(Encoding.Unicode.GetBytes(masterPin), salt, 50000);
-                        //var riKey = key.GetBytes(32);  //256 bits = 32 bytes
-                        //var riIv = key.GetBytes(16);  //128 bits = 16 bytes
-
-                        //SaveKeyIv("RiKey", riKey);
-                        //SaveKeyIv("RiIv", riIv);
-
-                        //if (si.uxSavePrivateKeyTo.Checked)
-                        //{  //save to disk
-                        //    SavePrivateKey(si.uxPrivateKeyFile.Text);
-                        //}
-
                         SaveToDisk();
                         return true;
                     case DialogResult.Retry:
@@ -537,7 +517,7 @@ namespace MyId
                 }
             }
             if (webSync)
-                _ = WebSync();
+                _ = WebSync(false);
         }
 
         /// <summary>
@@ -743,7 +723,7 @@ namespace MyId
                                 //password match
                                 success = true;
                                 timer1.Enabled = true;
-                                _ = WebSync();
+                                _ = WebSync(false);
                                 break;
                             }
                             else
@@ -818,7 +798,7 @@ namespace MyId
                     }
                 case "Key":
                     {
-                        byte[] iv32 = GetKeyIv("IV");// (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
+                        byte[] iv32 = GetKeyIv("IV");
                         byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
                         if (ciphertext == null)
                             return null;
@@ -826,10 +806,7 @@ namespace MyId
 
                         return plaintext;
 
-                        //using (SHA256 mySHA256 = SHA256.Create())
-                        //{
-                        //    return mySHA256.ComputeHash(plaintext);
-                        //}
+
                     }
                 case "Pin":
 
@@ -1065,9 +1042,10 @@ namespace MyId
                 uxList.Items.Clear();
                 foreach (var idItem in _idList)
                 {
-                    if ((idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                        idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                        idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0
+                    if ((
+                        (idItem.Site != null && idItem.Site.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0) ||
+                        (idItem.User != null && idItem.User.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0) ||
+                        (idItem.Memo != null && idItem.Memo.IndexOf(searchTerm, StringComparison.CurrentCultureIgnoreCase) >= 0)
                         ) && ShowDeleted(idItem.Deleted))
                     {
                         AddListItem(idItem);
@@ -1648,12 +1626,12 @@ namespace MyId
                     break;
             }
 
-            await WebSync();
+            await WebSync(true);
 
 
         }
 
-        private async Task WebSync()
+        private async Task WebSync(bool fromMemu)
         {
             string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
             string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
@@ -1675,9 +1653,7 @@ namespace MyId
                 var key = userEmail + userPassmd5 + recId;
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
-
-
-
+                
                 string payload = MyEncryption.EncryptString(json, key, recId);
 
                 var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
@@ -1685,10 +1661,15 @@ namespace MyId
                 payloads.Add(rec);
             }
 
+
+
             using (var client = new HttpClient())
             {
+                string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userEmail}:{md}"));
 
-                var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+                var vm = new {payloads.Count, Payloads = payloads };
+                //var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
 
@@ -1722,7 +1703,7 @@ namespace MyId
                     httpContent.Headers.ContentEncoding.Add("gzip");
 
                     // Send the POST request using PostAsync method
-                    HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
+                    HttpResponseMessage res = await client.PostAsync("https://192.168.0.68:8443/WebSync.php", httpContent);
 
                     // Check if the request was successful
                     if (res.IsSuccessStatusCode)
@@ -1742,7 +1723,7 @@ namespace MyId
                             {
                                 foreach (var row in joResponse["Return"])
                                 {
-
+                              
                                     var recId = row["RecId"].ToString();
                                     var key = userEmail + userPassmd5 + recId;
 
@@ -1752,10 +1733,37 @@ namespace MyId
 
                                     IdItem aItem = GetAItemByRecId(recId);
                                     if (aItem == null)
-                                    {
+                                    {   //new record from server
                                         aItem = new IdItem();
                                         aItem.UniqId = recId;
                                         _idList.Add(aItem);
+
+                                        //TODO download files from server
+                                    }
+                                    else
+                                    {  //updated records from app, upload files
+
+                                        var formData = new MultipartFormDataContent();
+
+                                        // Add each file to the FormData
+                                        foreach (var file in aItem.Images)
+                                        {
+                                            string f = Path.Combine(KnownFolders.DataDir, file.Key);
+                                            var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(f));
+                                            formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
+                                        }
+
+                                        if (formData.Count() > 0)
+                                        {
+                                            Debug.WriteLine($"Uploading {aItem.Images.Count} files...");
+
+                                            var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
+
+                                            string responseBody = await uploadResponse.Content.ReadAsStringAsync();
+                                            int statusCode = (int)uploadResponse.StatusCode;
+
+                                            Debug.WriteLine($"Upload Response ({statusCode}): {responseBody}");
+                                        }
                                     }
                                     aItem.User = item.User;
                                     aItem.Password = item.Password;
@@ -1776,21 +1784,29 @@ namespace MyId
                         }
                         else
                         {
-                            MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            if (fromMemu)
+                                MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            else
+                                uxItemCountStatus.Text = err;
                         }
                     }
                     else
                     {
                         // Handle unsuccessful response
-                        Debug.WriteLine(res.ToString());
-                        MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        if (fromMemu)
+                            MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        else
+                            uxItemCountStatus.Text = $"Error: {res.StatusCode}";
                     }
 
 
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (fromMemu)
+                        MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    else
+                        uxItemCountStatus.Text = ex.Message;
                 }
 
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);
@@ -1799,7 +1815,67 @@ namespace MyId
             
         }
 
+        static async Task Main(string[] args)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var formData = new MultipartFormDataContent();
 
+                // Add each file to the FormData
+                var files = new string[] { "file1.txt", "file2.txt" };
+                foreach (var file in files)
+                {
+                    var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(file));
+                    formData.Add(fileContent, "files[]", file); // 'files[]' is the name of the PHP input field
+                }
+
+                var response = await httpClient.PostAsync("https://your-php-server/upload.php", formData);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Files uploaded successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Upload failed.");
+                }
+            }
+        }
+
+        private async Task<string> GetTokenAsync(string uid, string pwd)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("cache-control", "no-cache");
+                client.DefaultRequestHeaders.Add("content-type", "application/x-www-form-urlencoded");
+         
+                var form = new Dictionary<string, string>
+                {
+                    {"grant_type", "client_credentials"},
+                    {"client_id", uid},
+                    {"client_secret", pwd},
+                };
+                try
+                {
+                    HttpResponseMessage tokenResponse = await client.PostAsync("https://192.168.0.68:8443/token.php", new FormUrlEncodedContent(form));
+                    if (tokenResponse.IsSuccessStatusCode)
+                    {
+                        var jsonContent = await tokenResponse.Content.ReadAsStringAsync();
+                        var jobj = JsonConvert.DeserializeObject<JObject>(jsonContent);
+                        return jobj["access_token"].ToString();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Token request failed: {tokenResponse.StatusCode}", "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            return null;
+        }
     }
 
 

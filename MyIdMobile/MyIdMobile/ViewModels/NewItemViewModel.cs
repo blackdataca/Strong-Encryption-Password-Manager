@@ -1,4 +1,5 @@
 ﻿using MyIdMobile.Models;
+using MyIdMobile.Views;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,10 +8,16 @@ using Xamarin.Forms;
 
 namespace MyIdMobile.ViewModels
 {
+    [QueryProperty(nameof(ItemId), nameof(ItemId))]
     public class NewItemViewModel : BaseViewModel
     {
-        private string text;
-        private string description;
+        private string site;
+        private string user;
+        private string itemId;
+        public Command SaveCommand { get; }
+        public Command CancelCommand { get; }
+        public Command DeleteCommand { get; }
+
 
         public NewItemViewModel()
         {
@@ -18,28 +25,74 @@ namespace MyIdMobile.ViewModels
             CancelCommand = new Command(OnCancel);
             this.PropertyChanged +=
                 (_, __) => SaveCommand.ChangeCanExecute();
+            DeleteCommand = new Command(OnDelete);
+
+            DeleteVisible = "False";
+        }
+        public string ItemId
+        {
+            get
+            {
+                return itemId;
+            }
+            set
+            {
+                itemId = value;
+                LoadItemId(value);
+            }
+        }
+
+        private string _deleteVisible;
+        public string DeleteVisible {
+            get => _deleteVisible;
+            set => SetProperty(ref _deleteVisible, value);
+        }
+
+            
+        public async void LoadItemId(string itemId)
+        {
+
+            var item = await DataStore.GetItemAsync(itemId);
+            Site = item.Site;
+            User = item.User;
+            Password = item.Password;
+            Memo = item.Memo;
+
+            //Device.BeginInvokeOnMainThread(() => { DeleteVisible = "True";  });
+            DeleteVisible = "True";
         }
 
         private bool ValidateSave()
         {
-            return !String.IsNullOrWhiteSpace(text)
-                && !String.IsNullOrWhiteSpace(description);
+            return !String.IsNullOrWhiteSpace(site)
+                && !String.IsNullOrWhiteSpace(user);
         }
 
-        public string Text
+        public string Site
         {
-            get => text;
-            set => SetProperty(ref text, value);
+            get => site;
+            set => SetProperty(ref site, value);
         }
 
-        public string Description
+        public string User
         {
-            get => description;
-            set => SetProperty(ref description, value);
+            get => user;
+            set => SetProperty(ref user, value);
         }
 
-        public Command SaveCommand { get; }
-        public Command CancelCommand { get; }
+        private string _password;
+        public string Password
+        {
+            get => _password;
+            set => SetProperty(ref _password, value);
+        }
+
+        private string _memo;
+        public string Memo
+        {
+            get => _memo;
+            set => SetProperty(ref _memo, value);
+        }
 
         private async void OnCancel()
         {
@@ -51,15 +104,33 @@ namespace MyIdMobile.ViewModels
         {
             Item newItem = new Item()
             {
-                Id = Guid.NewGuid().ToString(),
-                Text = Text,
-                Description = Description
+                Site = Site,
+                User = User,
+                Password = Password,
+                Memo = Memo,
             };
+            if (string.IsNullOrEmpty(ItemId))
+            {
+                
 
-            await DataStore.AddItemAsync(newItem);
+                await DataStore.AddItemAsync(newItem);
+            }
+            else
+            {
+                newItem.UniqId = ItemId;
 
+                await DataStore.UpdateItemAsync(newItem);
+            }
             // This will pop the current page off the navigation stack
             await Shell.Current.GoToAsync("..");
+        }
+
+        private async void OnDelete()
+        {
+
+            await DataStore.DeleteItemAsync(ItemId);
+            // This will pop the current page off the navigation stack
+            await Shell.Current.GoToAsync($"//{nameof(ItemsPage)}");
         }
     }
 }

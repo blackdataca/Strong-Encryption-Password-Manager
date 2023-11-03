@@ -2,13 +2,41 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MyIdMobile.Views.ItemDetailPage"
-             Title="{Binding Title}">
+             >
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Edit" Command="{Binding EditItemCommand}" />
+    </ContentPage.ToolbarItems>
 
-    <StackLayout Spacing="20" Padding="15">
-        <Label Text="Text:" FontSize="Medium" />
-        <Label Text="{Binding Text}" FontSize="Small"/>
-        <Label Text="Description:" FontSize="Medium" />
-        <Label Text="{Binding Description}" FontSize="Small"/>
+    <StackLayout Spacing="20" Padding="15" BackgroundColor="{AppThemeBinding Dark=Black}">
+        <Label Text="Site:" FontSize="Medium" />
+        <Label Text="{Binding Site}" FontSize="Small">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="Site" />
+            </Label.GestureRecognizers>
+        </Label>
+
+        <Label Text="User:" FontSize="Medium" />
+        <Label Text="{Binding User}" FontSize="Small">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="User" />
+            </Label.GestureRecognizers>
+        </Label>
+
+
+        <Label Text="Password:" FontSize="Medium" />
+        <Label Text="{Binding Password}" FontSize="Small" >
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="Password" />
+            </Label.GestureRecognizers>
+        </Label>
+
+        <Label Text="Memo:" FontSize="Medium" />
+        <Label Text="{Binding Memo}" FontSize="Small">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer  Command="{Binding TapCommand}" CommandParameter="Memo" />
+            </Label.GestureRecognizers>
+        </Label>
+
     </StackLayout>
     
 </ContentPage>

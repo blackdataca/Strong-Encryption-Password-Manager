@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyIdMobile.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -11,5 +12,11 @@ namespace MyIdMobile.Services
         Task<bool> DeleteItemAsync(string id);
         Task<T> GetItemAsync(string id);
         Task<IEnumerable<T>> GetItemsAsync(bool forceRefresh = false);
+
+        Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null);
+        Task SaveToDiskAsync();
+        Task<bool> WebSync();
+
+        List<Item> AllItems { get; set; }
     }
 }

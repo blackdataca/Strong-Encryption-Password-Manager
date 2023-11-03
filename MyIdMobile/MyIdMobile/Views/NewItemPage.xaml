@@ -7,14 +7,34 @@
              xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
              ios:Page.UseSafeArea="true">
     <ContentPage.Content>
-        <StackLayout Spacing="3" Padding="15">
-            <Label Text="Text" FontSize="Medium" />
-            <Entry Text="{Binding Text, Mode=TwoWay}" FontSize="Medium" />
-            <Label Text="Description" FontSize="Medium" />
-            <Editor Text="{Binding Description, Mode=TwoWay}" AutoSize="TextChanges" FontSize="Medium" Margin="0" />
-            <StackLayout Orientation="Horizontal">
+        <StackLayout  Spacing="3" Padding="15" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
+            <Label Text="Site" FontSize="Medium" />
+            <Entry Text="{Binding Site, Mode=TwoWay}" FontSize="Medium" IsSpellCheckEnabled="false"   ClearButtonVisibility="WhileEditing"  />
+            
+            <Label Text="User" FontSize="Medium" />
+            <Entry  Text="{Binding User, Mode=TwoWay}" FontSize="Medium" IsSpellCheckEnabled="false" ClearButtonVisibility="WhileEditing" />
+            
+            <Label Text="Password" FontSize="Medium" />
+            <Entry  Text="{Binding Password, Mode=TwoWay}" FontSize="Medium" IsPassword="true"  IsSpellCheckEnabled="false" ClearButtonVisibility="WhileEditing" />
+            
+            <Label Text="Memo" FontSize="Medium" />
+            <Editor Text="{Binding Memo, Mode=TwoWay}" FontSize="Medium" HeightRequest = "100" AutoSize="TextChanges" />
+            
+            <Label Text="Files" FontSize="Medium" />
+            <Entry Placeholder="TODO" Text="{Binding Files, Mode=TwoWay}" FontSize="Medium"  ClearButtonVisibility="WhileEditing"  />
+            
+            
+            
+            <StackLayout Orientation="Horizontal" VerticalOptions="Start">
                 <Button Text="Cancel" Command="{Binding CancelCommand}" HorizontalOptions="FillAndExpand"></Button>
                 <Button Text="Save" Command="{Binding SaveCommand}" HorizontalOptions="FillAndExpand"></Button>
+            </StackLayout>
+            <StackLayout VerticalOptions="CenterAndExpand">
+                <!-- middle controls -->
+            </StackLayout>
+            <StackLayout Orientation="Horizontal" VerticalOptions="End">
+                <!-- bottom controls -->
+                <Button Text="Delete" Command="{Binding DeleteCommand}" HorizontalOptions="FillAndExpand" BackgroundColor="Red" IsVisible="{Binding DeleteVisible, Mode=TwoWay}"></Button>
             </StackLayout>
         </StackLayout>
     </ContentPage.Content>

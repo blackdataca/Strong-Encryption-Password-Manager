@@ -28,5 +28,10 @@ namespace MyIdMobile.Views
             base.OnAppearing();
             _viewModel.OnAppearing();
         }
+
+        protected void SearchBar_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.SearchBar_TextChanged(sender, e);
+        }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using MyIdMobile.Services;
 using MyIdMobile.Views;
 using System;
+using System.Threading.Tasks;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -13,13 +15,25 @@ namespace MyIdMobile
         {
             InitializeComponent();
 
-            DependencyService.Register<MockDataStore>();
-            //MainPage = new AppShell();
-            MainPage = new LoginPage();
+            DependencyService.Register<MyDataStore>();
+            //MainPage = new LoginPage();
+            _ = LoadScreenAsync();
         }
+
+        private async Task LoadScreenAsync()
+        {
+            string encString = await SecureStorage.GetAsync("Data");
+            if (string.IsNullOrEmpty(encString))
+                MainPage = new WelcomePage();
+            else
+                MainPage = new LoginPage();
+
+        }
+
 
         protected override void OnStart()
         {
+
         }
 
         protected override void OnSleep()

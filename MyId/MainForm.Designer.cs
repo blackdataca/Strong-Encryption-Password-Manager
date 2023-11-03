@@ -414,12 +414,12 @@
             this.toolStripSeparator3.Name = "toolStripSeparator3";
             this.toolStripSeparator3.Size = new System.Drawing.Size(6, 39);
             // 
-            // uxToolSync
+            // uxWebSync
             // 
-            this.uxWebSync.Image = ((System.Drawing.Image)(resources.GetObject("uxToolSync.Image")));
+            this.uxWebSync.Image = ((System.Drawing.Image)(resources.GetObject("uxWebSync.Image")));
             this.uxWebSync.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.uxWebSync.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.uxWebSync.Name = "uxToolSync";
+            this.uxWebSync.Name = "uxWebSync";
             this.uxWebSync.Size = new System.Drawing.Size(68, 36);
             this.uxWebSync.Text = "&Sync";
             this.uxWebSync.ToolTipText = "Sync  to Cloud";
@@ -449,7 +449,7 @@
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(456, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(425, 17);
             this.toolStripStatusLabel1.Spring = true;
             // 
             // toolStripStatusLabel2
