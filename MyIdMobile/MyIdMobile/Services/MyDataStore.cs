@@ -29,7 +29,7 @@ namespace MyIdMobile.Services
 
         }
 
-        public async Task SaveToDiskAsync(bool webSync = true)
+        public async Task SaveToDiskAsync()
         {
             byte[] pin = await MyEncryption.GetKeyIvAsync("Pin");
             var key = new Rfc2898DeriveBytes(pin, await MyEncryption.GetKeyIvAsync("Salt"), 50000);
@@ -66,8 +66,7 @@ namespace MyIdMobile.Services
 
 
             }
-            //if (webSync)
-            //    _ = WebSync();
+
         }
 
 
@@ -158,7 +157,7 @@ namespace MyIdMobile.Services
                     }
                 }
                 if (uniqIdUpdate > 0)
-                    await SaveToDiskAsync(false);
+                    await SaveToDiskAsync();
 
                 //foreach (var idItem in _idList)
                 //{
@@ -188,6 +187,8 @@ namespace MyIdMobile.Services
                 await App.Current.MainPage.DisplayAlert("Load Data", "Access denied: " + ex.ToString(), "OK");
                 return false;
             }
+
+            _= WebSync();
 
             //ShowNumberOfItems();
             return success;
@@ -269,7 +270,7 @@ namespace MyIdMobile.Services
 
             if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5))
             {
-                await App.Current.MainPage.DisplayAlert("WebSync", "Require credential", "OK");
+                //await App.Current.MainPage.DisplayAlert("WebSync", "Require credential", "OK");
                 return false;
             }
             //ToolSyncVisual(0);
@@ -350,7 +351,7 @@ namespace MyIdMobile.Services
                         string response = await res.Content.ReadAsStringAsync();
 
 
-                        Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
+                        Debug.WriteLine($"Received {response.Length:N0} bytes in {start.ElapsedMilliseconds:N0} seconds");
 
                         JObject joResponse = JObject.Parse(response);
                         err = joResponse["Error"].ToString();
@@ -417,7 +418,7 @@ namespace MyIdMobile.Services
                                 }
                                 if (recNew > 0)
                                 {
-                                    await SaveToDiskAsync(false);
+                                    await SaveToDiskAsync();
                                     //SaveToDisk(false);
                                     //ShowNumberOfItems();
                                     //UxSearchBox_TextChanged();

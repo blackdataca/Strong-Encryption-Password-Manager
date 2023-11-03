@@ -14,7 +14,7 @@ namespace MyIdMobile.Services
         Task<IEnumerable<T>> GetItemsAsync(bool forceRefresh = false);
 
         Task<bool> LoadFromDiskAsync(string pPrivateKeyFile = null);
-        Task SaveToDiskAsync(bool webSync = true);
+        Task SaveToDiskAsync();
         Task<bool> WebSync();
 
         List<Item> AllItems { get; set; }

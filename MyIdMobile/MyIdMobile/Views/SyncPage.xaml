@@ -9,7 +9,7 @@
     <ContentPage.Content>
         <StackLayout Padding="10,0,10,0" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
             <StackLayout VerticalOptions="CenterAndExpand" >
-                <Entry Text="{Binding Email}" Placeholder="MyID Web Login Email" />
+                <Entry Text="{Binding Email}" Placeholder="MyID Web Login Email" Keyboard="Email" />
                 <Entry Text="{Binding Password}" Placeholder="Password" IsPassword="True" />
 
                 <StackLayout Orientation="Horizontal" VerticalOptions="Start">

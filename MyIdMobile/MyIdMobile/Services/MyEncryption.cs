@@ -253,7 +253,7 @@ namespace MyIdMobile.Services
                     byte[] encPin = EncryptData(value, Encoding.ASCII.GetBytes("key"), Encoding.ASCII.GetBytes("iv"));
                     string encPinText = Bin2Hex(encPin);
                     await SecureStorage.SetAsync(type, encPinText);
-                    //return ProtectedData.Protect(value, null, DataProtectionScope.CurrentUser);
+                    
                     break;
                 default:
                     throw new NotImplementedException($"{type}: {value}");

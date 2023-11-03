@@ -28,7 +28,9 @@ namespace MyIdMobile.ViewModels
             else if ( Password == VerifyPassword)
             {
 
-                
+                SecureStorage.RemoveAll();
+                Preferences.Clear();
+
                 byte[] masterPin = Encoding.Unicode.GetBytes(Password);
                 await MyEncryption.SaveKeyIvAsync("Pin", masterPin);
 

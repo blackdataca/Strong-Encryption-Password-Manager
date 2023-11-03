@@ -11,7 +11,7 @@ namespace MyIdMobile.Models
         private string site = "";
         private string user = "";
         public string Password = "";
-        public string Memo ="";
+        private string memo = "";
 
         public DateTime Changed = DateTime.UtcNow;
 
@@ -4959,5 +4959,21 @@ namespace MyIdMobile.Models
 
         public string Site { get => site; set => site = value; }
         public string User { get => user; set => user = value; }
+        public string Memo { get => memo; set => memo = value; }
+
+        public string ItemsPageMemo { 
+            get
+            {
+                string s = memo;
+                if (Images.Count > 0)
+                {
+                    if (Images.Count > 1)
+                        s = $"({Images.Count} files) {s}";
+                    else
+                        s = $"(1 file) {s}";
+                }
+                return s;
+            } 
+        }
     }
 }

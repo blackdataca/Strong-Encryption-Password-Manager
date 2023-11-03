@@ -43,7 +43,7 @@ namespace MyIdMobile.ViewModels
         async Task ExecuteLoadItemsCommand()
         {
 
-            IsBusy = true;
+            //IsBusy = true;
 
             try
             {
@@ -122,7 +122,6 @@ namespace MyIdMobile.ViewModels
                 items = DataStore.AllItems.Where(s => 
                 (s.Site != null && s.Site.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0) ||
                 (s.User != null && s.User.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                (s.Password != null && s.Password.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0) ||
                 (s.Memo != null && s.Memo.IndexOf(e.NewTextValue, StringComparison.OrdinalIgnoreCase) >= 0)
                 ).ToList();
             VisibleItems.Clear();
