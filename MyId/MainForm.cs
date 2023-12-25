@@ -1660,9 +1660,9 @@ namespace MyId
 
                 payloads.Add(rec);
             }
-
-
-
+#if DEBUG
+            ServicePointManager.ServerCertificateValidationCallback +=  (sender, cert, chain, sslPolicyErrors) => true;
+#endif
             using (var client = new HttpClient())
             {
                 string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userEmail}:{md}"));
