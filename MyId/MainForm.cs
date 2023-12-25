@@ -1703,7 +1703,7 @@ namespace MyId
                     httpContent.Headers.ContentEncoding.Add("gzip");
 
                     // Send the POST request using PostAsync method
-                    HttpResponseMessage res = await client.PostAsync("https://192.168.0.68:8443/WebSync.php", httpContent);
+                    HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
 
                     // Check if the request was successful
                     if (res.IsSuccessStatusCode)
