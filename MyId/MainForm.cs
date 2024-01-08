@@ -31,6 +31,7 @@ using System.IO.Compression;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
 
 namespace MyId
 {
@@ -1604,13 +1605,13 @@ namespace MyId
             bool webSyncSuccess = (webSyncSuccessSaved == "1");
             while (true)
             {
-                string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
-                userEmail = userEmail.ToLower();
+                string userName = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncUser", "");
+                userName = userName.ToLower();
 
-                string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+                string userPass = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncPass", "");
 
 
-                if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5) || !webSyncSuccess)
+                if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(userPass) || !webSyncSuccess)
                 {
                     WebSync frm = new WebSync();
                     if (frm.ShowDialog() != DialogResult.OK)
@@ -1633,30 +1634,30 @@ namespace MyId
 
         private async Task WebSync(bool fromMemu)
         {
-            string userEmail = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncEmail", "");
-            string userPassmd5 = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncHash", "");
+            string userName = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncUser", "");
+            string userPass = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncPass", "");
 
-            if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassmd5))
+            if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(userPass))
                 return;
 
             ToolSyncVisual(0);
 
-            userEmail = userEmail.ToLower();
+            userName = userName.ToLower();
 
-            var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(MyEncryption.UcFirst(userEmail)));
+            //var md = MyEncryption.MyHash(userPass + MyEncryption.MyHash(MyEncryption.UcFirst(username)));
 
             var payloads = new List<object>();
             uxItemCountStatus.Text = "Preparing sync data...";
             foreach (var item in _idList)
             {
                 var recId = item.UniqId;
-                var key = userEmail + userPassmd5 + recId;
+                var key = userName + userPass + recId;
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
                 
-                string payload = MyEncryption.EncryptString(json, key, recId);
+                //string payload = MyEncryption.EncryptString(json, key, recId);
 
-                var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = payload };
+                var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = json };
 
                 payloads.Add(rec);
             }
@@ -1667,7 +1668,7 @@ namespace MyId
 #endif
             using (var client = new HttpClient())
             {
-                string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userEmail}:{md}"));
+                string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userName}:{userPass}"));
 
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
                 var vm = new {payloads.Count, Payloads = payloads };
@@ -1698,13 +1699,15 @@ namespace MyId
                     start.Start();
                     // Prepare the content to send in the request
                     HttpContent httpContent = new ByteArrayContent(compressedData);
-
                     // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
                     httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
                     httpContent.Headers.ContentEncoding.Add("gzip");
+                    client.DefaultRequestHeaders
+                      .Accept
+                      .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
 
                     // Send the POST request using PostAsync method
-                    HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
+                    HttpResponseMessage res = await client.PostAsync("https://192.168.0.83:8442/WebSync", httpContent);
 
                     // Check if the request was successful
                     if (res.IsSuccessStatusCode)
@@ -1712,7 +1715,9 @@ namespace MyId
                         // Read the response content as a string
                         string response = await res.Content.ReadAsStringAsync();
 
-
+#if DEBUG
+                        File.WriteAllText("response_dump.html", response);
+#endif
                         uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
 
                         JObject joResponse = JObject.Parse(response);
@@ -1726,11 +1731,11 @@ namespace MyId
                                 {
                               
                                     var recId = row["RecId"].ToString();
-                                    var key = userEmail + userPassmd5 + recId;
+                                    //var key = userName + userPass + recId;
 
-                                    string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
+                                    //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
 
-                                    var item = JsonConvert.DeserializeObject<IdItem>(payload);
+                                    var item = JsonConvert.DeserializeObject<IdItem>(row["Payload"].ToString());
 
                                     IdItem aItem = GetAItemByRecId(recId);
                                     if (aItem == null)
@@ -1797,7 +1802,12 @@ namespace MyId
                         if (fromMemu)
                             MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         else
+                        {
                             uxItemCountStatus.Text = $"WebSync: {res.StatusCode}";
+#if DEBUG 
+                            File.WriteAllText("websync_error_dump.html",res.Content.ReadAsStringAsync().Result);
+#endif
+                        }
                     }
 
 
@@ -1877,6 +1887,8 @@ namespace MyId
             }
             return null;
         }
+
+       
     }
 
 
