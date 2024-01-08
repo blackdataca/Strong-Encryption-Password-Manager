@@ -1776,7 +1776,7 @@ namespace MyId
                                     aItem.Site = item.Site;
                                     aItem.Memo = item.Memo;
                                     aItem.Deleted = item.Deleted;
-                                    aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString());
+                                    aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString()).ToUniversalTime();
                                     recNew++;
                                 }
                                 if (recNew > 0)
