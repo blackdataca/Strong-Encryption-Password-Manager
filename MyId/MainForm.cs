@@ -1646,7 +1646,7 @@ namespace MyId
             var md = MyEncryption.MyHash(userPassmd5 + MyEncryption.MyHash(MyEncryption.UcFirst(userEmail)));
 
             var payloads = new List<object>();
-
+            uxItemCountStatus.Text = "Preparing sync data...";
             foreach (var item in _idList)
             {
                 var recId = item.UniqId;
@@ -1660,9 +1660,11 @@ namespace MyId
 
                 payloads.Add(rec);
             }
+            uxItemCountStatus.Text = $"Found {payloads.Count:N0} record{(payloads.Count > 1 ? 's' : ' ')}...";
+#if DEBUG
 
-
-
+            ServicePointManager.ServerCertificateValidationCallback +=  (sender, cert, chain, sslPolicyErrors) => true;
+#endif
             using (var client = new HttpClient())
             {
                 string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userEmail}:{md}"));
@@ -1676,8 +1678,7 @@ namespace MyId
                 string err = "";
                 try
                 {
-                    Debug.WriteLine($"Comprssing {dataString.Length:N0} bytes");
-
+                    uxItemCountStatus.Text = $"Comprssing {dataString.Length:N0} bytes";
                     // Compress the data using gzip
                     byte[] compressedData;
                     using (MemoryStream ms = new MemoryStream())
@@ -1691,7 +1692,7 @@ namespace MyId
                     }
 
 
-                    Debug.WriteLine($"Uploading {compressedData.Length:N0} bytes");
+                    uxItemCountStatus.Text = $"Uploading {compressedData.Length:N0} bytes";
 
                     var start = new Stopwatch();
                     start.Start();
@@ -1703,7 +1704,7 @@ namespace MyId
                     httpContent.Headers.ContentEncoding.Add("gzip");
 
                     // Send the POST request using PostAsync method
-                    HttpResponseMessage res = await client.PostAsync("https://192.168.0.68:8443/WebSync.php", httpContent);
+                    HttpResponseMessage res = await client.PostAsync("https://myid-dev.blackdata.ca:2096/WebSync.php", httpContent);
 
                     // Check if the request was successful
                     if (res.IsSuccessStatusCode)
@@ -1712,7 +1713,7 @@ namespace MyId
                         string response = await res.Content.ReadAsStringAsync();
 
 
-                        Debug.WriteLine($"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}");
+                        uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
 
                         JObject joResponse = JObject.Parse(response);
                         err = joResponse["Error"].ToString();
@@ -1755,14 +1756,14 @@ namespace MyId
 
                                         if (formData.Count() > 0)
                                         {
-                                            Debug.WriteLine($"Uploading {aItem.Images.Count} files...");
+                                            uxItemCountStatus.Text = $"Uploading {aItem.Images.Count} files...";
 
                                             var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
 
                                             string responseBody = await uploadResponse.Content.ReadAsStringAsync();
                                             int statusCode = (int)uploadResponse.StatusCode;
 
-                                            Debug.WriteLine($"Upload Response ({statusCode}): {responseBody}");
+                                            uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
                                         }
                                     }
                                     aItem.User = item.User;
@@ -1780,14 +1781,14 @@ namespace MyId
                                     UxSearchBox_TextChanged();
                                 }
                             }
-
+                            uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1?'s':' ')}";
                         }
                         else
                         {
                             if (fromMemu)
                                 MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             else
-                                uxItemCountStatus.Text = err;
+                                uxItemCountStatus.Text = "WebSync: " + err;
                         }
                     }
                     else
@@ -1796,7 +1797,7 @@ namespace MyId
                         if (fromMemu)
                             MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         else
-                            uxItemCountStatus.Text = $"Error: {res.StatusCode}";
+                            uxItemCountStatus.Text = $"WebSync: {res.StatusCode}";
                     }
 
 
