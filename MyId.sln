@@ -26,9 +26,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdMobile.iOS", "MyIdMobil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdMobile", "MyIdMobile\MyIdMobile\MyIdMobile.csproj", "{94290C5E-92AC-478C-A956-C5E04B307FDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdWeb", "MyIdWeb\MyIdWeb.csproj", "{BD8D00E6-C2F8-4852-87E2-1590168FCF8A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdWeb", "MyIdWeb\MyIdWeb.csproj", "{BD8D00E6-C2F8-4852-87E2-1590168FCF8A}"
 EndProject
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "MyIdDatabase", "MyIdDatabase\MyIdDatabase.sqlproj", "{526E316D-FDF0-447D-B281-6191164336D2}"
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "MyIdDb", "MyIdDatabase\MyIdDb.sqlproj", "{526E316D-FDF0-447D-B281-6191164336D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdLibrary", "MyIdLibrary\MyIdLibrary.csproj", "{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -202,12 +204,32 @@ Global
 		{526E316D-FDF0-447D-B281-6191164336D2}.Release|x86.ActiveCfg = Release|Any CPU
 		{526E316D-FDF0-447D-B281-6191164336D2}.Release|x86.Build.0 = Release|Any CPU
 		{526E316D-FDF0-447D-B281-6191164336D2}.Release|x86.Deploy.0 = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|x64.Build.0 = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Debug|x86.Build.0 = Debug|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|Any CPU.Build.0 = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|iPhone.Build.0 = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|x64.ActiveCfg = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|x64.Build.0 = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|x86.ActiveCfg = Release|Any CPU
+		{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		VisualSVNWorkingCopyRoot = .
 		SolutionGuid = {3142D2AD-47B6-4B37-8B5F-138310A77CAC}
+		VisualSVNWorkingCopyRoot = .
 	EndGlobalSection
 EndGlobal
