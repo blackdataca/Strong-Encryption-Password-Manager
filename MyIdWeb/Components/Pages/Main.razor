@@ -1,0 +1,66 @@
+﻿@page "/Main"
+@inject ISecretData secretData
+@inject IUserData userData
+@inject NavigationManager navManager
+@inject ProtectedSessionStorage sessionStorage
+@rendermode InteractiveServer
+
+<h3>Main</h3>
+
+@code {
+    private List<SecretModel> secrets;
+    private string searchText = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        secrets = await secretData.GetAllSecrets("userId");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadFilterState();
+            await FilterSecrets();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadFilterState()
+    {
+        var stringResults = await sessionStorage.GetAsync<string>(nameof(searchText));
+        searchText = stringResults.Success ? stringResults.Value : "";
+    }
+
+    private async Task SaveFilterState()
+    {
+        await sessionStorage.SetAsync(nameof(searchText), searchText);
+    }
+
+    private async Task FilterSecrets()
+    {
+        var output = await secretData.GetAllSecrets("userId");
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            output = output.Where(
+                s => s.Payload.Contains(searchText, StringComparison.InvariantCultureIgnoreCase)
+            ).ToList();
+        }
+
+        secrets = output;
+
+        await SaveFilterState();
+    }
+
+    private async Task OnSearchInput(string searchInput)
+    {
+        searchText = searchInput;
+        await FilterSecrets();
+    }
+
+    private void OpenDetails(SecretModel secret)
+    {
+        navManager.NavigateTo($"/Details/{secret.Id}");
+    }
+}

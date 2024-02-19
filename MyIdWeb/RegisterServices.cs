@@ -37,5 +37,9 @@ public static class RegisterServices
             .AddDefaultTokenProviders();
 
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+        builder.Services.AddSingleton<IDbConnection, DbConnection>();
+        builder.Services.AddSingleton<ISecretData, SqlSecretData>();
+        builder.Services.AddSingleton<IUserData, SqlUserData>();
     }
 }
