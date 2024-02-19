@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [dbo].[secrets]
 (
-	[id] BINARY(16) NOT NULL PRIMARY KEY, 
-    [record_id] VARCHAR(23) NOT NULL, 
+	[id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT newsequentialid(), 
+    [record_id] VARCHAR(23) NULL, 
     [payload] TEXT NOT NULL, 
     [created] DATETIME NOT NULL DEFAULT GETUTCDATE(), 
     [modified] DATETIME NULL, 

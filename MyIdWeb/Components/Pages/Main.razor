@@ -5,7 +5,20 @@
 @inject ProtectedSessionStorage sessionStorage
 @rendermode InteractiveServer
 
-<h3>Main</h3>
+<h1>Main</h1>
+
+<div>
+    <button>Create Secret</button>
+</div>
+
+<div>
+    <div>@secrets?.Count Secrets</div>
+    <div>
+        <input type="text" placeholder="Search"
+            aria-label="Search box"
+            @oninput="((txt) => OnSearchInput((string)txt.Value))" />
+    </div>
+</div>
 
 @code {
     private List<SecretModel> secrets;
