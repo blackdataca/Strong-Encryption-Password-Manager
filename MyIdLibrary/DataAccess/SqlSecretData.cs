@@ -111,7 +111,7 @@ public class SqlSecretData : ISecretData
 
         await _connection.OpenAsync();
         
-        var result = await _connection.QueryFirstOrDefaultAsync<SecretModel>(sql, new { secretId });
+        var result = await _connection.QueryFirstOrDefaultAsync<SecretModel>(sql, new { id = secretId });
 
         await _connection.CloseAsync();
 
