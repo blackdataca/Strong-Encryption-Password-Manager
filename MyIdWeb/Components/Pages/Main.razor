@@ -20,6 +20,21 @@
     </div>
 </div>
 
+<div>
+    <div>
+        @if (secrets is not null)
+        {
+            <Virtualize Items="@secrets" Context="s" OverscanCount="10">
+                <div>
+                    <div @onclick="(() => OpenDetails(s))">
+                        @s.Payload
+                    </div>
+                </div>
+            </Virtualize>
+        }
+    </div>
+</div>
+
 @code {
     private List<SecretModel> secrets;
     private string searchText = "";
