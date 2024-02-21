@@ -57,13 +57,15 @@ public class SqlSecretData : ISecretData
         var tx = await _connection.BeginTransactionAsync();
         try
         {
-            string sql = "INSERT INTO secrets (payload) VALUES (@payload)";
-            var newSecret = await _connection.QuerySingleOrDefaultAsync<SecretModel>(sql, secret, tx);
-            if (newSecret is null)
+            string sql = "INSERT INTO secrets (payload) OUTPUT INSERTED.Id VALUES (@payload)";
+            var secretId = await _connection.QuerySingleOrDefaultAsync<Guid?>(sql, secret, tx);
+            if (secretId is null)
                 throw new Exception("Unable to add new secret");
 
-            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key) VALUES (@user_id, @secret_id, @secret_key)";
-            affecgtedRows = await _connection.ExecuteAsync(sql, newSecret, tx);
+            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key) VALUES (@userId, @secretId, @secretKey)";
+            string userId = "74995b0c-63bf-4755-aba8-00815cc641d8"; //TODO get loggedInUser
+            string secretKey = "secret key"; //TODO generate secret key
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { userId, secretId, secretKey }, tx);
 
             await tx.CommitAsync();
         }

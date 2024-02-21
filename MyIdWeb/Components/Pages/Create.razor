@@ -1,0 +1,68 @@
+﻿@page "/Create"
+@using MyIdWeb.Models
+@using System.Text.Json
+@rendermode InteractiveServer
+@inject ISecretData secretData
+@inject IUserData userData
+@inject NavigationManager navManage
+
+<h1>Add A Secret</h1>
+
+<div>
+    <div>
+        <div>
+            <button @onclick="ClosePage"></button>
+        </div>
+        <EditForm Model="secret" OnValidSubmit="CreateSecret">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label for="site">Site</label>
+                <InputText id="site" @bind-Value="secret.Site" />
+            </div>
+            <div>
+                <label for="user">User</label>
+                <InputText id="user" @bind-Value="secret.UserName" />
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="secret.Password" />
+            </div>
+            <div>
+                <label for="memo">Memo</label>
+                <InputText id="memo" @bind-Value="secret.Memo" />
+            </div>
+            <div>
+                <button type="submit">Save</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private CreateSecretModel secret = new();
+    private UserModel loggedInUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        //return base.OnInitializedAsync();
+
+        //TODO - Replace with user lookup
+        loggedInUser = await userData.GetUserFromAuthentication("74995b0c-63bf-4755-aba8-00815cc641d8");
+    }
+
+    private void ClosePage()
+    {
+        navManage.NavigateTo("/main");
+    }
+
+    private async Task CreateSecret()
+    {
+        SecretModel s = new();
+        s.Payload = JsonSerializer.Serialize(secret);  //TODO Encrypt
+        s.UserIds.Add(loggedInUser.Id);
+        await secretData.CreateSecret(s);
+        secret = new();
+        ClosePage();
+    }
+}

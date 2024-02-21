@@ -15,26 +15,28 @@ public class SqlUserData : IUserData
     public async Task<UserModel> GetUser(string Id)
     {
         await _connection.OpenAsync();
-        var result = await _connection.QueryFirstOrDefaultAsync<UserModel>("SELECT * FROM users WHERE id =@Id", Id);
+        var result = await _connection.QueryFirstOrDefaultAsync<UserModel>("SELECT * FROM users WHERE id =@Id", new { Id });
         await _connection.CloseAsync();
         return result;
     }
 
+    public async Task<UserModel> GetUserFromAuthentication(string objectId)
+    {
+        return await GetUser(objectId);
+    }
+
+    public async Task CreateUser(UserModel user)
+    {
+        await _connection.OpenAsync();
+        string sql = "INSERT INTO users (id, name, public_key) VALUES (@id, @name, @public_key)";
+        var result = await _connection.ExecuteAsync(sql, user);
+        await _connection.CloseAsync();
+    }
+
     public async Task UpdateUser(UserModel user)
     {
-        var currentUser = GetUser(user.Id);
-        string sql;
-        if (currentUser is null) //user not in db
-        {
-
-            sql = "INSERT INTO users (id, name, public_key) VALUES (@id, @name, @public_key)";
-        }
-        else
-        {
-            sql = "UPDATE users set name=@name, public_key=@public_key WHERE id=@id";
-        }
+        string sql = "UPDATE users set name=@name, public_key=@public_key WHERE id=@id";
         await _connection.OpenAsync();
-
         var result = await _connection.ExecuteAsync(sql, user);
         await _connection.CloseAsync();
 
