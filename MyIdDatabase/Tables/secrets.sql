@@ -5,7 +5,8 @@
     [payload] TEXT NOT NULL, 
     [created] DATETIME NOT NULL DEFAULT GETUTCDATE(), 
     [modified] DATETIME NULL, 
-    [synced] DATETIME NULL 
+    [synced] DATETIME NULL, 
+    
 )
 
 GO

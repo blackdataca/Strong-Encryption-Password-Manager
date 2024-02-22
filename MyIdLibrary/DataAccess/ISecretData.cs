@@ -3,7 +3,7 @@ namespace MyIdLibrary.DataAccess
 {
     public interface ISecretData
     {
-        Task<List<SecretModel>> GetAllSecrets(string userId);
+        Task<List<SecretModel>> GetUserSecrets(string userId);
         Task<bool> CreateSecret(SecretModel secret);
         Task<bool> UpdateSecret(SecretModel secret);
 

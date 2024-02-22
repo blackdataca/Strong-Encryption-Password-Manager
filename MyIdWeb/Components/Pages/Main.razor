@@ -22,7 +22,7 @@
 
 <div>
     <div>
-        @if (secrets is not null)
+        @if (secrets?.Count > 0)
         {
             <Virtualize Items="@secrets" Context="s" OverscanCount="10">
                 <div>
@@ -38,11 +38,14 @@
 @code {
     private List<SecretModel> secrets;
     private string searchText = "";
+    private UserModel loggedInUser;
 
 
     protected override async Task OnInitializedAsync()
     {
-        secrets = await secretData.GetAllSecrets("userId");
+        //TODO - Replace with user lookup
+        loggedInUser = await userData.GetUserFromAuthentication("74995b0c-63bf-4755-aba8-00815cc641d8"); 
+        secrets = await secretData.GetUserSecrets(loggedInUser.Id);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -68,7 +71,7 @@
 
     private async Task FilterSecrets()
     {
-        var output = await secretData.GetAllSecrets("userId");
+        var output = await secretData.GetUserSecrets("userId");
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             output = output.Where(

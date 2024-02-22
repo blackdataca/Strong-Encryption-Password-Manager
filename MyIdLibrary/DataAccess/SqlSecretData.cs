@@ -1,52 +1,38 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Caching.Memory;
-using System.ComponentModel;
-using System.Net.Sockets;
 
 namespace MyIdLibrary.DataAccess;
 
 public class SqlSecretData : ISecretData
 {
-    private readonly IMemoryCache _cache;
+    //private readonly IMemoryCache _cache;
     private readonly SqlConnection _connection;
-    private const string CacheName = "SecretData";
 
-    public SqlSecretData(IDbConnection db, IMemoryCache cache)
+    public SqlSecretData(IDbConnection db)
     {
         _connection = db.Connection;
-        _cache = cache;
     }
 
-    public async Task<List<SecretModel>> GetAllSecrets(string userId)
+    public async Task<List<SecretModel>> GetUserSecrets(string userId)
     {
-        userId = "74995b0c-63bf-4755-aba8-00815cc641d8"; //TODO for testing
-
-        var uid = Guid.Parse(userId);
-
-        var output = _cache.Get<List<SecretModel>>(CacheName);
-        if (output is null)
+        await _connection.OpenAsync();
+        try
         {
-            await _connection.OpenAsync();
-            try
-            {
-                var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@UserId", new { UserId = uid });
-                output = result.ToList();
-            }
-            catch (Exception)
-            {
+            var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@UserId", new { UserId = userId });
+            var output = result.ToList();
+            return output;
+        }
+        catch (Exception)
+        {
 
-                throw;
-            }
-            finally
-            {
-                await _connection.CloseAsync();
-            }
-
-            _cache.Set(CacheName, output, TimeSpan.FromMinutes(1));
+            throw;
+        }
+        finally
+        {
+            await _connection.CloseAsync();
         }
 
-        return output;
+
     }
 
     public async Task<bool> CreateSecret(SecretModel secret)
@@ -62,7 +48,7 @@ public class SqlSecretData : ISecretData
             if (secretId is null)
                 throw new Exception("Unable to add new secret");
 
-            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key) VALUES (@userId, @secretId, @secretKey)";
+            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@userId, @secretId, @secretKey, 1)";
             string userId = "74995b0c-63bf-4755-aba8-00815cc641d8"; //TODO get loggedInUser
             string secretKey = "secret key"; //TODO generate secret key
             affecgtedRows = await _connection.ExecuteAsync(sql, new { userId, secretId, secretKey }, tx);
@@ -78,7 +64,6 @@ public class SqlSecretData : ISecretData
             await _connection.CloseAsync(); 
         }
 
-        _cache.Remove(CacheName);
         return (affecgtedRows == 1);
     }
 
@@ -103,7 +88,6 @@ public class SqlSecretData : ISecretData
 
         await _connection.CloseAsync();
 
-        _cache.Remove(CacheName);
         return (affecgtedRows == 1);
     }
 
@@ -147,7 +131,6 @@ public class SqlSecretData : ISecretData
 
         await _connection.CloseAsync();
 
-        _cache.Remove(CacheName);
         return (affecgtedRows == 1);
     }
 }
