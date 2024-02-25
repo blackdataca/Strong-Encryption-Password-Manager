@@ -41,7 +41,7 @@
 
 @code {
     private CreateSecretModel secret = new();
-    private UserModel loggedInUser;
+    private UserModel loggedInUser = new();
 
     protected override async Task OnInitializedAsync()
     {
