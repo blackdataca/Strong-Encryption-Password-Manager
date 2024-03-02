@@ -51,6 +51,8 @@
             loggedInUser = await userData.GetUserFromAuthentication(objectId) ?? new(); //"74995b0c-63bf-4755-aba8-00815cc641d8"
             string name = authState.User.Claims.FirstOrDefault(c => c.Type.EndsWith("/name"))?.Value;
 
+            string securityStamp = authState.User.Claims.FirstOrDefault(c => c.Type.EndsWith("SecurityStamp"))?.Value;
+
             bool isDirty = false;
             bool isNew = false;
             if (!objectId.Equals(loggedInUser.Id))
@@ -63,6 +65,12 @@
             {
                 isDirty = true;
                 loggedInUser.Name = name;
+            }
+
+            if (securityStamp != loggedInUser.SecurityStamp)
+            {
+                isDirty = true;
+                loggedInUser.SetSecurityStamp(securityStamp);
             }
 
             if (isDirty)
@@ -102,7 +110,7 @@
 
     private async Task FilterSecrets()
     {
-        var output = await secretData.GetUserSecrets(loggedInUser.Id);
+        var output = await secretData.GetUserSecrets(loggedInUser?.Id);
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             output = output.Where(

@@ -53,7 +53,7 @@ Use strongest standard encryption to store everyone's secrets in a safe place
 * Cannot reset password
 * No need to collect email address
 
-### User change password
+### User changed password
 1. Symmetric decrypt Private Key with old password <- users.private_key(encrypted)
 2. Symmetric re-encrypt Privte Key with new password -> users.private_key(encrypted)
 

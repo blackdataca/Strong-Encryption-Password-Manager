@@ -16,6 +16,7 @@ public class SqlUserData : IUserData
     public async Task<UserModel> GetUser(string Id)
     {
         await _connection.OpenAsync();
+        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
         var result = await _connection.QueryFirstOrDefaultAsync<UserModel>("SELECT * FROM users WHERE id =@Id", new { Id });
         await _connection.CloseAsync();
         return result;
@@ -28,15 +29,9 @@ public class SqlUserData : IUserData
 
     public async Task CreateUser(UserModel user)
     {
-        //Generate a public/private key pair.  
-        RSA rsa = RSA.Create();
-        //Save the public key information to an RSAParameters structure.  
-        var pubKey = rsa.ExportRSAPublicKey();
-        user.PublicKey = Convert.ToHexString(pubKey);
-
         await _connection.OpenAsync();
         //Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-        string sql = "INSERT INTO users (id, name, public_key) VALUES (@id, @name, @publicKey)";
+        string sql = "INSERT INTO users (id, name, public_key, private_key, security_stamp) VALUES (@id, @name, @publicKey, @privateKey, @SecurityStamp)";
         var result = await _connection.ExecuteAsync(sql, user);
         await _connection.CloseAsync();
     }
