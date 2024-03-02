@@ -1,10 +1,13 @@
-﻿namespace MyIdLibrary.Models;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MyIdLibrary.Models;
 
 public class UserModel
 {
     public string Id { get; set; } //ObjectIdentifier
     public string Name { get; set; }
     public string Email { get; set; }
+
     public string PublicKey { get; set; }
     public string PrivateKey { get; set; }
     public int Status { get; set; }

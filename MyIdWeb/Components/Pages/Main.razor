@@ -1,4 +1,5 @@
 ﻿@page "/Main"
+@inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
 @inject IUserData userData
 @inject NavigationManager navManager
@@ -36,16 +37,46 @@
 </div>
 
 @code {
+    private UserModel loggedInUser;
     private List<SecretModel> secrets;
     private string searchText = "";
-    private UserModel loggedInUser;
-
 
     protected override async Task OnInitializedAsync()
     {
-        //TODO - Replace with user lookup
-        loggedInUser = await userData.GetUserFromAuthentication("74995b0c-63bf-4755-aba8-00815cc641d8"); 
-        secrets = await secretData.GetUserSecrets(loggedInUser.Id);
+        var authState = await authProvider.GetAuthenticationStateAsync();
+        string objectId = authState.User.Claims.FirstOrDefault(c => c.Type.EndsWith("identifier"))?.Value;
+
+        if (!string.IsNullOrWhiteSpace(objectId))
+        {
+            loggedInUser = await userData.GetUserFromAuthentication(objectId) ?? new(); //"74995b0c-63bf-4755-aba8-00815cc641d8"
+            string name = authState.User.Claims.FirstOrDefault(c => c.Type.EndsWith("/name"))?.Value;
+
+            bool isDirty = false;
+            bool isNew = false;
+            if (!objectId.Equals(loggedInUser.Id))
+            {
+                isDirty = true;
+                isNew = true;
+                loggedInUser.Id = objectId;
+            }
+            if (!name.Equals(loggedInUser.Name))
+            {
+                isDirty = true;
+                loggedInUser.Name = name;
+            }
+
+            if (isDirty)
+            {
+                if (isNew)
+                    await userData.CreateUser(loggedInUser);
+                else
+                    await userData.UpdateUser(loggedInUser);
+            }
+            //secrets = await secretData.GetUserSecrets(loggedInUser.Id);
+        }
+        else
+            navManager.NavigateTo("Account/Login");
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -71,7 +102,7 @@
 
     private async Task FilterSecrets()
     {
-        var output = await secretData.GetUserSecrets("userId");
+        var output = await secretData.GetUserSecrets(loggedInUser.Id);
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             output = output.Where(

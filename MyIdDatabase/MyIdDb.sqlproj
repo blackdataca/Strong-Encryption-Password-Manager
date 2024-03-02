@@ -68,6 +68,6 @@
     <RefactorLog Include="MyIdDatabase.refactorlog" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="MyIdDatabase.publish.xml" />
+    <None Include="MyIdDb.publish.xml" />
   </ItemGroup>
 </Project>
