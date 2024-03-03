@@ -1,10 +1,13 @@
 ﻿@page "/Create"
+@attribute [Authorize]
+@using MyIdWeb.Helpers
 @using MyIdWeb.Models
 @using System.Text.Json
-@rendermode InteractiveServer
+@inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
 @inject IUserData userData
 @inject NavigationManager navManage
+@rendermode InteractiveServer
 
 <h1>Add A Secret</h1>
 
@@ -13,7 +16,7 @@
         <div>
             <button @onclick="ClosePage"></button>
         </div>
-        <EditForm Model="secret" OnValidSubmit="CreateSecret">
+        <EditForm Model="secret" OnValidSubmit="SaveSecret">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div>
@@ -45,10 +48,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        //return base.OnInitializedAsync();
-
-        //TODO - Replace with user lookup
-        loggedInUser = await userData.GetUserFromAuthentication("74995b0c-63bf-4755-aba8-00815cc641d8");
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
     }
 
     private void ClosePage()
@@ -56,12 +56,12 @@
         navManage.NavigateTo("/main");
     }
 
-    private async Task CreateSecret()
+    private async Task SaveSecret()
     {
         SecretModel s = new();
         s.Payload = JsonSerializer.Serialize(secret);  //TODO Encrypt
         s.UserIds.Add(loggedInUser.Id);
-        await secretData.CreateSecret(s);
+        await secretData.CreateSecret(s, loggedInUser);
         secret = new();
         ClosePage();
     }

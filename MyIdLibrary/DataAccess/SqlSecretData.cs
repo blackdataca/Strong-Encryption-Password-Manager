@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
 
 namespace MyIdLibrary.DataAccess;
 
@@ -35,8 +36,20 @@ public class SqlSecretData : ISecretData
 
     }
 
-    public async Task<bool> CreateSecret(SecretModel secret)
+    public async Task<bool> CreateSecret(SecretModel secret, UserModel user)
     {
+        //1. Generate a new Secret Key
+        byte[] secretKey = RandomNumberGenerator.GetBytes(32);
+
+        //2. Symmetric encrypt secret payload (site, username, password, memo and files) with Secret Key
+        string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
+        secret.Payload = encPayload;
+
+        //3.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
+        byte[] pubKey = Convert.FromBase64String(user.PublicKey);
+        byte[] encSecretKeyBytes = Crypto.AsymetricEncrypt(secretKey, pubKey);
+        string encSecretKey = Convert.ToBase64String(encSecretKeyBytes);
+
         int affecgtedRows;
 
         await _connection.OpenAsync();
@@ -48,10 +61,9 @@ public class SqlSecretData : ISecretData
             if (secretId is null)
                 throw new Exception("Unable to add new secret");
 
-            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@userId, @secretId, @secretKey, 1)";
-            string userId = "74995b0c-63bf-4755-aba8-00815cc641d8"; //TODO get loggedInUser
-            string secretKey = "secret key"; //TODO generate secret key
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { userId, secretId, secretKey }, tx);
+            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @encSecretKey, 1)";
+
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { user.Id, secretId, encSecretKey }, tx);
 
             await tx.CommitAsync();
         }

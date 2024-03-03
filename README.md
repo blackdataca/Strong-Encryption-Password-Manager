@@ -50,7 +50,6 @@ Use strongest standard encryption to store everyone's secrets in a safe place
 2. Save Public Key in -> users.public_key
 3. Symmetric encrypt Private Key with user's password + users.uuid as salt -> users.private_key(encrypted)
 
-* Cannot reset password
 * No need to collect email address
 
 ### User changed password

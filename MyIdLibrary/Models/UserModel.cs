@@ -9,6 +9,9 @@ public class UserModel
     public string Name { get; set; }
     public string Email { get; set; }
 
+    /// <summary>
+    /// Base64 encoded RSA public key
+    /// </summary>
     public string PublicKey { get; set; }
     public string PrivateKey { get; set; }
 
@@ -34,30 +37,34 @@ public class UserModel
             //Symmetric encrypt private key
             using (var sha256 = SHA256.Create())
             {
-                var aes = Aes.Create();
+                //var aes = Aes.Create();
                 //key size 256 bits (32 bytes)
                 var newSecurityStampHash = sha256.ComputeHash(Encoding.ASCII.GetBytes(newSecurityStamp));
-                aes.Key = newSecurityStampHash;
+                byte[] key = newSecurityStampHash;
                 //IV size is BlockSize / 8 = 128 / 8 = 16 bytes
                 string subId = Id.Replace("-", "").Substring(0, 16);
-                aes.IV = Encoding.ASCII.GetBytes(subId);
+                byte[] iv = Encoding.ASCII.GetBytes(subId);
 
                 var priKey = rsa.ExportRSAPrivateKey();
-                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                string privateKey= Convert.ToBase64String(priKey);
 
-                // Create the streams used for encryption.
-                using (MemoryStream msEncrypt = new MemoryStream())
-                {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                    {
-                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                        {
-                            //Write all data to the stream.
-                            swEncrypt.Write(priKey);
-                        }
-                        PrivateKey = Convert.ToBase64String(msEncrypt.ToArray());
-                    }
-                }
+                PrivateKey = Crypto.SymmetricEncrypt(privateKey, key, iv);
+
+                //ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+                //// Create the streams used for encryption.
+                //using (MemoryStream msEncrypt = new MemoryStream())
+                //{
+                //    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                //    {
+                //        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                //        {
+                //            //Write all data to the stream.
+                //            swEncrypt.Write(priKey);
+                //        }
+                //        PrivateKey = Convert.ToBase64String(msEncrypt.ToArray());
+                //    }
+                //}
             }
         }
         else

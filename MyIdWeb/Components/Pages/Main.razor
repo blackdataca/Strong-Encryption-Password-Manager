@@ -1,4 +1,5 @@
 ﻿@page "/Main"
+@attribute [Authorize]
 @inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
 @inject IUserData userData

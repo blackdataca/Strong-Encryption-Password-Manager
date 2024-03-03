@@ -69,5 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="MyIdDb.publish.xml" />
+    <None Include="DbBackup.sql" />
+    <None Include="DbRestore.sql" />
   </ItemGroup>
 </Project>
