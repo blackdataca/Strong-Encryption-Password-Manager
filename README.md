@@ -66,7 +66,7 @@ Use strongest standard encryption to store everyone's secrets in a safe place
 2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
 3. Symmetric decrypt secret payload with Secret Key 
 
-### Write secret
+### Edit secret
 1. Get Secret Key by the first two steps in above [Read secret](#read-secret)
 2. Symmetric encrypt secret (site, username, password, memo and files) with Secret Key
 

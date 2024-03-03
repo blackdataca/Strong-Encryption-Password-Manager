@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 
 namespace MyIdLibrary.DataAccess;
@@ -123,17 +124,34 @@ public class SqlSecretData : ISecretData
         return (affecgtedRows == 1);
     }
 
-    public async Task<SecretModel> ReadSecret(string secretId)
+    public async Task<SecretModel> ReadSecret(string secretId, UserModel user)
     {
-        string sql = "SELECT * FROM secrets WHERE id=@id";
+        /*### Read secret
+        1. Symmetric decrypt Private Key from users.private_key(encrypted) with user's password + users.uuid as salt
+        */
+
+        byte[] priKey = user.GetPrivateKey();
+
+
+        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+        string sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id=@secretId and secrets_users.secret_id=@secretId and secrets_users.user_id=@Id";
 
         await _connection.OpenAsync();
         
-        var result = await _connection.QueryFirstOrDefaultAsync<SecretModel>(sql, new { id = secretId });
+        var secret = await _connection.QueryFirstOrDefaultAsync<SecretModel>(sql, new { secretId, user.Id });
+
+        //2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
+        byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
+        byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
+
+        //3. Symmetric decrypt secret payload with Secret Key 
+        string decPayload = Crypto.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
+        secret.Payload = decPayload;
+
 
         await _connection.CloseAsync();
 
-        return result;
+        return secret;
     }
 
 

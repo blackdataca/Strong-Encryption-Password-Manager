@@ -5,9 +5,9 @@ namespace MyIdLibrary.DataAccess
     {
         Task<bool> UpdateSecret(SecretModel secret);
 
-        Task<SecretModel> ReadSecret(string secretId);
         Task<bool> DeleteSecret(string secretId);
         Task<bool> CreateSecret(SecretModel secret, UserModel user);
         Task<List<SecretModel>> GetUserSecrets(UserModel user);
+        Task<SecretModel> ReadSecret(string secretId, UserModel user);
     }
 }

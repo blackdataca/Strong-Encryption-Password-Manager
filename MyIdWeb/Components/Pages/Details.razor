@@ -1,6 +1,9 @@
 ﻿@page "/Details/{Id}"
+@attribute [Authorize]
 @rendermode InteractiveServer
+@inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
+@inject IUserData userData
 @inject NavigationManager navManager
 
 <h1>Secret Details</h1>
@@ -26,12 +29,13 @@
 @code {
     [Parameter]
     public string Id { get; set; }
-
+    private UserModel loggedInUser;
     private SecretModel secret;
 
     protected override async Task OnInitializedAsync()
     {
-        secret = await secretData.ReadSecret(Id);
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
+        secret = await secretData.ReadSecret(Id, loggedInUser);
     }
 
     private void ClosePage()
