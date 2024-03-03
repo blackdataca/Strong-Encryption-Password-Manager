@@ -7,17 +7,18 @@
 @inject ProtectedSessionStorage sessionStorage
 @rendermode InteractiveServer
 
-<h1>Main</h1>
+<h1 class="page-heading text-uppercase mb-4">Secrets</h1>
 
-<div>
-    <button>Create Secret</button>
-</div>
 
-<div>
-    <div>@secrets?.Count Secrets</div>
-    <div>
+
+<div class="row">
+    <div class="col-md-4">
+        <button @onclick="LoadCreatePage" class="btn btn-outline-info text-uppercase">Create</button>
+    </div>
+    <div class="col-md-4">@secrets?.Count Secrets</div>
+    <div class="col-md-4 search-box">
         <input type="text" placeholder="Search"
-            aria-label="Search box"
+            aria-label="Search box" class="form-control rounded-control"
             @oninput="((txt) => OnSearchInput((string)txt.Value))" />
     </div>
 </div>
@@ -88,6 +89,14 @@
 
     }
 
+    private void LoadCreatePage()
+    {
+        if (loggedInUser is not null)
+            navManager.NavigateTo("/Create");
+        else
+            navManager.NavigateTo("/MicrosoftIdentity/Account/SignIn", true);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && loggedInUser != null)
@@ -114,8 +123,9 @@
         var output = await secretData.GetUserSecrets(loggedInUser);
         if (!string.IsNullOrWhiteSpace(searchText))
         {
+            string[] searchTerms = searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             output = output.Where(
-                s => s.Payload.Contains(searchText, StringComparison.InvariantCultureIgnoreCase)
+                s => searchTerms.All(val => s.Payload.Contains(val, StringComparison.InvariantCultureIgnoreCase))
             ).ToList();
         }
 
