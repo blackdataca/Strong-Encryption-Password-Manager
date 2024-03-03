@@ -14,13 +14,35 @@ public class SqlSecretData : ISecretData
         _connection = db.Connection;
     }
 
-    public async Task<List<SecretModel>> GetUserSecrets(string userId)
+    public async Task<List<SecretModel>> GetUserSecrets(UserModel user)
     {
+        /*### Read secret
+        1. Symmetric decrypt Private Key from users.private_key(encrypted) with user's password + users.uuid as salt
+        */
+
+        byte[] priKey = user.GetPrivateKey();
+
         await _connection.OpenAsync();
         try
         {
-            var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@UserId", new { UserId = userId });
-            var output = result.ToList();
+            Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+            var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id", new { user?.Id });
+
+            List<SecretModel> output = new List<SecretModel>();
+
+            foreach (var secret in result)
+            {
+                //2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
+                byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
+                byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
+
+                //3. Symmetric decrypt secret payload with Secret Key 
+                string decPayload = Crypto.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
+                secret.Payload = decPayload;
+
+                output.Add(secret);
+            }
+
             return output;
         }
         catch (Exception)
@@ -32,8 +54,6 @@ public class SqlSecretData : ISecretData
         {
             await _connection.CloseAsync();
         }
-
-
     }
 
     public async Task<bool> CreateSecret(SecretModel secret, UserModel user)

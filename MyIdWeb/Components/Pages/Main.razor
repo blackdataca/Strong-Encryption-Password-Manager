@@ -90,7 +90,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && loggedInUser != null)
         {
             await LoadFilterState();
             await FilterSecrets();
@@ -111,7 +111,7 @@
 
     private async Task FilterSecrets()
     {
-        var output = await secretData.GetUserSecrets(loggedInUser?.Id);
+        var output = await secretData.GetUserSecrets(loggedInUser);
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             output = output.Where(

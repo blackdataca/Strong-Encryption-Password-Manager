@@ -10,4 +10,6 @@ public class SecretModel
     public DateTime Synced { get; set; }
 
     public HashSet<string> UserIds { get; set; } = new();
+
+    public string SecretKey { get; set; }
 }
