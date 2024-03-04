@@ -22,37 +22,41 @@ else
         <div>
             <button @onclick="ClosePage"></button>
         </div>
-        <EditForm Model="secret" OnValidSubmit="SaveSecret">
+        <EditForm Model="secretDetail" OnValidSubmit="SaveSecret">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div>
                 <label for="site">Site</label>
-                <InputText id="site" @bind-Value="secret.Site" />
+                <InputText id="site" @bind-Value="secretDetail.Site" />
             </div>
             <div>
                 <label for="user">User</label>
-                <InputText id="user" @bind-Value="secret.UserName" />
+                <InputText id="user" @bind-Value="secretDetail.UserName" />
             </div>
             <div>
                 <label for="password">Password</label>
-                <InputText id="password" @bind-Value="secret.Password" />
+                <InputText id="password" @bind-Value="secretDetail.Password" />
             </div>
             <div>
                 <label for="memo">Memo</label>
-                <InputTextArea id="memo" @bind-Value="secret.Memo" />
+                <InputTextArea id="memo" @bind-Value="secretDetail.Memo" />
             </div>
             <div>
-                <button type="submit">Save</button>
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+            <div>
+                <button class="btn btn-danger" @onclick="Delete">Delete</button>
             </div>
         </EditForm>
+
     </div>
 </div>
 
 @code {
     [Parameter]
     public string secretId { get; set; }
-    private SecretDetailModel secret = new();
-    private SecretModel s = new();
+    private SecretDetailModel secretDetail = new();
+    private SecretModel secret = new();
     private UserModel loggedInUser = new();
 
     protected override async Task OnInitializedAsync()
@@ -60,9 +64,9 @@ else
         loggedInUser = await authProvider.GetUserFromAuth(userData);
         if (!string.IsNullOrWhiteSpace(secretId))
         {
-            s = await secretData.ReadSecret(secretId.ToString(), loggedInUser);
+            secret = await secretData.ReadSecret(secretId.ToString(), loggedInUser);
             //TODO - check if s is valid and belongs to current user
-            secret = JsonSerializer.Deserialize<SecretDetailModel>(s.Payload);
+            secretDetail = JsonSerializer.Deserialize<SecretDetailModel>(secret.Payload);
         }
     }
 
@@ -73,19 +77,30 @@ else
 
     private async Task SaveSecret()
     {
+        if (secret is null)
+            return;
         if (string.IsNullOrWhiteSpace(secretId))
         {
             SecretModel s = new();
-            s.Payload = JsonSerializer.Serialize(secret);
+            s.Payload = JsonSerializer.Serialize(secretDetail);
             s.UserIds.Add(loggedInUser.Id);
             await secretData.CreateSecret(s, loggedInUser);
         }
         else
         {
-            s.Payload = JsonSerializer.Serialize(secret);
-            await secretData.UpdateSecret(s, loggedInUser);
+            secret.Payload = JsonSerializer.Serialize(secretDetail);
+            await secretData.UpdateSecret(secret, loggedInUser);
         }
-        secret = new();
+        secretDetail = new();
+        secret = null;
+        ClosePage();
+    }
+
+    private async Task Delete()
+    {
+        secret.Deleted = DateTime.UtcNow;
+        await secretData.UpdateSecret(secret, loggedInUser);
+        secret = null;
         ClosePage();
     }
 }

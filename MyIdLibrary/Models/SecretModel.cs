@@ -7,6 +7,7 @@ public class SecretModel
     public string Payload { get; set; }
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime Modified {  get; set; }
+    public DateTime Deleted { get; set; }
     public DateTime Synced { get; set; }
 
     public HashSet<string> UserIds { get; set; } = new();

@@ -87,6 +87,7 @@ Use strongest standard encryption to store everyone's secrets in a safe place
 2. Other user removes themselves from secrets_users record
 
 ### Delete Secret
-1. Secret owner delete secrets record.
-2. Secrets_users records are deleted
+1. Secret owner mark secrets record deleted
+2. Purge deleted secret records
+3. Delete associated Secrets_users records
 

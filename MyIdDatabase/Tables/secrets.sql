@@ -6,6 +6,7 @@
     [created] DATETIME NOT NULL DEFAULT GETUTCDATE(), 
     [modified] DATETIME NULL, 
     [synced] DATETIME NULL, 
+    [deleted] DATETIME NULL, 
     
 )
 

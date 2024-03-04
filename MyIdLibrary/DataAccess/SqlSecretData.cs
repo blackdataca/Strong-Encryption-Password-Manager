@@ -27,7 +27,7 @@ public class SqlSecretData : ISecretData
         try
         {
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-            var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id", new { user?.Id });
+            var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id and secrets.deleted is null", new { user?.Id });
 
             List<SecretModel> output = new List<SecretModel>();
 
@@ -116,6 +116,9 @@ public class SqlSecretData : ISecretData
         try
         {
             string sql = "UPDATE secrets set payload=@payload WHERE id=@id";
+            if (secret.Deleted != DateTime.MinValue)
+                sql = "UPDATE secrets set payload=@payload,deleted=@deleted WHERE id=@id";
+
             affecgtedRows = await _connection.ExecuteAsync(sql, secret, tx);
 
             await tx.CommitAsync();
