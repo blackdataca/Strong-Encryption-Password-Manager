@@ -100,15 +100,22 @@ public class SqlSecretData : ISecretData
         return (affecgtedRows == 1);
     }
 
-    public async Task<bool> UpdateSecret(SecretModel secret)
+    public async Task<bool> UpdateSecret(SecretModel secret, UserModel user)
     {
+        byte[] priKey = user.GetPrivateKey();
+        byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
+        byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
+
+        string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
+        secret.Payload = encPayload;
+
         int affecgtedRows;
 
         await _connection.OpenAsync();
         var tx = await _connection.BeginTransactionAsync();
         try
         {
-            string sql = "UPDATE secrets set name=@name, public_key=@public_key WHERE id=@id";
+            string sql = "UPDATE secrets set payload=@payload WHERE id=@id";
             affecgtedRows = await _connection.ExecuteAsync(sql, secret, tx);
 
             await tx.CommitAsync();

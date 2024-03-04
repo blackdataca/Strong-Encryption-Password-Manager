@@ -1,4 +1,5 @@
 ﻿@page "/Create"
+@page "/Create/{secretId}"
 @attribute [Authorize]
 @using MyIdWeb.Models
 @using System.Text.Json
@@ -8,8 +9,14 @@
 @inject NavigationManager navManage
 @rendermode InteractiveServer
 
-<h1>Add A Secret</h1>
-
+@if (string.IsNullOrWhiteSpace(secretId))
+{
+    <h1>Add A Secret</h1>
+}
+else
+{
+    <h1>Secret Details</h1>
+}
 <div>
     <div>
         <div>
@@ -42,12 +49,21 @@
 </div>
 
 @code {
-    private CreateSecretModel secret = new();
+    [Parameter]
+    public string secretId { get; set; }
+    private SecretDetailModel secret = new();
+    private SecretModel s = new();
     private UserModel loggedInUser = new();
 
     protected override async Task OnInitializedAsync()
     {
         loggedInUser = await authProvider.GetUserFromAuth(userData);
+        if (!string.IsNullOrWhiteSpace(secretId))
+        {
+            s = await secretData.ReadSecret(secretId.ToString(), loggedInUser);
+            //TODO - check if s is valid and belongs to current user
+            secret = JsonSerializer.Deserialize<SecretDetailModel>(s.Payload);
+        }
     }
 
     private void ClosePage()
@@ -57,10 +73,18 @@
 
     private async Task SaveSecret()
     {
-        SecretModel s = new();
-        s.Payload = JsonSerializer.Serialize(secret);  //TODO Encrypt
-        s.UserIds.Add(loggedInUser.Id);
-        await secretData.CreateSecret(s, loggedInUser);
+        if (string.IsNullOrWhiteSpace(secretId))
+        {
+            SecretModel s = new();
+            s.Payload = JsonSerializer.Serialize(secret);
+            s.UserIds.Add(loggedInUser.Id);
+            await secretData.CreateSecret(s, loggedInUser);
+        }
+        else
+        {
+            s.Payload = JsonSerializer.Serialize(secret);
+            await secretData.UpdateSecret(s, loggedInUser);
+        }
         secret = new();
         ClosePage();
     }

@@ -9,14 +9,14 @@
 
 <h1 class="page-heading text-uppercase mb-4">Secrets</h1>
 
-
+<div class="">
+    <button @onclick="LoadCreatePage" class="btn btn-primary">Create</button>
+</div>
 
 <div class="row">
-    <div class="col-md-4">
-        <button @onclick="LoadCreatePage" class="btn btn-outline-info text-uppercase">Create</button>
-    </div>
-    <div class="col-md-4">@secrets?.Count Secrets</div>
-    <div class="col-md-4 search-box">
+
+    <div class="col-md-2">@secrets?.Count Secrets</div>
+    <div class="col-md-10 search-box">
         <input type="text" placeholder="Search"
             aria-label="Search box" class="form-control rounded-control"
             @oninput="((txt) => OnSearchInput((string)txt.Value))" />
@@ -142,6 +142,6 @@
 
     private void OpenDetails(SecretModel secret)
     {
-        navManager.NavigateTo($"/Details/{secret.Id}");
+        navManager.NavigateTo($"/Create/{secret.Id}");
     }
 }

@@ -2,20 +2,20 @@
 
 namespace MyIdWeb.Models;
 
-public class CreateSecretModel
+public class SecretDetailModel
 {
     [Required]
     [MaxLength(50)]
-    public string? Site { get; set; }
+    public string Site { get; set; }
 
     [MaxLength(50)]
     [Display(Name = "User")]
-    public string? UserName { get; set; }
+    public string UserName { get; set; }
 
     [MaxLength(50)]
-    public string? Password { get; set; }
+    public string Password { get; set; }
 
     [MaxLength(500)]
-    public string? Memo { get; set; }
+    public string Memo { get; set; }
 
 }
