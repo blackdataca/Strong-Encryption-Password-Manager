@@ -36,28 +36,38 @@ public class UserModel
             //Save the public key information to an RSAParameters structure.  
             var pubKey = rsa.ExportRSAPublicKey();
             PublicKey = Convert.ToBase64String(pubKey);
+            var priKey = rsa.ExportRSAPrivateKey();
 
             //Symmetric encrypt private key
-            using (var sha256 = SHA256.Create())
-            {
-                //var aes = Aes.Create();
-                //key size 256 bits (32 bytes)
-                byte[] key = sha256.ComputeHash(Encoding.ASCII.GetBytes(newSecurityStamp));
-                //IV size is BlockSize / 8 = 128 / 8 = 16 bytes
-                string subId = Id.Replace("-", "").Substring(0, 16);
-                byte[] iv = Encoding.ASCII.GetBytes(subId);
-
-                var priKey = rsa.ExportRSAPrivateKey();
-                string privateKey = Convert.ToBase64String(priKey);
-
-                PrivateKey = Crypto.SymmetricEncrypt(privateKey, key, iv);
-            }
+            EncryptPrivateKey(newSecurityStamp, priKey);
         }
-        else
+        else if (SecurityStamp != newSecurityStamp)
         {
-            //TODO follow User changed password
+            //User changed password
+            byte[] priKey = GetPrivateKey();
+
+            //Symmetric encrypt private key
+            EncryptPrivateKey(newSecurityStamp, priKey);
+
         }
         SecurityStamp = newSecurityStamp;
+    }
+
+    private void EncryptPrivateKey(string newSecurityStamp, byte[] priKey)
+    {
+        using (var sha256 = SHA256.Create())
+        {
+            //var aes = Aes.Create();
+            //key size 256 bits (32 bytes)
+            byte[] key = sha256.ComputeHash(Encoding.ASCII.GetBytes(newSecurityStamp));
+            //IV size is BlockSize / 8 = 128 / 8 = 16 bytes
+            string subId = Id.Replace("-", "").Substring(0, 16);
+            byte[] iv = Encoding.ASCII.GetBytes(subId);
+
+            string privateKey = Convert.ToBase64String(priKey);
+
+            PrivateKey = Crypto.SymmetricEncrypt(privateKey, key, iv);
+        }
     }
 
     public int Status { get; set; }

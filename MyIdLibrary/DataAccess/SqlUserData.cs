@@ -38,7 +38,7 @@ public class SqlUserData : IUserData
 
     public async Task UpdateUser(UserModel user)
     {
-        string sql = "UPDATE users set name=@name WHERE id=@id";
+        string sql = "UPDATE users set name=@name,private_key=@privateKey, security_stamp=@securityStamp WHERE id=@id";
         await _connection.OpenAsync();
         var result = await _connection.ExecuteAsync(sql, user);
         await _connection.CloseAsync();

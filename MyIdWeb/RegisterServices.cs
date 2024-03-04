@@ -39,8 +39,8 @@ public static class RegisterServices
 
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-        builder.Services.AddSingleton<IDbConnection, DbConnection>();
-        builder.Services.AddSingleton<ISecretData, SqlSecretData>();
-        builder.Services.AddSingleton<IUserData, SqlUserData>();
+        builder.Services.AddScoped<IDbConnection, DbConnection>();
+        builder.Services.AddScoped<ISecretData, SqlSecretData>();
+        builder.Services.AddScoped<IUserData, SqlUserData>();
     }
 }
