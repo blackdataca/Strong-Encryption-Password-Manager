@@ -4,6 +4,8 @@ namespace MyIdWeb.Models;
 
 public class SecretDetailModel
 {
+    public string Id { get; set; }
+
     [Required]
     [MaxLength(50)]
     public string Site { get; set; }

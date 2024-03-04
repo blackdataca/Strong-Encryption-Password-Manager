@@ -1,4 +1,6 @@
 ﻿@page "/Main"
+@using System.Text.Json
+@using MyIdWeb.Models
 @attribute [Authorize]
 @inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
@@ -27,20 +29,32 @@
     <div>
         @if (secrets?.Count > 0)
         {
-            <Virtualize Items="@secrets" Context="s" OverscanCount="10">
-                <div>
-                    <div @onclick="(() => OpenDetails(s))">
-                        @s.Payload
-                    </div>
-                </div>
-            </Virtualize>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Site</th>
+                        <th>Name</th>
+                        <th>Memo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <Virtualize Items="@secrets" Context="s" OverscanCount="10">
+                        <tr @onclick="(() => OpenDetails(s.Id))">
+                            <td>@s.Site</td>
+                            <td>@s.UserName</td>
+                            <td>@s.Memo</td>
+                        </tr>
+                    </Virtualize>
+                </tbody>
+            </table>
+
         }
     </div>
 </div>
 
 @code {
     private UserModel loggedInUser;
-    private List<SecretModel> secrets;
+    private List<SecretDetailModel> secrets;
     private string searchText = "";
 
     protected override async Task OnInitializedAsync()
@@ -120,16 +134,23 @@
 
     private async Task FilterSecrets()
     {
-        var output = await secretData.GetUserSecrets(loggedInUser);
+
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             string[] searchTerms = searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            output = output.Where(
+            var secretPayloads = await secretData.GetUserSecrets(loggedInUser);
+            secretPayloads = secretPayloads.Where(
                 s => searchTerms.All(val => s.Payload.Contains(val, StringComparison.InvariantCultureIgnoreCase))
             ).ToList();
-        }
+            secrets = new List<SecretDetailModel> { };
+            foreach(var payload in secretPayloads)
+            {
+                var secretDetail = JsonSerializer.Deserialize<SecretDetailModel>(payload.Payload);
+                secretDetail.Id = payload.Id.ToString();
+                secrets.Add(secretDetail);
+            }
 
-        secrets = output;
+        }
 
         await SaveFilterState();
     }
@@ -140,8 +161,8 @@
         await FilterSecrets();
     }
 
-    private void OpenDetails(SecretModel secret)
+    private void OpenDetails(string secretId)
     {
-        navManager.NavigateTo($"/Create/{secret.Id}");
+        navManager.NavigateTo($"/Create/{secretId}");
     }
 }
