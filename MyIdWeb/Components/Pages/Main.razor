@@ -39,7 +39,7 @@
                 </thead>
                 <tbody>
                     <Virtualize Items="@secrets" Context="s" OverscanCount="10">
-                        <tr @onclick="(() => OpenDetails(s.Id))">
+                        <tr class="@ShowDeleted(s)" @onclick="(() => OpenDetails(s.Id))">
                             <td>@s.Site</td>
                             <td>@s.UserName</td>
                             <td>@s.Memo</td>
@@ -147,6 +147,7 @@
             {
                 var secretDetail = JsonSerializer.Deserialize<SecretDetailModel>(payload.Payload);
                 secretDetail.Id = payload.Id.ToString();
+                secretDetail.Deleted = payload.Deleted;
                 secrets.Add(secretDetail);
             }
 
@@ -164,5 +165,13 @@
     private void OpenDetails(string secretId)
     {
         navManager.NavigateTo($"/Create/{secretId}");
+    }
+
+    private string ShowDeleted(SecretDetailModel s)
+    {
+        if (s.Deleted == DateTime.MinValue)
+            return "";
+        else
+            return "table-danger text-decoration-line-through";
     }
 }

@@ -27,7 +27,9 @@ public class SqlSecretData : ISecretData
         try
         {
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-            var result = await _connection.QueryAsync<SecretModel>("SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id and secrets.deleted is null", new { user?.Id });
+            string sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id and secrets.deleted is null";
+            sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id";
+            var result = await _connection.QueryAsync<SecretModel>(sql, new { user?.Id });
 
             List<SecretModel> output = new List<SecretModel>();
 

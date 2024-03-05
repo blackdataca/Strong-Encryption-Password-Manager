@@ -22,7 +22,7 @@ else
         <div>
             <button @onclick="ClosePage"></button>
         </div>
-        <EditForm Model="secretDetail" OnValidSubmit="SaveSecret">
+        <EditForm Model="secretDetail" OnValidSubmit="SaveSecret" autocomplete="off">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div>
@@ -31,11 +31,11 @@ else
             </div>
             <div>
                 <label for="user">User</label>
-                <InputText id="user" @bind-Value="secretDetail.UserName" />
+                <InputText autocomplete="false" id="user" @bind-Value="secretDetail.UserName" />
             </div>
             <div>
                 <label for="password">Password</label>
-                <InputText id="password" @bind-Value="secretDetail.Password" />
+                <InputText type="password" id="password" @bind-Value="secretDetail.Password" />
             </div>
             <div>
                 <label for="memo">Memo</label>

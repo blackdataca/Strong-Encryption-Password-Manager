@@ -5,6 +5,7 @@ namespace MyIdWeb.Models;
 public class SecretDetailModel
 {
     public string Id { get; set; }
+    public DateTime Deleted { get; set; } = DateTime.MinValue;
 
     [Required]
     [MaxLength(50)]
