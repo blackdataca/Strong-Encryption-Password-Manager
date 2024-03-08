@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using System.IO.Compression;
 using WebApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +36,15 @@ builder.Services.AddAuthentication();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddEntityFrameworkStores<DataContext>();
 
+builder.Services.AddRequestDecompression();
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -49,5 +61,9 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseRequestDecompression();
+app.UseResponseCompression();
+
 
 app.Run();

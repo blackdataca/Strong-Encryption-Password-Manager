@@ -1634,13 +1634,21 @@ namespace MyId
 
         private async Task WebSync(bool fromMemu)
         {
+            ToolSyncVisual(0);
+            string err = await SendWebSyncData(fromMemu);
+            ToolSyncVisual(err == "0" ? 1 : 2);
+        }
+
+        private async Task<string> SendWebSyncData(bool fromMemu)
+        {
             string userName = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncUser", "");
             string userPass = (string)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncPass", "");
-
+            string err = "";
             if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(userPass))
-                return;
+                return err;
 
-            ToolSyncVisual(0);
+
+
 
             userName = userName.ToLower();
 
@@ -1654,7 +1662,7 @@ namespace MyId
                 var key = userName + userPass + recId;
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
-                
+
                 //string payload = MyEncryption.EncryptString(json, key, recId);
 
                 var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = json };
@@ -1664,153 +1672,166 @@ namespace MyId
             uxItemCountStatus.Text = $"Found {payloads.Count:N0} record{(payloads.Count > 1 ? 's' : ' ')}...";
 #if DEBUG
 
-            ServicePointManager.ServerCertificateValidationCallback +=  (sender, cert, chain, sslPolicyErrors) => true;
+            ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
 #endif
             using (var client = new HttpClient())
             {
-                string credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{userName}:{userPass}"));
+                string token = await GetTokenAsync(client, userName, userPass);
+                if (string.IsNullOrWhiteSpace(token))
+                    return err;
 
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
-                var vm = new {payloads.Count, Payloads = payloads };
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var vm = new { payloads.Count, Payloads = payloads };
                 //var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
 
-                string err = "";
                 try
                 {
-                    uxItemCountStatus.Text = $"Comprssing {dataString.Length:N0} bytes";
-                    // Compress the data using gzip
-                    byte[] compressedData;
-                    using (MemoryStream ms = new MemoryStream())
+                    using (var contentData = new MemoryStream(Encoding.Default.GetBytes(dataString)))
                     {
-                        using (GZipStream gzipStream = new GZipStream(ms, CompressionMode.Compress))
-                        using (StreamWriter writer = new StreamWriter(gzipStream))
+                        uxItemCountStatus.Text = $"Comprssing {dataString.Length:N0} bytes";
+                        // Compress the data using gzip
+                        //byte[] compressedData;
+                        using (var compressedData = new MemoryStream())
                         {
-                            writer.Write(dataString);
-                        }
-                        compressedData = ms.ToArray();
-                    }
+                            using (GZipStream gzipStream = new GZipStream(compressedData, CompressionMode.Compress, true))
+                            {
+                                contentData.CopyTo(gzipStream);
+                            }
+                                //using (StreamWriter writer = new StreamWriter(gzipStream))
+                                //{
+                                //writer.Write(dataString);
+                                //writer.Flush();
+                               // gzipStream.Flush();
 
+                                compressedData.Position = 0;
+                                //File.WriteAllBytes("data.gz", compressedData.ToArray());
+                                //compressedData.Position = 0;
+                                //compressedData = ms.ToArray();
 
-                    uxItemCountStatus.Text = $"Uploading {compressedData.Length:N0} bytes";
+                                uxItemCountStatus.Text = $"Uploading {compressedData.Length:N0} bytes";
 
-                    var start = new Stopwatch();
-                    start.Start();
-                    // Prepare the content to send in the request
-                    HttpContent httpContent = new ByteArrayContent(compressedData);
-                    // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
-                    httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                    httpContent.Headers.ContentEncoding.Add("gzip");
-                    client.DefaultRequestHeaders
-                      .Accept
-                      .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
+                                var start = new Stopwatch();
+                                start.Start();
+                                // Prepare the content to send in the request
+                                HttpContent httpContent = new StreamContent(compressedData);
+                                // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
+                                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                                httpContent.Headers.ContentEncoding.Add("gzip");
+                            client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
+                                client.DefaultRequestHeaders
+                                  .Accept
+                                  .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
+                            
+                                // Send the POST request using PostAsync method
+                                HttpResponseMessage res = await client.PostAsync("https://localhost:7283/Sync", httpContent);
 
-                    // Send the POST request using PostAsync method
-                    HttpResponseMessage res = await client.PostAsync("https://192.168.0.83:8442/WebSync", httpContent);
-
-                    // Check if the request was successful
-                    if (res.IsSuccessStatusCode)
-                    {
-                        // Read the response content as a string
-                        string response = await res.Content.ReadAsStringAsync();
+                                // Check if the request was successful
+                                if (res.IsSuccessStatusCode)
+                                {
+                                    // Read the response content as a string
+                                    string response = await res.Content.ReadAsStringAsync();
 
 #if DEBUG
-                        File.WriteAllText("response_dump.html", response);
+                                    File.WriteAllText("response_dump.html", response);
 #endif
-                        uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
+                                    uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
 
-                        JObject joResponse = JObject.Parse(response);
-                        err = joResponse["Error"].ToString();
-                        if (err == "0")
-                        {
-                            int recNew = 0;
-                            if (joResponse["Return"] != null)
-                            {
-                                foreach (var row in joResponse["Return"])
-                                {
-                              
-                                    var recId = row["RecId"].ToString();
-                                    //var key = userName + userPass + recId;
+                                    JObject joResponse = JObject.Parse(response);
+                                    err = joResponse["Error"].ToString();
+                                    if (err == "0")
+                                    {
+                                        int recNew = 0;
+                                        if (joResponse["Return"] != null)
+                                        {
+                                            foreach (var row in joResponse["Return"])
+                                            {
 
-                                    //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
+                                                var recId = row["RecId"].ToString();
+                                                //var key = userName + userPass + recId;
 
-                                    var item = JsonConvert.DeserializeObject<IdItem>(row["Payload"].ToString());
+                                                //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
 
-                                    IdItem aItem = GetAItemByRecId(recId);
-                                    if (aItem == null)
-                                    {   //new record from server
-                                        aItem = new IdItem();
-                                        aItem.UniqId = recId;
-                                        _idList.Add(aItem);
+                                                var item = JsonConvert.DeserializeObject<IdItem>(row["Payload"].ToString());
 
-                                        //TODO download files from server
+                                                IdItem aItem = GetAItemByRecId(recId);
+                                                if (aItem == null)
+                                                {   //new record from server
+                                                    aItem = new IdItem();
+                                                    aItem.UniqId = recId;
+                                                    _idList.Add(aItem);
+
+                                                    //TODO download files from server
+                                                }
+                                                else
+                                                {  //updated records from app, upload files
+
+                                                    var formData = new MultipartFormDataContent();
+
+                                                    // Add each file to the FormData
+                                                    foreach (var file in aItem.Images)
+                                                    {
+                                                        string f = Path.Combine(KnownFolders.DataDir, file.Key);
+                                                        var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(f));
+                                                        formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
+                                                    }
+
+                                                    if (formData.Count() > 0)
+                                                    {
+                                                        uxItemCountStatus.Text = $"Uploading {aItem.Images.Count} files...";
+
+                                                        var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
+
+                                                        string responseBody = await uploadResponse.Content.ReadAsStringAsync();
+                                                        int statusCode = (int)uploadResponse.StatusCode;
+
+                                                        uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
+                                                    }
+                                                }
+                                                aItem.User = item.User;
+                                                aItem.Password = item.Password;
+                                                aItem.Site = item.Site;
+                                                aItem.Memo = item.Memo;
+                                                aItem.Deleted = item.Deleted;
+                                                aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString()).ToUniversalTime();
+                                                recNew++;
+                                            }
+                                            if (recNew > 0)
+                                            {
+                                                SaveToDisk(false);
+                                                ShowNumberOfItems();
+                                                UxSearchBox_TextChanged();
+                                            }
+                                        }
+                                        uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1 ? 's' : ' ')}";
                                     }
                                     else
-                                    {  //updated records from app, upload files
-
-                                        var formData = new MultipartFormDataContent();
-
-                                        // Add each file to the FormData
-                                        foreach (var file in aItem.Images)
-                                        {
-                                            string f = Path.Combine(KnownFolders.DataDir, file.Key);
-                                            var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(f));
-                                            formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
-                                        }
-
-                                        if (formData.Count() > 0)
-                                        {
-                                            uxItemCountStatus.Text = $"Uploading {aItem.Images.Count} files...";
-
-                                            var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
-
-                                            string responseBody = await uploadResponse.Content.ReadAsStringAsync();
-                                            int statusCode = (int)uploadResponse.StatusCode;
-
-                                            uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
-                                        }
+                                    {
+                                        if (fromMemu)
+                                            MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                        else
+                                            uxItemCountStatus.Text = "WebSync: " + err;
                                     }
-                                    aItem.User = item.User;
-                                    aItem.Password = item.Password;
-                                    aItem.Site = item.Site;
-                                    aItem.Memo = item.Memo;
-                                    aItem.Deleted = item.Deleted;
-                                    aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString()).ToUniversalTime();
-                                    recNew++;
                                 }
-                                if (recNew > 0)
+                                else
                                 {
-                                    SaveToDisk(false);
-                                    ShowNumberOfItems();
-                                    UxSearchBox_TextChanged();
-                                }
-                            }
-                            uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1?'s':' ')}";
-                        }
-                        else
-                        {
-                            if (fromMemu)
-                                MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                            else
-                                uxItemCountStatus.Text = "WebSync: " + err;
-                        }
-                    }
-                    else
-                    {
-                        // Handle unsuccessful response
-                        if (fromMemu)
-                            MessageBox.Show($"Error: {res.StatusCode}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        else
-                        {
-                            uxItemCountStatus.Text = $"WebSync: {res.StatusCode}";
-#if DEBUG 
-                            File.WriteAllText("websync_error_dump.html",res.Content.ReadAsStringAsync().Result);
+                                    // Handle unsuccessful response
+                                    if (fromMemu)
+                                        MessageBox.Show($"Error: {res.StatusCode} \n {res.Content.ReadAsStringAsync().Result}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                    else
+                                    {
+                                        uxItemCountStatus.Text = $"WebSync: {res.StatusCode}";
+#if DEBUG
+                                        File.WriteAllText("websync_error_dump.html", res.Content.ReadAsStringAsync().Result);
 #endif
+                                    }
+                                }
+                                //}
+                           // }
                         }
                     }
-
-
                 }
                 catch (Exception ex)
                 {
@@ -1821,9 +1842,9 @@ namespace MyId
                 }
 
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);
-                ToolSyncVisual(err == "0" ? 1 : 2);
             }
-            
+
+            return err;
         }
 
         static async Task Main(string[] args)
@@ -1853,37 +1874,34 @@ namespace MyId
             }
         }
 
-        private async Task<string> GetTokenAsync(string uid, string pwd)
+        private async Task<string> GetTokenAsync(HttpClient client, string uid, string pwd)
         {
-            using (var client = new HttpClient())
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var form = new Dictionary<string, string>()
             {
-                client.DefaultRequestHeaders.Add("cache-control", "no-cache");
-                client.DefaultRequestHeaders.Add("content-type", "application/x-www-form-urlencoded");
-         
-                var form = new Dictionary<string, string>
+                { "email" , uid },
+                { "password" , pwd }
+            };
+            var json = JsonConvert.SerializeObject(form);
+            try
+            {
+                var body = new StringContent(json, Encoding.UTF8, "application/json");
+                HttpResponseMessage tokenResponse = await client.PostAsync("https://localhost:7283/login", body);
+                if (tokenResponse.IsSuccessStatusCode)
                 {
-                    {"grant_type", "client_credentials"},
-                    {"client_id", uid},
-                    {"client_secret", pwd},
-                };
-                try
-                {
-                    HttpResponseMessage tokenResponse = await client.PostAsync("https://192.168.0.68:8443/token.php", new FormUrlEncodedContent(form));
-                    if (tokenResponse.IsSuccessStatusCode)
-                    {
-                        var jsonContent = await tokenResponse.Content.ReadAsStringAsync();
-                        var jobj = JsonConvert.DeserializeObject<JObject>(jsonContent);
-                        return jobj["access_token"].ToString();
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Token request failed: {tokenResponse.StatusCode}", "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
+                    var jsonContent = await tokenResponse.Content.ReadAsStringAsync();
+                    var jobj = JsonConvert.DeserializeObject<JObject>(jsonContent);
+                    return jobj["accessToken"].ToString();
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show(ex.Message, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Token request failed: {tokenResponse.StatusCode} \n {tokenResponse.Content.ReadAsStringAsync().Result}", "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             return null;
         }

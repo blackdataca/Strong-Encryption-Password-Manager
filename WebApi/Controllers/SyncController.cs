@@ -1,20 +1,22 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class SyncController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly ILogger<SyncController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public SyncController(ILogger<SyncController> logger)
         {
             _logger = logger;
         }
@@ -30,6 +32,20 @@ namespace WebApi.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        [HttpPost]
+        [Authorize]
+        [Produces("text/plain")]
+        public async Task<string> PostAsync()
+        {
+
+            using var sr = new StreamReader(Request.Body);
+            
+            string json = await sr.ReadToEndAsync();
+            Response.Headers.Remove("Content-Encoding");
+            Response.Headers.TryAdd("Content-Encoding", "gzip");
+            return json;
         }
     }
 }
