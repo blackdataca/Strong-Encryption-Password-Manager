@@ -9,7 +9,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace MyId
 {
-
+    //TODO use same class in MyIdLibrary instead
 
     public class MyEncryption
     {
@@ -144,7 +144,8 @@ namespace MyId
             }
             else
             {
-                return (prefix + System.Guid.NewGuid().ToString().Replace("-", "").Substring(0, 14)) + "." + System.Guid.NewGuid().ToString().Substring(0, 8);
+                //return (prefix + System.Guid.NewGuid().ToString().Replace("-", "").Substring(0, 14)) + "." + System.Guid.NewGuid().ToString().Substring(0, 8);
+                return prefix + System.Guid.NewGuid().ToString();
             }
         }
 

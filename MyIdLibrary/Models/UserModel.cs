@@ -22,7 +22,7 @@ public class UserModel
             var key = sha256.ComputeHash(Encoding.ASCII.GetBytes(SecurityStamp));
             string subId = Id.Replace("-", "").Substring(0, 16);
             byte[] iv = Encoding.ASCII.GetBytes(subId);
-            string priKey = Crypto.SymmetricDecrypt(PrivateKey, key, iv);
+            string priKey = MyEncryption.SymmetricDecrypt(PrivateKey, key, iv);
             return Convert.FromBase64String(priKey);
         }
     }
@@ -66,7 +66,7 @@ public class UserModel
 
             string privateKey = Convert.ToBase64String(priKey);
 
-            PrivateKey = Crypto.SymmetricEncrypt(privateKey, key, iv);
+            PrivateKey = MyEncryption.SymmetricEncrypt(privateKey, key, iv);
         }
     }
 

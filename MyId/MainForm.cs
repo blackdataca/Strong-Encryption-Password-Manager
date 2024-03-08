@@ -1662,7 +1662,7 @@ namespace MyId
             foreach (var item in _idList)
             {
                 var recId = item.UniqId;
-                var key = userName + userPass + recId;
+                //var key = userName + userPass + recId;
 
                 var json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
 

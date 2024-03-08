@@ -8,6 +8,7 @@ using System.Text;
 
 namespace MyId
 {
+    //TODO use same class in MyIdLibrary instead
     [Serializable]
     public class IdItem
     {

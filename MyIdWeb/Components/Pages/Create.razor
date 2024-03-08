@@ -64,7 +64,7 @@ else
         loggedInUser = await authProvider.GetUserFromAuth(userData);
         if (!string.IsNullOrWhiteSpace(secretId))
         {
-            secret = await secretData.ReadSecret(secretId.ToString(), loggedInUser);
+            secret = await secretData.ReadSecretAsync(secretId.ToString(), loggedInUser);
             //TODO - check if s is valid and belongs to current user
             secretDetail = JsonSerializer.Deserialize<SecretDetailModel>(secret.Payload);
         }
