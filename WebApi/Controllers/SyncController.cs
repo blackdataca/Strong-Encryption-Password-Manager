@@ -77,6 +77,10 @@ public class SyncController : ControllerBase
         using var sr = new StreamReader(Request.Body);
         string s = await sr.ReadToEndAsync();
         dynamic? vm = JsonConvert.DeserializeObject(s);
+        var returnObject = new List<SecretModel>();
+        int newCnt = 0;
+        int updateCnt = 0;
+
         if (vm is not null && vm.Count is not null)
         {
             _logger.Log(LogLevel.Debug, $"[PutAsync] incoming {vm.Count} records");
@@ -88,27 +92,37 @@ public class SyncController : ControllerBase
                 IdItem recItem = JsonConvert.DeserializeObject<IdItem>(payload);
                 if (string.IsNullOrWhiteSpace(recId))
                     recId = Guid.NewGuid().ToString();
-                
+
                 DateTime appTime = rec.LastUpdate;
                 SecretModel secret = await _secretData.FindSecretAsync(recId, user);
                 if (secret is not null)
                 { //row exists on server
                     DateTime dbTime = secret.Modified;
-                    if ( appTime > dbTime)
+                    if (appTime >= dbTime)
                     { //app is newer, update server record, mark synced
-                        
+
                         secret.Synced = DateTime.UtcNow;
                         secret.Modified = appTime;
+                        updateCnt++;
                         if (await _secretData.UpdateSecret(secret, user))
                             _logger.Log(LogLevel.Debug, "Server secret updated");
                         else
                             _logger.Log(LogLevel.Warning, "Server secret update failed");
+
+                        if (appTime > dbTime)
+                        {
+                            //app is newer send back record, may need file upload
+                            returnObject.Add(secret);
+                        }
+                    }
+                    else
+                    { //server is newer, do nothing
+                        
+                        _logger.Log(LogLevel.Debug, $"Server {dbTime} is newer than app {appTime}");
                     }
 
-
-
                 }
-                else 
+                else
                 {  //row does not exist on server, create server record
                     secret = new();
                     secret.Id = Guid.NewGuid();
@@ -118,7 +132,11 @@ public class SyncController : ControllerBase
                     secret.Synced = DateTime.UtcNow;
                     secret.UserIds.Add(user.Id);
                     if (await _secretData.CreateSecret(secret, user))
+                    {
+                        newCnt++;
+                        returnObject.Add(secret);
                         _logger.Log(LogLevel.Debug, "Server secret created");
+                    }
                     else
                         _logger.Log(LogLevel.Warning, "Server secret create failed");
                 }
@@ -127,6 +145,38 @@ public class SyncController : ControllerBase
             }
         }
 
-        return """{"Error":"0"}"""; ;
+        _logger.Log(LogLevel.Debug, $"New: {newCnt} Updated: {updateCnt}");
+
+        //4. Get all synced is null records (server is newer)
+
+        var secrets = await _secretData.GetUserSecretsAsync(user, true);
+        returnObject.AddRange(secrets);
+
+        var res = new
+        {
+            Error = "0",
+            Return = returnObject
+        };
+
+        string resJson = JsonConvert.SerializeObject(res);
+        return resJson;
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> PostAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
+
+        //1. Get authenticated user
+        var user = _userData.GetUser(userId).Result;
+        if (user is null)
+        {
+            _logger.Log(LogLevel.Warning, $"[PostAsync] user not found: {userId}");
+            return Unauthorized();
+        }
+
+        _logger.Log(LogLevel.Debug, $"[PostAsync] user found: {user.Email}");
+        return Ok();
     }
 }

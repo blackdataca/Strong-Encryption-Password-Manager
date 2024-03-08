@@ -12,7 +12,7 @@ namespace MyId
     [Serializable]
     public class IdItem
     {
-        public Guid Uid = Guid.NewGuid();
+        public Guid Uid;
         public string UniqId = MyEncryption.UniqId("", true);
         public string Site = "";
         public string User ="";

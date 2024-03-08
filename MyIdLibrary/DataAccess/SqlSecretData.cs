@@ -16,7 +16,7 @@ public class SqlSecretData : ISecretData
         Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
     }
 
-    public async Task<List<SecretModel>> GetUserSecrets(UserModel user)
+    public async Task<List<SecretModel>> GetUserSecretsAsync(UserModel user, bool onlyUnSynced = false)
     {
         /*### Read secret
         1. Symmetric decrypt Private Key from users.private_key(encrypted) with user's password + users.uuid as salt
@@ -24,12 +24,18 @@ public class SqlSecretData : ISecretData
 
         byte[] priKey = user.GetPrivateKey();
 
-        await _connection.OpenAsync();
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
         try
         {
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-            string sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id and secrets.deleted is null";
-            sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id";
+            string sql; // = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id and secrets.deleted is null";
+            if (onlyUnSynced)
+                sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id AND secrets_users.user_id=@Id AND secrets.synced is null";
+            else
+                sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id =secrets_users.secret_id and secrets_users.user_id=@Id";
             var result = await _connection.QueryAsync<SecretModel>(sql, new { user?.Id });
 
             List<SecretModel> output = new List<SecretModel>();
@@ -162,7 +168,7 @@ public class SqlSecretData : ISecretData
 
 
         Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-        string sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id=@secretId and secrets_users.secret_id=@secretId and secrets_users.user_id=@Id";
+        string sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id=@secretId and secrets_users.secret_id=secrets.id and secrets_users.user_id=@Id";
 
         await _connection.OpenAsync();
         

@@ -8,6 +8,7 @@ using MyIdWeb.Components.Account.Pages;
 using MyIdWeb.Components.Account.Pages.Manage;
 using MyIdWeb.Data;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 
 namespace Microsoft.AspNetCore.Routing
@@ -101,8 +102,8 @@ namespace Microsoft.AspNetCore.Routing
                 }
 
                 personalData.Add("Authenticator Key", (await userManager.GetAuthenticatorKeyAsync(user))!);
-                var fileBytes = JsonSerializer.SerializeToUtf8Bytes(personalData);
-
+                //var fileBytes = JsonSerializer.SerializeToUtf8Bytes(personalData);
+                var fileBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(personalData));
                 context.Response.Headers.TryAdd("Content-Disposition", "attachment; filename=PersonalData.json");
                 return TypedResults.File(fileBytes, contentType: "application/json", fileDownloadName: "PersonalData.json");
             });

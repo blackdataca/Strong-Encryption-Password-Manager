@@ -2,7 +2,6 @@
 @page "/Create/{secretId}"
 @attribute [Authorize]
 @using MyIdWeb.Models
-@using System.Text.Json
 @inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
 @inject IUserData userData
@@ -64,9 +63,25 @@ else
         loggedInUser = await authProvider.GetUserFromAuth(userData);
         if (!string.IsNullOrWhiteSpace(secretId))
         {
-            secret = await secretData.ReadSecretAsync(secretId.ToString(), loggedInUser);
+            secret = await secretData.ReadSecretAsync(secretId, loggedInUser);
             //TODO - check if s is valid and belongs to current user
-            secretDetail = JsonSerializer.Deserialize<SecretDetailModel>(secret.Payload);
+            if (secret is not null)
+            {
+                try
+                {
+                    secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(secret.Payload);
+                }
+                catch (JsonReaderException)
+                {
+                    //TODO Unify IdItem classes in projects
+                    var item = JsonConvert.DeserializeObject<IdItem>(secret.Payload);
+                    secretDetail.Site = item.Site;
+                    secretDetail.UserName = item.User;
+                    secretDetail.Password = item.Password;
+                    secretDetail.Memo = item.Memo;
+                    secretDetail.Deleted = item.Deleted ? DateTime.UtcNow : DateTime.MinValue;
+                }
+            }
         }
     }
 
@@ -82,13 +97,13 @@ else
         if (string.IsNullOrWhiteSpace(secretId))
         {
             SecretModel s = new();
-            s.Payload = JsonSerializer.Serialize(secretDetail);
+            s.Payload = JsonConvert.SerializeObject(secretDetail);
             s.UserIds.Add(loggedInUser.Id);
             await secretData.CreateSecret(s, loggedInUser);
         }
         else
         {
-            secret.Payload = JsonSerializer.Serialize(secretDetail);
+            secret.Payload = JsonConvert.SerializeObject(secretDetail);
             await secretData.UpdateSecret(secret, loggedInUser);
         }
         secretDetail = new();

@@ -21,4 +21,6 @@ public class SecretDetailModel
     [MaxLength(500)]
     public string Memo { get; set; }
 
+    public Dictionary<string, string> Images { get; set; }
+
 }

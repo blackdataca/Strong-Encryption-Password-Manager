@@ -1,6 +1,7 @@
 ﻿@page "/Main"
 @using System.Text.Json
 @using MyIdWeb.Models
+@using Newtonsoft.Json
 @attribute [Authorize]
 @inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
@@ -16,12 +17,27 @@
 </div>
 
 <div class="row">
-
-    <div class="col-md-2">@secrets?.Count Secrets</div>
+    <div class="col-md-2">
+    @if (IsTaskRunning)
+    {
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    }
+    else
+    {
+        if (secretCount > 10)
+        {
+            <span>>10</span>
+        }
+        else
+        {
+            @secrets?.Count 
+        }
+    }
+    Secrets</div>
     <div class="col-md-10 search-box">
         <input type="text" placeholder="Search"
             aria-label="Search box" class="form-control rounded-control"
-            @oninput="((txt) => OnSearchInput((string)txt.Value))" />
+               @oninput="((txt) => OnSearchInput((string)txt.Value))" value="@searchText" />
     </div>
 </div>
 
@@ -38,13 +54,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <Virtualize Items="@secrets" Context="s" OverscanCount="10">
-                        <tr class="@ShowDeleted(s)" @onclick="(() => OpenDetails(s.Id))">
-                            <td>@s.Site</td>
-                            <td>@s.UserName</td>
-                            <td>@s.Memo</td>
-                        </tr>
-                    </Virtualize>
+                    @* <Virtualize Items="@secrets" Context="s" OverscanCount="10"> *@
+                        @foreach (var s in secrets)
+                        {
+                            <tr class="@ShowDeleted(s)" @onclick="(() => OpenDetails(s.Id))">
+                                <td>@s.Site</td>
+                                <td>@s.UserName</td>
+                                <td>@s.Memo</td>
+                            </tr>
+                        }
+                    @* </Virtualize> *@
                 </tbody>
             </table>
 
@@ -53,9 +72,11 @@
 </div>
 
 @code {
+    private bool IsTaskRunning = false;
     private UserModel loggedInUser;
     private List<SecretDetailModel> secrets;
     private string searchText = "";
+    private int secretCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -134,26 +155,50 @@
 
     private async Task FilterSecrets()
     {
-
+        IsTaskRunning = true;
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             string[] searchTerms = searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var secretPayloads = await secretData.GetUserSecrets(loggedInUser);
+            var secretPayloads = await secretData.GetUserSecretsAsync(loggedInUser);
             secretPayloads = secretPayloads.Where(
                 s => searchTerms.All(val => s.Payload.Contains(val, StringComparison.InvariantCultureIgnoreCase))
-            ).ToList();
+            ).Take(11).ToList();
             secrets = new List<SecretDetailModel> { };
-            foreach(var payload in secretPayloads)
+            secretCount = secretPayloads.Count;
+            //foreach (var payload in secretPayloads)
+            for (int i = 0; i < secretCount; i++)
             {
-                var secretDetail = JsonSerializer.Deserialize<SecretDetailModel>(payload.Payload);
+                if (i>=10)
+                {
+                    break;
+                }
+                var payload = secretPayloads[i];
+                SecretDetailModel secretDetail = new();
+                try
+                {
+                    secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(payload.Payload);
+                    
+                    secretDetail.Deleted = payload.Deleted;
+                }
+                catch (Exception)
+                { //TODO Unify IdItem classes in projects
+                    var item = JsonConvert.DeserializeObject<IdItem>(payload.Payload);
+                    secretDetail.Site = item.Site;
+                    secretDetail.UserName = item.User;
+                    secretDetail.Password = item.Password;
+                    secretDetail.Memo = item.Memo;
+                    secretDetail.Deleted = item.Deleted ? DateTime.UtcNow : DateTime.MinValue;
+                    //secretDetail.Id = item.Uid.ToString();
+                }
                 secretDetail.Id = payload.Id.ToString();
-                secretDetail.Deleted = payload.Deleted;
+                
                 secrets.Add(secretDetail);
             }
 
         }
 
         await SaveFilterState();
+        IsTaskRunning = false;
     }
 
     private async Task OnSearchInput(string searchInput)

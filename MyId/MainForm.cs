@@ -1752,7 +1752,7 @@ namespace MyId
                                         foreach (var row in joResponse["Return"])
                                         {
 
-                                            var recId = row["RecId"].ToString();
+                                            var recId = row["RecordId"].ToString();
                                             //var key = userName + userPass + recId;
 
                                             //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
@@ -1764,13 +1764,14 @@ namespace MyId
                                             {   //new record from server
                                                 aItem = new IdItem();
                                                 aItem.UniqId = recId;
+                                                aItem.Uid = Guid.Parse(row["Id"].ToString());
                                                 _idList.Add(aItem);
 
                                                 //TODO download files from server
                                             }
                                             else
                                             {  //updated records from app, upload files
-
+                                                break; //TODO remove break
                                                 var formData = new MultipartFormDataContent();
 
                                                 // Add each file to the FormData
@@ -1785,7 +1786,7 @@ namespace MyId
                                                 {
                                                     uxItemCountStatus.Text = $"Uploading {aItem.Images.Count} files...";
 
-                                                    var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
+                                                    var uploadResponse = await client.PostAsync("https://localhost:7283/Sync", formData);
 
                                                     string responseBody = await uploadResponse.Content.ReadAsStringAsync();
                                                     int statusCode = (int)uploadResponse.StatusCode;
@@ -1793,12 +1794,13 @@ namespace MyId
                                                     uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
                                                 }
                                             }
+                                            aItem.Uid = Guid.Parse(row["Id"].ToString());
                                             aItem.User = item.User;
                                             aItem.Password = item.Password;
                                             aItem.Site = item.Site;
                                             aItem.Memo = item.Memo;
                                             aItem.Deleted = item.Deleted;
-                                            aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString()).ToUniversalTime();
+                                            aItem.Changed = DateTime.Parse(row["Modified"].ToString()).ToUniversalTime();
                                             recNew++;
                                         }
                                         if (recNew > 0)
@@ -1842,6 +1844,9 @@ namespace MyId
                         MessageBox.Show(ex.Message, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     else
                         uxItemCountStatus.Text = ex.Message;
+#if DEBUG
+                    File.WriteAllText("websync_exception_dump.html", ex.ToString());
+#endif
                 }
 
                 Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "WebSyncSuccess", err == "0" ? 1 : 0);
