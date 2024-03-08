@@ -13,4 +13,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MyIdLibrary\MyIdLibrary.csproj" />
+    <ProjectReference Include="..\MyIdWeb\MyIdWeb.csproj" />
+  </ItemGroup>
+
 </Project>

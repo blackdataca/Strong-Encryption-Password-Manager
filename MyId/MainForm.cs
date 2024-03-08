@@ -331,7 +331,7 @@ namespace MyId
                             li.SubItems[2].Text = ShowHint(li, aItem);
                             li.SubItems[3].Text = aItem.ChangedHuman;
                             li.SubItems[4].Text = aItem.Memo1Line;
-                            
+
                             SaveToDisk();
                         }
                     }
@@ -370,7 +370,7 @@ namespace MyId
             ListViewItem li = uxList.Items.Add(item);
             li.Tag = idItem.Uid.ToString();
             li.SubItems[2].Text = ShowHint(li, idItem);
-           
+
         }
 
         private string ShowHint(ListViewItem li, IdItem idItem)
@@ -501,7 +501,7 @@ namespace MyId
                 myRijndael.Mode = CipherMode.CFB;
 
 
-                myRijndael.Key = key.GetBytes(32); 
+                myRijndael.Key = key.GetBytes(32);
                 myRijndael.IV = GetKeyIv("Iv2022");
 
 
@@ -528,7 +528,7 @@ namespace MyId
         /// <returns></returns>
         private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
         {
-            
+
             uxList.Items.Clear();
 
             bool success = false;
@@ -538,7 +538,7 @@ namespace MyId
                 using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
                 {
                     int version = 0;
-                    if (fs.ReadByte() == 0x20 && fs.ReadByte()==0x22)
+                    if (fs.ReadByte() == 0x20 && fs.ReadByte() == 0x22)
                         version = 2022;
                     else
                         // Set the stream position to the beginning of the file.
@@ -567,7 +567,7 @@ namespace MyId
                             byte[] pin = GetKeyIv("Pin");
                             byte[] salt = GetKeyIv("Salt");
                             var key = new Rfc2898DeriveBytes(pin, salt, 50000);
-                            myRijndael.Key = key.GetBytes(32); 
+                            myRijndael.Key = key.GetBytes(32);
                             myRijndael.IV = GetKeyIv("Iv2022");
                         }
                         else
@@ -579,7 +579,7 @@ namespace MyId
 
                             if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
                             {
- 
+
                                 MessageBox.Show("Missing private key");
 
                             }
@@ -590,7 +590,7 @@ namespace MyId
                                 myRijndael.IV = GetKeyIv("RiIv");
                             }
                         }
-                        
+
                         using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
                         {
                             try
@@ -1569,12 +1569,12 @@ namespace MyId
             page = 0;
         }
 
-       
-
-        
 
 
-       
+
+
+
+
 
         private void ToolSyncVisual(int syncState)
         {
@@ -1628,14 +1628,20 @@ namespace MyId
             }
 
             await WebSync(true);
-
-
         }
 
         private async Task WebSync(bool fromMemu)
         {
             ToolSyncVisual(0);
-            string err = await SendWebSyncData(fromMemu);
+            string err = "";
+            try
+            {
+                err = await SendWebSyncData(fromMemu);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "[WebSync]", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             ToolSyncVisual(err == "0" ? 1 : 2);
         }
 
@@ -1646,9 +1652,6 @@ namespace MyId
             string err = "";
             if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(userPass))
                 return err;
-
-
-
 
             userName = userName.ToLower();
 
@@ -1700,136 +1703,136 @@ namespace MyId
                             {
                                 contentData.CopyTo(gzipStream);
                             }
-                                //using (StreamWriter writer = new StreamWriter(gzipStream))
-                                //{
-                                //writer.Write(dataString);
-                                //writer.Flush();
-                               // gzipStream.Flush();
+                            //using (StreamWriter writer = new StreamWriter(gzipStream))
+                            //{
+                            //writer.Write(dataString);
+                            //writer.Flush();
+                            // gzipStream.Flush();
 
-                                compressedData.Position = 0;
-                                //File.WriteAllBytes("data.gz", compressedData.ToArray());
-                                //compressedData.Position = 0;
-                                //compressedData = ms.ToArray();
+                            compressedData.Position = 0;
+                            //File.WriteAllBytes("data.gz", compressedData.ToArray());
+                            //compressedData.Position = 0;
+                            //compressedData = ms.ToArray();
 
-                                uxItemCountStatus.Text = $"Uploading {compressedData.Length:N0} bytes";
+                            uxItemCountStatus.Text = $"Uploading {compressedData.Length:N0} bytes";
 
-                                var start = new Stopwatch();
-                                start.Start();
-                                // Prepare the content to send in the request
-                                HttpContent httpContent = new StreamContent(compressedData);
-                                // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
-                                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                                httpContent.Headers.ContentEncoding.Add("gzip");
+                            var start = new Stopwatch();
+                            start.Start();
+                            // Prepare the content to send in the request
+                            HttpContent httpContent = new StreamContent(compressedData);
+                            // Set the content type (replace "application/octet-stream" with the appropriate content type for your binary data)
+                            httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                            httpContent.Headers.ContentEncoding.Add("gzip");
                             client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
-                                client.DefaultRequestHeaders
-                                  .Accept
-                                  .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
-                            
-                                // Send the POST request using PostAsync method
-                                HttpResponseMessage res = await client.PostAsync("https://localhost:7283/Sync", httpContent);
+                            client.DefaultRequestHeaders
+                              .Accept
+                              .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
 
-                                // Check if the request was successful
-                                if (res.IsSuccessStatusCode)
-                                {
-                                    // Read the response content as a string
-                                    string response = await res.Content.ReadAsStringAsync();
+                            // Send the POST request using PostAsync method
+                            HttpResponseMessage res = await client.PutAsync("https://localhost:7283/Sync", httpContent);
+
+                            // Check if the request was successful
+                            if (res.IsSuccessStatusCode)
+                            {
+                                // Read the response content as a string
+                                string response = await res.Content.ReadAsStringAsync();
 
 #if DEBUG
-                                    File.WriteAllText("response_dump.html", response);
+                                File.WriteAllText("response_dump.html", response);
 #endif
-                                    uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
+                                uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
 
-                                    JObject joResponse = JObject.Parse(response);
-                                    err = joResponse["Error"].ToString();
-                                    if (err == "0")
+                                JObject joResponse = JObject.Parse(response);
+                                err = joResponse["Error"]?.ToString();
+                                if (err == "0")
+                                {
+                                    int recNew = 0;
+                                    if (joResponse["Return"] != null)
                                     {
-                                        int recNew = 0;
-                                        if (joResponse["Return"] != null)
+                                        foreach (var row in joResponse["Return"])
                                         {
-                                            foreach (var row in joResponse["Return"])
-                                            {
 
-                                                var recId = row["RecId"].ToString();
-                                                //var key = userName + userPass + recId;
+                                            var recId = row["RecId"].ToString();
+                                            //var key = userName + userPass + recId;
 
-                                                //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
+                                            //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
 
-                                                var item = JsonConvert.DeserializeObject<IdItem>(row["Payload"].ToString());
+                                            var item = JsonConvert.DeserializeObject<IdItem>(row["Payload"].ToString());
 
-                                                IdItem aItem = GetAItemByRecId(recId);
-                                                if (aItem == null)
-                                                {   //new record from server
-                                                    aItem = new IdItem();
-                                                    aItem.UniqId = recId;
-                                                    _idList.Add(aItem);
+                                            IdItem aItem = GetAItemByRecId(recId);
+                                            if (aItem == null)
+                                            {   //new record from server
+                                                aItem = new IdItem();
+                                                aItem.UniqId = recId;
+                                                _idList.Add(aItem);
 
-                                                    //TODO download files from server
-                                                }
-                                                else
-                                                {  //updated records from app, upload files
-
-                                                    var formData = new MultipartFormDataContent();
-
-                                                    // Add each file to the FormData
-                                                    foreach (var file in aItem.Images)
-                                                    {
-                                                        string f = Path.Combine(KnownFolders.DataDir, file.Key);
-                                                        var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(f));
-                                                        formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
-                                                    }
-
-                                                    if (formData.Count() > 0)
-                                                    {
-                                                        uxItemCountStatus.Text = $"Uploading {aItem.Images.Count} files...";
-
-                                                        var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
-
-                                                        string responseBody = await uploadResponse.Content.ReadAsStringAsync();
-                                                        int statusCode = (int)uploadResponse.StatusCode;
-
-                                                        uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
-                                                    }
-                                                }
-                                                aItem.User = item.User;
-                                                aItem.Password = item.Password;
-                                                aItem.Site = item.Site;
-                                                aItem.Memo = item.Memo;
-                                                aItem.Deleted = item.Deleted;
-                                                aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString()).ToUniversalTime();
-                                                recNew++;
+                                                //TODO download files from server
                                             }
-                                            if (recNew > 0)
-                                            {
-                                                SaveToDisk(false);
-                                                ShowNumberOfItems();
-                                                UxSearchBox_TextChanged();
+                                            else
+                                            {  //updated records from app, upload files
+
+                                                var formData = new MultipartFormDataContent();
+
+                                                // Add each file to the FormData
+                                                foreach (var file in aItem.Images)
+                                                {
+                                                    string f = Path.Combine(KnownFolders.DataDir, file.Key);
+                                                    var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(f));
+                                                    formData.Add(fileContent, "files[]", file.Key); // 'files[]' is the name of the PHP input field
+                                                }
+
+                                                if (formData.Count() > 0)
+                                                {
+                                                    uxItemCountStatus.Text = $"Uploading {aItem.Images.Count} files...";
+
+                                                    var uploadResponse = await client.PostAsync("https://192.168.0.68:8443/WebUpload.php", formData);
+
+                                                    string responseBody = await uploadResponse.Content.ReadAsStringAsync();
+                                                    int statusCode = (int)uploadResponse.StatusCode;
+
+                                                    uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
+                                                }
                                             }
+                                            aItem.User = item.User;
+                                            aItem.Password = item.Password;
+                                            aItem.Site = item.Site;
+                                            aItem.Memo = item.Memo;
+                                            aItem.Deleted = item.Deleted;
+                                            aItem.Changed = DateTime.Parse(row["LastUpdate"].ToString()).ToUniversalTime();
+                                            recNew++;
                                         }
-                                        uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1 ? 's' : ' ')}";
+                                        if (recNew > 0)
+                                        {
+                                            SaveToDisk(false);
+                                            ShowNumberOfItems();
+                                            UxSearchBox_TextChanged();
+                                        }
                                     }
-                                    else
-                                    {
-                                        if (fromMemu)
-                                            MessageBox.Show(err, "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                                        else
-                                            uxItemCountStatus.Text = "WebSync: " + err;
-                                    }
+                                    uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1 ? 's' : ' ')}";
                                 }
                                 else
                                 {
-                                    // Handle unsuccessful response
                                     if (fromMemu)
-                                        MessageBox.Show($"Error: {res.StatusCode} \n {res.Content.ReadAsStringAsync().Result}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                        MessageBox.Show(err ?? "Invalid json", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                                     else
-                                    {
-                                        uxItemCountStatus.Text = $"WebSync: {res.StatusCode}";
-#if DEBUG
-                                        File.WriteAllText("websync_error_dump.html", res.Content.ReadAsStringAsync().Result);
-#endif
-                                    }
+                                        uxItemCountStatus.Text = "WebSync: " + err ?? "Invalid json";
                                 }
-                                //}
-                           // }
+                            }
+                            else
+                            {
+                                // Handle unsuccessful response
+                                if (fromMemu)
+                                    MessageBox.Show($"Error: {res.StatusCode} \n {res.Content.ReadAsStringAsync().Result}", "WebSync", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                else
+                                {
+                                    uxItemCountStatus.Text = $"WebSync: {res.StatusCode}";
+#if DEBUG
+                                    File.WriteAllText("websync_error_dump.html", res.Content.ReadAsStringAsync().Result);
+#endif
+                                }
+                            }
+                            //}
+                            // }
                         }
                     }
                 }
@@ -1906,7 +1909,7 @@ namespace MyId
             return null;
         }
 
-       
+
     }
 
 

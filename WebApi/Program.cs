@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MyIdLibrary.DataAccess;
+using MyIdWeb.Data;
 using Swashbuckle.AspNetCore.Filters;
 using System.IO.Compression;
 using WebApi.Data;
@@ -27,9 +29,12 @@ builder.Services.AddSwaggerGen(options =>
     }
     );
 
-
+var connectionString = builder.Configuration.GetConnectionString("Default") ?? throw new InvalidOperationException("Connection string 'Default' not found.");
 builder.Services.AddDbContext<DataContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
+
+//builder.Services.AddDbContext<DataContext>(options =>
+//        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAuthentication();
 
@@ -43,6 +48,11 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
     options.Providers.Add<GzipCompressionProvider>();
 });
+
+
+builder.Services.AddScoped<IDbConnection, DbConnection>();
+builder.Services.AddScoped<ISecretData, SqlSecretData>();
+builder.Services.AddScoped<IUserData, SqlUserData>();
 
 
 var app = builder.Build();

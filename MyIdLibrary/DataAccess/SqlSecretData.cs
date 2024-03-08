@@ -195,4 +195,14 @@ public class SqlSecretData : ISecretData
 
         return (affecgtedRows == 1);
     }
+
+    public async Task<bool> ClearSyncFlags(UserModel user)
+    {
+        await _connection.OpenAsync();
+        string sql = "UPDATE secrets,secrets_users SET secrets.synced = null WHERE secrets.id=secrets_users.secret_id and secrets_users.user_id=@id";
+        await _connection.ExecuteAsync(sql, new { user.Id });
+
+        await _connection.CloseAsync();
+        return true;
+    }
 }
