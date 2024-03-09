@@ -67,20 +67,7 @@ else
             //TODO - check if s is valid and belongs to current user
             if (secret is not null)
             {
-                try
-                {
-                    secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(secret.Payload);
-                }
-                catch (JsonReaderException)
-                {
-                    //TODO Unify IdItem classes in projects
-                    var item = JsonConvert.DeserializeObject<IdItem>(secret.Payload);
-                    secretDetail.Site = item.Site;
-                    secretDetail.UserName = item.User;
-                    secretDetail.Password = item.Password;
-                    secretDetail.Memo = item.Memo;
-                    secretDetail.Deleted = item.Deleted ? DateTime.UtcNow : DateTime.MinValue;
-                }
+                secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(secret.Payload);
             }
         }
     }
@@ -113,7 +100,7 @@ else
 
     private async Task Delete()
     {
-        secret.Deleted = DateTime.UtcNow;
+        secret.Deleted = true;
         await secretData.UpdateSecret(secret, loggedInUser);
         secret = null;
         ClosePage();

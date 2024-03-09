@@ -1747,17 +1747,17 @@ namespace MyId
                                 if (err == "0")
                                 {
                                     int recNew = 0;
+                                    int recUpdated = 0;
                                     if (joResponse["Return"] != null)
                                     {
                                         foreach (var row in joResponse["Return"])
                                         {
-
                                             var recId = row["RecordId"].ToString();
                                             //var key = userName + userPass + recId;
 
                                             //string payload = MyEncryption.DecryptString(row["Payload"].ToString(), key, recId);
-
-                                            var item = JsonConvert.DeserializeObject<IdItem>(row["Payload"].ToString());
+                                            string payload = row["Payload"].ToString();
+                                            var item = JsonConvert.DeserializeObject<IdItem>(payload);
 
                                             IdItem aItem = GetAItemByRecId(recId);
                                             if (aItem == null)
@@ -1766,12 +1766,12 @@ namespace MyId
                                                 aItem.UniqId = recId;
                                                 aItem.Uid = Guid.Parse(row["Id"].ToString());
                                                 _idList.Add(aItem);
-
+                                                recNew++;
                                                 //TODO download files from server
                                             }
                                             else
                                             {  //updated records from app, upload files
-                                                break; //TODO remove break
+                                                /* //TODO uncomment this block
                                                 var formData = new MultipartFormDataContent();
 
                                                 // Add each file to the FormData
@@ -1793,6 +1793,8 @@ namespace MyId
 
                                                     uxItemCountStatus.Text = $"Upload Response ({statusCode}): {responseBody}";
                                                 }
+                                                */
+                                                recUpdated++;
                                             }
                                             aItem.Uid = Guid.Parse(row["Id"].ToString());
                                             aItem.User = item.User;
@@ -1801,16 +1803,16 @@ namespace MyId
                                             aItem.Memo = item.Memo;
                                             aItem.Deleted = item.Deleted;
                                             aItem.Changed = DateTime.Parse(row["Modified"].ToString()).ToUniversalTime();
-                                            recNew++;
+                                            
                                         }
-                                        if (recNew > 0)
+                                        if (recNew > 0 || recUpdated > 0)
                                         {
                                             SaveToDisk(false);
                                             ShowNumberOfItems();
                                             UxSearchBox_TextChanged();
                                         }
                                     }
-                                    uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1 ? 's' : ' ')}";
+                                    uxItemCountStatus.Text = $"Added {recNew:N0} record{(recNew > 1 ? 's' : ' ')} Updated {recUpdated:N0} record{(recUpdated > 1 ? 's' : ' ')} ";
                                 }
                                 else
                                 {

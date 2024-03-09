@@ -98,26 +98,32 @@ public class SyncController : ControllerBase
                 if (secret is not null)
                 { //row exists on server
                     DateTime dbTime = secret.Modified;
-                    if (appTime >= dbTime)
+                    if (appTime > dbTime)
                     { //app is newer, update server record, mark synced
-
                         secret.Synced = DateTime.UtcNow;
                         secret.Modified = appTime;
+                        secret.Deleted = recItem.Deleted; 
                         updateCnt++;
                         if (await _secretData.UpdateSecret(secret, user))
                             _logger.Log(LogLevel.Debug, "Server secret updated");
                         else
                             _logger.Log(LogLevel.Warning, "Server secret update failed");
 
-                        if (appTime > dbTime)
-                        {
-                            //app is newer send back record, may need file upload
-                            returnObject.Add(secret);
-                        }
+                        //app is newer send back record, may need file upload
+                        secret.Payload = payload; //send back unencrypted payload
+                        returnObject.Add(secret);
+                    }
+                    else if (appTime == dbTime)
+                    {//No update, mark synced
+                        secret.Synced = DateTime.UtcNow;
+                        if (await _secretData.UpdateSecret(secret, user))
+                            _logger.Log(LogLevel.Debug, "Server secert synced");
+                        else
+                            _logger.Log(LogLevel.Warning, "Server secret synced failed");
                     }
                     else
-                    { //server is newer, do nothing
-                        
+                    { //server is newer, will send to app
+
                         _logger.Log(LogLevel.Debug, $"Server {dbTime} is newer than app {appTime}");
                     }
 
@@ -134,6 +140,7 @@ public class SyncController : ControllerBase
                     if (await _secretData.CreateSecret(secret, user))
                     {
                         newCnt++;
+                        secret.Payload = payload; //send back unencrypted payload
                         returnObject.Add(secret);
                         _logger.Log(LogLevel.Debug, "Server secret created");
                     }

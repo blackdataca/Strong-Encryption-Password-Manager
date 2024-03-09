@@ -187,7 +187,7 @@
                     secretDetail.UserName = item.User;
                     secretDetail.Password = item.Password;
                     secretDetail.Memo = item.Memo;
-                    secretDetail.Deleted = item.Deleted ? DateTime.UtcNow : DateTime.MinValue;
+                    secretDetail.Deleted = item.Deleted;
                     //secretDetail.Id = item.Uid.ToString();
                 }
                 secretDetail.Id = payload.Id.ToString();
@@ -214,9 +214,10 @@
 
     private string ShowDeleted(SecretDetailModel s)
     {
-        if (s.Deleted == DateTime.MinValue)
-            return "";
-        else
+        if (s.Deleted)
             return "table-danger text-decoration-line-through";
+        else
+            return "";
+
     }
 }

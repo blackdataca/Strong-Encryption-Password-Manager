@@ -4,9 +4,9 @@
     [record_id] VARCHAR(23) NULL, 
     [payload] TEXT NOT NULL, 
     [created] DATETIME NOT NULL DEFAULT GETUTCDATE(), 
-    [modified] DATETIME NULL, 
+    [modified] DATETIME NOT NULL DEFAULT GETUTCDATE(), 
     [synced] DATETIME NULL, 
-    [deleted] DATETIME NULL, 
+    [deleted] BIT NULL , 
     
 )
 

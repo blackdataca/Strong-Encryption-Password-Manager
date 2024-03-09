@@ -124,10 +124,7 @@ public class SqlSecretData : ISecretData
         var tx = await _connection.BeginTransactionAsync();
         try
         {
-            string sql = "UPDATE secrets set payload=@payload WHERE id=@id";
-            if (secret.Deleted != DateTime.MinValue)
-                sql = "UPDATE secrets set payload=@payload,deleted=@deleted WHERE id=@id";
-
+            string sql = "UPDATE secrets set payload=@payload,record_id=@recordId,modified=@modified,synced=@synced,deleted=@deleted WHERE id=@id";
             affecgtedRows = await _connection.ExecuteAsync(sql, secret, tx);
 
             await tx.CommitAsync();
