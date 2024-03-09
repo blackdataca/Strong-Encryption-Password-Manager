@@ -75,5 +75,5 @@ app.MapControllers();
 app.UseRequestDecompression();
 app.UseResponseCompression();
 
-
+app.Logger.LogInformation("Starting WebApi...");
 app.Run();

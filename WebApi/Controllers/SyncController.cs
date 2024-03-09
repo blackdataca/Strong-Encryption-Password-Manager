@@ -7,6 +7,7 @@ using MyIdLibrary.DataAccess;
 using MyIdLibrary.Models;
 using MyIdWeb.Data;
 using Newtonsoft.Json;
+using System.Linq.Expressions;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
@@ -57,21 +58,21 @@ public class SyncController : ControllerBase
         Response.Headers.Remove("Content-Encoding");
         Response.Headers.TryAdd("Content-Encoding", "gzip");
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
 
         //1. Get authenticated user
         var user = _userData.GetUser(userId).Result;
         if (user is null)
         {
-            _logger.Log(LogLevel.Warning, $"[PutAsync] user not found: {userId}");
+            _logger.LogWarning($"[PutAsync] user not found: {userId}");
             return """{"Error":"Unauthorized!"}""";
         }
 
-        _logger.Log(LogLevel.Debug, $"[PutAsync] user found: {user.Email}");
+        _logger.LogInformation($"[PutAsync] user found: {user.Email}");
 
         //2. Clear all synced flags
         await _secretData.ClearSyncFlagsAsync(user);
-        _logger.Log(LogLevel.Debug, $"[PutAsync] Sync flags cleared");
+        _logger.LogDebug($"[PutAsync] Sync flags cleared");
 
         //3. Sync from incoming data: Update, Add, or No Change. If server is newer, leave synced null.
         using var sr = new StreamReader(Request.Body);
@@ -83,13 +84,26 @@ public class SyncController : ControllerBase
 
         if (vm is not null && vm.Count is not null)
         {
-            _logger.Log(LogLevel.Debug, $"[PutAsync] incoming {vm.Count} records");
+            _logger.LogInformation( $"[PutAsync] incoming {vm.Count} records");
             for (int i = 0; i < (int)vm.Count; i++)
             {
                 var rec = vm.Payloads[i];
                 string recId = rec.RecId;
                 string payload = rec.Payload;
-                IdItem recItem = JsonConvert.DeserializeObject<IdItem>(payload);
+                IdItem recItem = null;
+                try
+                {
+                    recItem = JsonConvert.DeserializeObject<IdItem>(payload);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex.ToString());
+                }
+                if (recItem is null)
+                {
+                    _logger.LogWarning($"Invalid payload: {payload}");
+                    continue;
+                }
                 if (string.IsNullOrWhiteSpace(recId))
                     recId = Guid.NewGuid().ToString();
 
@@ -105,26 +119,29 @@ public class SyncController : ControllerBase
                         secret.Deleted = recItem.Deleted; 
                         updateCnt++;
                         if (await _secretData.UpdateSecret(secret, user))
-                            _logger.Log(LogLevel.Debug, "Server secret updated");
+                            _logger.LogDebug("Server secret updated");
                         else
-                            _logger.Log(LogLevel.Warning, "Server secret update failed");
+                            _logger.LogWarning("Server secret update failed");
 
-                        //app is newer send back record, may need file upload
-                        secret.Payload = payload; //send back unencrypted payload
-                        returnObject.Add(secret);
+                        if (recItem.Images?.Count > 0)
+                        {
+                            //app is newer send back record, may need file upload
+                            secret.Payload = payload; //send back unencrypted payload
+                            returnObject.Add(secret);
+                        }
                     }
                     else if (appTime == dbTime)
                     {//No update, mark synced
                         secret.Synced = DateTime.UtcNow;
                         if (await _secretData.UpdateSecret(secret, user))
-                            _logger.Log(LogLevel.Debug, "Server secert synced");
+                            _logger.LogDebug( "Server secert synced");
                         else
-                            _logger.Log(LogLevel.Warning, "Server secret synced failed");
+                            _logger.LogWarning("Server secret synced failed");
                     }
                     else
                     { //server is newer, will send to app
 
-                        _logger.Log(LogLevel.Debug, $"Server {dbTime} is newer than app {appTime}");
+                        _logger.LogDebug($"Server {dbTime} is newer than app {appTime}");
                     }
 
                 }
@@ -140,19 +157,23 @@ public class SyncController : ControllerBase
                     if (await _secretData.CreateSecret(secret, user))
                     {
                         newCnt++;
-                        secret.Payload = payload; //send back unencrypted payload
-                        returnObject.Add(secret);
-                        _logger.Log(LogLevel.Debug, "Server secret created");
+                        _logger.LogDebug("Server secret created");
+
+                        if (recItem.Images?.Count> 0)
+                        {
+                            secret.Payload = payload; //send back unencrypted payload
+                            returnObject.Add(secret);
+                        }
                     }
                     else
-                        _logger.Log(LogLevel.Warning, "Server secret create failed");
+                        _logger.LogWarning("Server secret create failed");
                 }
 
 
             }
         }
 
-        _logger.Log(LogLevel.Debug, $"New: {newCnt} Updated: {updateCnt}");
+        _logger.LogInformation($"New: {newCnt} Updated: {updateCnt}");
 
         //4. Get all synced is null records (server is newer)
 
@@ -179,11 +200,11 @@ public class SyncController : ControllerBase
         var user = _userData.GetUser(userId).Result;
         if (user is null)
         {
-            _logger.Log(LogLevel.Warning, $"[PostAsync] user not found: {userId}");
+            _logger.LogWarning($"[PostAsync] user not found: {userId}");
             return Unauthorized();
         }
 
-        _logger.Log(LogLevel.Debug, $"[PostAsync] user found: {user.Email}");
+        _logger.LogInformation($"[PostAsync] user found: {user.Email}");
         return Ok();
     }
 }
