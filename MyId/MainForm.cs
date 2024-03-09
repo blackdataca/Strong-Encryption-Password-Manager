@@ -1668,7 +1668,10 @@ namespace MyId
 
                 //string payload = MyEncryption.EncryptString(json, key, recId);
 
-                var rec = new { RecId = recId, LastUpdate = item.Changed.ToString("yyyy-MM-dd HH:mm:ss"), Payload = json };
+                DateTime uTime = item.Changed;
+                string sTime = uTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+                var rec = new { RecId = recId, LastUpdate = sTime, Payload = json };
 
                 payloads.Add(rec);
             }
@@ -1802,7 +1805,9 @@ namespace MyId
                                             aItem.Site = item.Site;
                                             aItem.Memo = item.Memo;
                                             aItem.Deleted = item.Deleted;
-                                            aItem.Changed = DateTime.Parse(row["Modified"].ToString()).ToUniversalTime();
+                                            string sTime = row["Modified"].ToString();
+                                            DateTime dTime = DateTime.Parse(sTime);
+                                            aItem.Changed = DateTime.SpecifyKind(dTime, DateTimeKind.Utc);
                                             
                                         }
                                         if (recNew > 0 || recUpdated > 0)

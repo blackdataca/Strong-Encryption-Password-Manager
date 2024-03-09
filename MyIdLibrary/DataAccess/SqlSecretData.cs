@@ -82,7 +82,10 @@ public class SqlSecretData : ISecretData
 
         int affecgtedRows;
 
-        await _connection.OpenAsync();
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
         var tx = await _connection.BeginTransactionAsync();
         try
         {
@@ -120,39 +123,51 @@ public class SqlSecretData : ISecretData
 
         int affecgtedRows;
 
-        await _connection.OpenAsync();
-        var tx = await _connection.BeginTransactionAsync();
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
         try
         {
-            string sql = "UPDATE secrets set payload=@payload,record_id=@recordId,modified=@modified,synced=@synced,deleted=@deleted WHERE id=@id";
-            affecgtedRows = await _connection.ExecuteAsync(sql, secret, tx);
+            string sql = "UPDATE secrets set payload=@payload, record_id=@recordId, created=@created, modified=@modified, synced=@synced, deleted=@deleted WHERE id=@id";
+            affecgtedRows = await _connection.ExecuteAsync(sql, secret);
 
-            await tx.CommitAsync();
         }
         catch (Exception)
         {
-            await tx.RollbackAsync();
             throw;
         }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
 
-        await _connection.CloseAsync();
 
         return (affecgtedRows == 1);
     }
 
     public async Task<SecretModel> FindSecretAsync(string recordId, UserModel user)
     {
-        string sql = "SELECT secrets.id FROM secrets,secrets_users WHERE secrets.record_id=@recordId and secrets_users.secret_id=secrets.id and secrets_users.user_id=@Id";
-        await _connection.OpenAsync();
-
-        object id = await _connection.ExecuteScalarAsync(sql, new { recordId, user.Id });
-        await _connection.CloseAsync();
-        if (id is null)
+        string sql = "SELECT secrets.id FROM secrets, secrets_users WHERE secrets.record_id=@recordId and secrets_users.secret_id=secrets.id and secrets_users.user_id=@Id";
+        if (_connection.State != System.Data.ConnectionState.Open)
         {
-            return null;
+            await _connection.OpenAsync();
         }
-        else
-            return await ReadSecretAsync(id.ToString(), user);
+
+        try
+        {
+            object id = await _connection.ExecuteScalarAsync(sql, new { recordId, user.Id });
+            if (id is null)
+            {
+                return null;
+            }
+            else
+                return await ReadSecretAsync(id.ToString(), user);
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
     }
 
     public async Task<SecretModel> ReadSecretAsync(string secretId, UserModel user)
@@ -167,25 +182,33 @@ public class SqlSecretData : ISecretData
         Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
         string sql = "SELECT * FROM secrets,secrets_users WHERE secrets.id=@secretId and secrets_users.secret_id=secrets.id and secrets_users.user_id=@Id";
 
-        await _connection.OpenAsync();
-        
-        var secret = await _connection.QueryFirstOrDefaultAsync<SecretModel>(sql, new { secretId, user.Id });
-
-        if (secret is not null)
+        if (_connection.State != System.Data.ConnectionState.Open)
         {
-
-            //2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
-            byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
-            byte[] secretKey = MyEncryption.AsymetricDecrypt(secretKeyCrypt, priKey);
-
-            //3. Symmetric decrypt secret payload with Secret Key 
-            string decPayload = MyEncryption.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
-            secret.Payload = decPayload;
+            await _connection.OpenAsync();
         }
 
-        await _connection.CloseAsync();
+        try
+        {
+            var secret = await _connection.QueryFirstOrDefaultAsync<SecretModel>(sql, new { secretId, user.Id });
 
-        return secret;
+            if (secret is not null)
+            {
+
+                //2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
+                byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
+                byte[] secretKey = MyEncryption.AsymetricDecrypt(secretKeyCrypt, priKey);
+
+                //3. Symmetric decrypt secret payload with Secret Key 
+                string decPayload = MyEncryption.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
+                secret.Payload = decPayload;
+            }
+            return secret;
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
+
     }
 
 
@@ -193,14 +216,17 @@ public class SqlSecretData : ISecretData
     {
         int affecgtedRows;
 
-        await _connection.OpenAsync();
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
         var tx = await _connection.BeginTransactionAsync();
         try
         {
             string sql = "DELETE FROM secrets_users WHERE secret_id=@id";
             affecgtedRows = await _connection.ExecuteAsync(sql, new { secretId });
-            
-            
+
+
             sql = "DELETE FROM secrets WHERE id=@id";
             affecgtedRows = await _connection.ExecuteAsync(sql, new { secretId });
 
@@ -212,19 +238,28 @@ public class SqlSecretData : ISecretData
             await tx.RollbackAsync();
             throw;
         }
-
-        await _connection.CloseAsync();
-
+        finally
+        {
+            await _connection.CloseAsync();
+        }
         return (affecgtedRows == 1);
     }
 
     public async Task<bool> ClearSyncFlagsAsync(UserModel user)
     {
-        await _connection.OpenAsync();
-        string sql = "UPDATE secrets SET secrets.synced = null FROM secrets INNER JOIN secrets_users ON secrets.id=secrets_users.secret_id WHERE secrets_users.user_id=@id";
-        await _connection.ExecuteAsync(sql, new { user.Id });
-
-        await _connection.CloseAsync();
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
+        try
+        {
+            string sql = "UPDATE secrets SET secrets.synced = null FROM secrets INNER JOIN secrets_users ON secrets.id=secrets_users.secret_id WHERE secrets_users.user_id=@id";
+            await _connection.ExecuteAsync(sql, new { user.Id });
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
         return true;
     }
 }

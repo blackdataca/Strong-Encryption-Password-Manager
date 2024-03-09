@@ -12,8 +12,7 @@ public class SecretDetailModel
     public string Site { get; set; }
 
     [MaxLength(50)]
-    [Display(Name = "User")]
-    public string UserName { get; set; }
+    public string User { get; set; }
 
     [MaxLength(50)]
     public string Password { get; set; }

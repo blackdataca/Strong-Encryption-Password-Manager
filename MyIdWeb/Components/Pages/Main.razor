@@ -59,7 +59,7 @@
                         {
                             <tr class="@ShowDeleted(s)" @onclick="(() => OpenDetails(s.Id))">
                                 <td>@s.Site</td>
-                                <td>@s.UserName</td>
+                                <td>@s.User</td>
                                 <td>@s.Memo</td>
                             </tr>
                         }
@@ -174,22 +174,22 @@
                 }
                 var payload = secretPayloads[i];
                 SecretDetailModel secretDetail = new();
-                try
-                {
+                // try
+                // {
                     secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(payload.Payload);
                     
-                    secretDetail.Deleted = payload.Deleted;
-                }
-                catch (Exception)
-                { //TODO Unify IdItem classes in projects
-                    var item = JsonConvert.DeserializeObject<IdItem>(payload.Payload);
-                    secretDetail.Site = item.Site;
-                    secretDetail.UserName = item.User;
-                    secretDetail.Password = item.Password;
-                    secretDetail.Memo = item.Memo;
-                    secretDetail.Deleted = item.Deleted;
-                    //secretDetail.Id = item.Uid.ToString();
-                }
+                    //secretDetail.Deleted = payload.Deleted;
+                // }
+                // catch (Exception)
+                // { //TODO Unify IdItem classes in projects
+                //     var item = JsonConvert.DeserializeObject<IdItem>(payload.Payload);
+                //     secretDetail.Site = item.Site;
+                //     secretDetail.UserName = item.User;
+                //     secretDetail.Password = item.Password;
+                //     secretDetail.Memo = item.Memo;
+                //     secretDetail.Deleted = item.Deleted;
+                //     //secretDetail.Id = item.Uid.ToString();
+                // }
                 secretDetail.Id = payload.Id.ToString();
                 
                 secrets.Add(secretDetail);

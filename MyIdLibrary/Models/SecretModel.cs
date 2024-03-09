@@ -12,7 +12,7 @@ public class SecretModel
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime Modified {  get; set; } = DateTime.UtcNow;
     public bool Deleted { get; set; }
-    public DateTime Synced { get; set; }
+    public DateTime? Synced { get; set; } = null;
 
     public HashSet<string> UserIds { get; set; } = new();
 

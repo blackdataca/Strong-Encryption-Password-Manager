@@ -30,7 +30,7 @@ else
             </div>
             <div>
                 <label for="user">User</label>
-                <InputText autocomplete="false" id="user" @bind-Value="secretDetail.UserName" />
+                <InputText autocomplete="false" id="user" @bind-Value="secretDetail.User" />
             </div>
             <div>
                 <label for="password">Password</label>
@@ -44,7 +44,14 @@ else
                 <button class="btn btn-primary" type="submit">Save</button>
             </div>
             <div>
-                <button class="btn btn-danger" @onclick="Delete">Delete</button>
+                @if (secret.Deleted)
+                {
+                    <button class="btn btn-secondary" @onclick="() => Delete(false)">Undelete</button>
+                }
+                else
+                {
+                    <button class="btn btn-danger" @onclick="() => Delete(true)">Delete</button>
+                }
             </div>
         </EditForm>
 
@@ -91,18 +98,17 @@ else
         else
         {
             secret.Payload = JsonConvert.SerializeObject(secretDetail);
+            secret.Modified = DateTime.UtcNow;
             await secretData.UpdateSecret(secret, loggedInUser);
         }
-        secretDetail = new();
-        secret = null;
         ClosePage();
     }
 
-    private async Task Delete()
+    private async Task Delete(bool isDelete)
     {
-        secret.Deleted = true;
+        secret.Deleted = isDelete;
+        secret.Modified = DateTime.UtcNow;
         await secretData.UpdateSecret(secret, loggedInUser);
-        secret = null;
         ClosePage();
     }
 }

@@ -101,27 +101,29 @@ public class SyncController : ControllerBase
                 }
                 if (recItem is null)
                 {
-                    _logger.LogWarning($"Invalid payload: {payload}");
+                    _logger.LogWarning($"{recId} Invalid payload: {payload}");
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(recId))
                     recId = Guid.NewGuid().ToString();
 
                 DateTime appTime = rec.LastUpdate;
+                appTime = DateTime.SpecifyKind(appTime, DateTimeKind.Utc);
                 SecretModel secret = await _secretData.FindSecretAsync(recId, user);
                 if (secret is not null)
                 { //row exists on server
-                    DateTime dbTime = secret.Modified;
+                    DateTime dbTime = DateTime.SpecifyKind(secret.Modified, DateTimeKind.Utc);
                     if (appTime > dbTime)
                     { //app is newer, update server record, mark synced
                         secret.Synced = DateTime.UtcNow;
                         secret.Modified = appTime;
                         secret.Deleted = recItem.Deleted; 
+                        secret.Payload = payload;
                         updateCnt++;
                         if (await _secretData.UpdateSecret(secret, user))
-                            _logger.LogDebug("Server secret updated");
+                            _logger.LogDebug($"{recId} Server secret updated");
                         else
-                            _logger.LogWarning("Server secret update failed");
+                            _logger.LogWarning($"{recId} Server secret update failed");
 
                         if (recItem.Images?.Count > 0)
                         {
@@ -133,15 +135,15 @@ public class SyncController : ControllerBase
                     else if (appTime == dbTime)
                     {//No update, mark synced
                         secret.Synced = DateTime.UtcNow;
-                        if (await _secretData.UpdateSecret(secret, user))
-                            _logger.LogDebug( "Server secert synced");
-                        else
-                            _logger.LogWarning("Server secret synced failed");
+                        if (!await _secretData.UpdateSecret(secret, user))
+                            //_logger.LogDebug( "Server secert synced");
+                        //else
+                            _logger.LogWarning($"{recId} Server secret synced failed");
                     }
                     else
                     { //server is newer, will send to app
 
-                        _logger.LogDebug($"Server {dbTime} is newer than app {appTime}");
+                        _logger.LogDebug($"{recId} Server {dbTime} is newer than app {appTime}");
                     }
 
                 }
@@ -157,7 +159,7 @@ public class SyncController : ControllerBase
                     if (await _secretData.CreateSecret(secret, user))
                     {
                         newCnt++;
-                        _logger.LogDebug("Server secret created");
+                        _logger.LogDebug($"{secret.Id} Server secret created");
 
                         if (recItem.Images?.Count> 0)
                         {
@@ -166,7 +168,7 @@ public class SyncController : ControllerBase
                         }
                     }
                     else
-                        _logger.LogWarning("Server secret create failed");
+                        _logger.LogWarning($"{secret.Id} Server secret create failed");
                 }
 
 
