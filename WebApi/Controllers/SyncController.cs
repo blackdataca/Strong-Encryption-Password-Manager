@@ -61,7 +61,7 @@ public class SyncController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
 
         //1. Get authenticated user
-        var user = _userData.GetUser(userId).Result;
+        var user = await _userData.GetUserAsync(userId);
         if (user is null)
         {
             _logger.LogWarning($"[PutAsync] user not found: {userId}");
@@ -199,7 +199,7 @@ public class SyncController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
 
         //1. Get authenticated user
-        var user = _userData.GetUser(userId).Result;
+        var user =  await _userData.GetUserAsync(userId);
         if (user is null)
         {
             _logger.LogWarning($"[PostAsync] user not found: {userId}");

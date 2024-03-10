@@ -1767,6 +1767,7 @@ namespace MyId
                                                 aItem = new IdItem();
                                                 aItem.UniqId = recId;
                                                 aItem.Uid = Guid.Parse(row["Id"].ToString());
+                                                
                                                 _idList.Add(aItem);
                                                 recNew++;
                                                 //TODO download files from server
@@ -1803,7 +1804,7 @@ namespace MyId
                                             aItem.Password = item.Password;
                                             aItem.Site = item.Site;
                                             aItem.Memo = item.Memo;
-                                            aItem.Deleted = item.Deleted;
+                                            aItem.Deleted = bool.Parse(row["Deleted"].ToString());
                                             string sTime = row["Modified"].ToString();
                                             DateTime dTime = DateTime.Parse(sTime);
                                             aItem.Changed = DateTime.SpecifyKind(dTime, DateTimeKind.Utc);

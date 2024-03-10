@@ -8,6 +8,7 @@
 @inject IUserData userData
 @inject NavigationManager navManager
 @inject ProtectedSessionStorage sessionStorage
+@inject ILogger<Main> logger
 @rendermode InteractiveServer
 
 <h1 class="page-heading text-uppercase mb-4">Secrets</h1>
@@ -18,7 +19,7 @@
 
 <div class="row">
     <div class="col-md-2">
-    @if (IsTaskRunning)
+    @if (IsTaskRunning > 0)
     {
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     }
@@ -72,7 +73,7 @@
 </div>
 
 @code {
-    private bool IsTaskRunning = false;
+    private int IsTaskRunning;
     private UserModel loggedInUser;
     private List<SecretDetailModel> secrets;
     private string searchText = "";
@@ -136,75 +137,66 @@
     {
         if (firstRender && loggedInUser != null)
         {
-            await LoadFilterState();
-            await FilterSecrets();
+            string searchInput = await LoadFilterState();
+            await FilterSecrets(searchInput);
             StateHasChanged();
         }
     }
 
-    private async Task LoadFilterState()
+    private async Task<string> LoadFilterState()
     {
         var stringResults = await sessionStorage.GetAsync<string>(nameof(searchText));
         searchText = stringResults.Success ? stringResults.Value : "";
+        return searchText;
     }
 
-    private async Task SaveFilterState()
+    private async Task SaveFilterState(string searchInput)
     {
-        await sessionStorage.SetAsync(nameof(searchText), searchText);
+        await sessionStorage.SetAsync(nameof(searchText), searchInput);
     }
 
-    private async Task FilterSecrets()
+    private async Task FilterSecrets(string searchInput)
     {
-        IsTaskRunning = true;
-        if (!string.IsNullOrWhiteSpace(searchText))
+        try
         {
-            string[] searchTerms = searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var secretPayloads = await secretData.GetUserSecretsAsync(loggedInUser);
-            secretPayloads = secretPayloads.Where(
-                s => searchTerms.All(val => s.Payload.Contains(val, StringComparison.InvariantCultureIgnoreCase))
-            ).Take(11).ToList();
-            secrets = new List<SecretDetailModel> { };
-            secretCount = secretPayloads.Count;
-            //foreach (var payload in secretPayloads)
-            for (int i = 0; i < secretCount; i++)
+            IsTaskRunning ++;
+            if (!string.IsNullOrWhiteSpace(searchInput))
             {
-                if (i>=10)
+                string[] searchTerms = searchInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var secretPayloads = await secretData.GetUserSecretsAsync(loggedInUser);
+
+                secretPayloads = secretPayloads.Where(
+                    s => searchTerms.All(val => s.Payload.Contains(val, StringComparison.InvariantCultureIgnoreCase))
+                ).Take(11).ToList();
+                secrets = new List<SecretDetailModel> { };
+                secretCount = secretPayloads.Count;
+                //foreach (var payload in secretPayloads)
+                for (int i = 0; i < secretCount; i++)
                 {
-                    break;
+                    if (i >= 10)
+                    {
+                        break;
+                    }
+                    var payload = secretPayloads[i];
+                    SecretDetailModel secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(payload.Payload);
+                    secretDetail.Id = payload.Id.ToString();
+                    secretDetail.Deleted = payload.Deleted;
+                    secrets.Add(secretDetail);
                 }
-                var payload = secretPayloads[i];
-                SecretDetailModel secretDetail = new();
-                // try
-                // {
-                    secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(payload.Payload);
-                    
-                    //secretDetail.Deleted = payload.Deleted;
-                // }
-                // catch (Exception)
-                // { //TODO Unify IdItem classes in projects
-                //     var item = JsonConvert.DeserializeObject<IdItem>(payload.Payload);
-                //     secretDetail.Site = item.Site;
-                //     secretDetail.UserName = item.User;
-                //     secretDetail.Password = item.Password;
-                //     secretDetail.Memo = item.Memo;
-                //     secretDetail.Deleted = item.Deleted;
-                //     //secretDetail.Id = item.Uid.ToString();
-                // }
-                secretDetail.Id = payload.Id.ToString();
-                
-                secrets.Add(secretDetail);
+
             }
+            await SaveFilterState(searchInput);
 
         }
-
-        await SaveFilterState();
-        IsTaskRunning = false;
+        finally
+        {
+            IsTaskRunning --;
+        }
     }
 
     private async Task OnSearchInput(string searchInput)
     {
-        searchText = searchInput;
-        await FilterSecrets();
+        await FilterSecrets(searchInput);
     }
 
     private void OpenDetails(string secretId)

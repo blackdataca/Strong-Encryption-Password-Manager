@@ -13,7 +13,7 @@ public class SqlUserData : IUserData
         _connection = db.Connection;
     }
 
-    public async Task<UserModel> GetUser(string Id)
+    public async Task<UserModel> GetUserAsync(string Id)
     {
         await _connection.OpenAsync();
         Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
@@ -24,7 +24,7 @@ public class SqlUserData : IUserData
 
     public async Task<UserModel> GetUserFromAuthentication(string objectId)
     {
-        return await GetUser(objectId);
+        return await GetUserAsync(objectId);
     }
 
     public async Task CreateUser(UserModel user)
