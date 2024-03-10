@@ -1682,7 +1682,7 @@ namespace MyId
 #endif
             using (var client = new HttpClient())
             {
-                string token = await GetTokenAsync(client, userName, userPass);
+                string token = await GetTokenAsync(client, userName, userPass, fromMemu);
                 if (string.IsNullOrWhiteSpace(token))
                     return err;
 
@@ -1862,7 +1862,7 @@ namespace MyId
             return err;
         }
 
-        static async Task Main(string[] args)
+        static async Task FileUploadExample()
         {
             using (var httpClient = new HttpClient())
             {
@@ -1889,7 +1889,7 @@ namespace MyId
             }
         }
 
-        private async Task<string> GetTokenAsync(HttpClient client, string uid, string pwd)
+        private async Task<string> GetTokenAsync(HttpClient client, string uid, string pwd, bool fromMemu)
         {
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -1911,12 +1911,22 @@ namespace MyId
                 }
                 else
                 {
-                    MessageBox.Show($"Token request failed: {tokenResponse.StatusCode} \n {tokenResponse.Content.ReadAsStringAsync().Result}", "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    string msg = $"Token request failed: {tokenResponse.StatusCode} \n {tokenResponse.Content.ReadAsStringAsync().Result}";
+                    if (fromMemu)
+                        MessageBox.Show(msg, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    else
+                        uxItemCountStatus.Text = msg;
+
+                    
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (fromMemu)
+                    MessageBox.Show(ex.Message, "GetToken", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                else
+                    uxItemCountStatus.Text = "GetToken " + ex.Message;
+                
             }
             return null;
         }
