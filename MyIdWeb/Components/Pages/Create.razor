@@ -21,29 +21,30 @@ else
         <div>
             <button @onclick="ClosePage"></button>
         </div>
-        <EditForm Model="secretDetail" OnValidSubmit="SaveSecret" autocomplete="off">
+        <EditForm Model="secretDetail" OnValidSubmit="SaveSecret">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <div>
-                <label for="site">Site</label>
-                <InputText id="site" @bind-Value="secretDetail.Site" />
+            <div class="input-group">
+                <label class="input-group-text" for="site">Site</label>
+                <InputText  class="form-control rounded-control" id="site" @bind-Value="secretDetail.Site" />
             </div>
-            <div>
-                <label for="user">User</label>
-                <InputText autocomplete="false" id="user" @bind-Value="secretDetail.User" />
+            <div class="input-group">
+                <label class="input-group-text" for="user">User</label>
+                <InputText  class="form-control rounded-control" id="user" @bind-Value="secretDetail.User" />
             </div>
-            <div>
-                <label for="password">Password</label>
-                <InputText type="password" id="password" @bind-Value="secretDetail.Password" />
+            <div class="input-group">
+                <label class="input-group-text" for="password">Password</label>
+                <InputText class="form-control rounded-control" type="@PasswordType" id="password" @bind-Value="secretDetail.Password" autoComplete="new-password" />
+                <span class="input-group-text @EyeColor" @onclick="ShowPassword"></span>
             </div>
-            <div>
-                <label for="memo">Memo</label>
-                <InputTextArea id="memo" @bind-Value="secretDetail.Memo" />
+            <div class="input-group">
+                <label class="input-group-text" for="memo">Memo</label>
+                <InputTextArea class="form-control rounded-control" id="memo" @bind-Value="secretDetail.Memo" />
             </div>
-            <div>
+            <div class="input-group">
                 <button class="btn btn-primary" type="submit">Save</button>
             </div>
-            <div>
+            <div class="input-group">
                 @if (secret.Deleted)
                 {
                     <button class="btn btn-secondary" @onclick="() => Delete(false)">Undelete</button>
@@ -64,6 +65,8 @@ else
     private SecretDetailModel secretDetail = new();
     private SecretModel secret = new();
     private UserModel loggedInUser = new();
+    private string PasswordType = "password";
+    private string EyeColor = "bi bi-eye-fill";
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,5 +113,19 @@ else
         secret.Modified = DateTime.UtcNow;
         await secretData.UpdateSecret(secret, loggedInUser);
         ClosePage();
+    }
+
+    private void ShowPassword()
+    {
+        if (PasswordType == "password")
+        {
+            PasswordType = "text";
+            EyeColor = "bi bi-eye-slash-fill";
+        }
+        else
+        {
+            PasswordType = "password";
+            EyeColor = "bi bi-eye-fill";
+        }
     }
 }

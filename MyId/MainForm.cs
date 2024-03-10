@@ -1689,7 +1689,6 @@ namespace MyId
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
                 var vm = new { payloads.Count, Payloads = payloads };
-                //var vm = new { UserEmail = userEmail, PassHash = md, payloads.Count, Payloads = payloads };
 
                 var dataString = JsonConvert.SerializeObject(vm);
 
@@ -1840,8 +1839,6 @@ namespace MyId
 #endif
                                 }
                             }
-                            //}
-                            // }
                         }
                     }
                 }
