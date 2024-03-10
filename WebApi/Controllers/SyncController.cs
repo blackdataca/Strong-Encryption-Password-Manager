@@ -90,7 +90,7 @@ public class SyncController : ControllerBase
                 var rec = vm.Payloads[i];
                 string recId = rec.RecId;
                 string payload = rec.Payload;
-                IdItem recItem = null;
+                IdItem? recItem = null;
                 try
                 {
                     recItem = JsonConvert.DeserializeObject<IdItem>(payload);
@@ -113,7 +113,7 @@ public class SyncController : ControllerBase
                 if (secret is not null)
                 { //row exists on server
                     DateTime dbTime = DateTime.SpecifyKind(secret.Modified, DateTimeKind.Utc);
-                    if (appTime > dbTime)
+                    if ((appTime - dbTime).TotalSeconds > 1 )
                     { //app is newer, update server record, mark synced
                         secret.Synced = DateTime.UtcNow;
                         secret.Modified = appTime;
@@ -132,7 +132,7 @@ public class SyncController : ControllerBase
                             returnObject.Add(secret);
                         }
                     }
-                    else if (appTime == dbTime)
+                    else if (Math.Abs((appTime - dbTime).TotalSeconds) < 1)
                     {//No update, mark synced
                         secret.Synced = DateTime.UtcNow;
                         if (!await _secretData.UpdateSecret(secret, user))
@@ -141,7 +141,7 @@ public class SyncController : ControllerBase
                             _logger.LogWarning($"{recId} Server secret synced failed");
                     }
                     else
-                    { //server is newer, will send to app
+                    { //server is newer, do not mark synced, will send to app
 
                         _logger.LogDebug($"{recId} Server {dbTime} is newer than app {appTime}");
                     }
