@@ -6,6 +6,9 @@
 @inject ISecretData secretData
 @inject IUserData userData
 @inject NavigationManager navManage
+@inject IConfiguration config
+@inject IWebHostEnvironment host
+@inject ILogger<Create> logger
 @rendermode InteractiveServer
 
 @if (string.IsNullOrWhiteSpace(secretId))
@@ -42,6 +45,19 @@ else
                 <InputTextArea class="form-control rounded-control" id="memo" @bind-Value="secretDetail.Memo" />
             </div>
             <div class="input-group">
+                <label class="input-group-text" for="files">Files</label>
+                <InputFile OnChange="@LoadFiles" multiple />
+                @if (errors.Count>0)
+                {
+                    <ul class="text-danger">
+                        @foreach( var error in errors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                }
+            </div>
+            <div class="input-group">
                 <button class="btn btn-primary" type="submit">Save</button>
             </div>
             <div class="input-group">
@@ -67,6 +83,10 @@ else
     private UserModel loggedInUser = new();
     private string PasswordType = "password";
     private string EyeColor = "bi bi-eye-fill";
+
+    private long maxFileSize = 1024 * 1024 * 3; //3MB
+    private int maxAllowedFiles = 3;
+    private List<string> errors = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -126,6 +146,34 @@ else
         {
             PasswordType = "password";
             EyeColor = "bi bi-eye-fill";
+        }
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+
+        if (e.FileCount > maxAllowedFiles)
+        {
+            errors.Add($"Error: Attempting to upload {e.FileCount} files, but only {maxAllowedFiles} files are allowed");
+            return;
+        }
+
+        foreach(var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            string newFileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(file.Name));
+
+            string root = host.WebRootPath;
+
+            string path = Path.Combine(root, config.GetValue<string>("FileStorage"));
+            path =  Path.Combine(path, loggedInUser.Id, newFileName);
+
+            logger.LogInformation($"Saving file {path}...");
+
+            await using FileStream fs = new(path, FileMode.Create);
+            await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+
+
         }
     }
 }
