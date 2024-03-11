@@ -23,11 +23,10 @@ namespace MyId
         {
             get
             {
-
                 string memo = "";
                 if (!string.IsNullOrWhiteSpace(Memo))
                 {
-                    return Memo.Replace("\n", " ");
+                    memo = Memo.Replace("\n", " ");
                 }
                 if (Images != null && Images.Count > 0)
                     memo = $"({Images.Count} file{(Images.Count == 1 ? "" : "s")}) {memo}";
@@ -39,6 +38,7 @@ namespace MyId
 
         //encrypted file name, original name
         public Dictionary<string,string> Images = new Dictionary<string, string>();
+        
         public bool Deleted;
         public string ChangedHuman
         {

@@ -7,7 +7,6 @@
 @inject IUserData userData
 @inject NavigationManager navManage
 @inject IConfiguration config
-@inject IWebHostEnvironment host
 @inject ILogger<Create> logger
 @rendermode InteractiveServer
 
@@ -44,19 +43,32 @@ else
                 <label class="input-group-text" for="memo">Memo</label>
                 <InputTextArea class="form-control rounded-control" id="memo" @bind-Value="secretDetail.Memo" />
             </div>
+            @if (secretDetail.Images?.Count > 0)
+            {
+
+                <div class="input-group">
+                    <label class="input-group-text" for="images">Images</label>
+                    @foreach (var image in secretDetail.Images)
+                    {
+                        <div class="thumbnail">
+                            <img class="img-fluid img-thumbnail" src="@secretDetail.GetImageContent(image.Key)" style="width:100px;height:100px;object-fit:cover;" alt="@image.Key" />
+                        </div>
+                    }
+                </div>
+            }
             <div class="input-group">
-                <label class="input-group-text" for="files">Files</label>
-                <InputFile OnChange="@LoadFiles" multiple />
-                @if (errors.Count>0)
-                {
-                    <ul class="text-danger">
-                        @foreach( var error in errors)
-                        {
-                            <li>@error</li>
-                        }
-                    </ul>
-                }
+                <label class="input-group-text" for="addFiles">Add Image</label>
+                <InputFile id="addFiles" OnChange="LoadFiles" multiple class="form-control" accept=".png,.jpg,.jpeg" />
             </div>
+            @if (errors.Count > 0)
+            {
+                <ul class="text-danger">
+                    @foreach (var error in errors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            }
             <div class="input-group">
                 <button class="btn btn-primary" type="submit">Save</button>
             </div>
@@ -161,18 +173,36 @@ else
 
         foreach(var file in e.GetMultipleFiles(maxAllowedFiles))
         {
-            string newFileName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(file.Name));
+            try
+            {
 
-            string root = host.WebRootPath;
+                logger.LogInformation($"Receiving file {file.Name}...");
+                var fs = file.OpenReadStream(maxFileSize);
 
-            string path = Path.Combine(root, config.GetValue<string>("FileStorage"));
-            path =  Path.Combine(path, loggedInUser.Id, newFileName);
+                var fileContent = new byte[file.Size];
 
-            logger.LogInformation($"Saving file {path}...");
+                int dataCount = 0;
+                while (dataCount < file.Size)
+                {
+                    var buffer = new byte[10000];
+                    int count = await fs.ReadAsync(buffer);
+                    Array.Copy( buffer, 0, fileContent, dataCount, count);
+                    dataCount += count;
+                }
 
-            await using FileStream fs = new(path, FileMode.Create);
-            await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+                if (secretDetail.Images is null)
+                {
+                    secretDetail.Images = new();
+                }
 
+                secretDetail.Images.Add(file.Name, Convert.ToBase64String(fileContent));
+                logger.LogInformation($"Received {dataCount} bytes");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.ToString());
+                errors.Add($"Error: {ex.Message}");
+            }
 
         }
     }

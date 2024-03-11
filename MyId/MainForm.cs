@@ -88,17 +88,16 @@ namespace MyId
             return data;
         }
 
-        private MemoryStream DecryptFileStream(string encFile)
+        private MemoryStream DecryptFileStream(KeyValuePair<string,string> encFile)
         {
-            MemoryStream ms = null;
+            MemoryStream ms = null ;
+            string fileName = encFile.Key;
+            string encFileNameOnly = Path.GetFileName(fileName);
+            fileName = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
 
-            string encFileNameOnly = Path.GetFileName(encFile);
-            encFile = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
-
-            if (File.Exists(encFile))
+            if (File.Exists(fileName))
             {
                 ms = new MemoryStream();
-
                 using (RijndaelManaged myRijndael = new RijndaelManaged())
                 {
                     myRijndael.KeySize = 256;
@@ -108,7 +107,7 @@ namespace MyId
                     myRijndael.Mode = CipherMode.CFB;
 
 
-                    using (var fsCrypt = new FileStream(encFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    using (var fsCrypt = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         if (fsCrypt.ReadByte() == 0x20 && fsCrypt.ReadByte() == 0x22)
                         {
@@ -163,6 +162,7 @@ namespace MyId
                 */
 #endif
             }
+
             return ms;
         }
 
@@ -245,10 +245,27 @@ namespace MyId
                         Cursor.Current = Cursors.WaitCursor;
                         foreach (var encFile in aItem.Images)
                         {
-                            var st = DecryptFileStream(encFile.Key);
-                            if (st != null)
-                            {
-                                Image img;
+                            Image img;
+                            var st = DecryptFileStream(encFile);
+                            if (st is null)
+                            { //new format
+                                var bytes = Convert.FromBase64String(encFile.Value);
+                                st = new MemoryStream(bytes);
+                                img = Image.FromStream(st);
+                                if (img != null)
+                                {
+                                    string idx = edit.imageList1.Images.Count.ToString();
+
+                                    edit.imageList1.Images.Add(idx, img);
+
+                                    edit.uxImages.Items.Add(encFile.Key, idx);
+
+                                    edit.TempImages.Add(encFile.Key, img);
+                                }
+                            }
+                            else
+                            { //Old format
+                               
                                 try
                                 {
                                     img = Image.FromStream(st);
@@ -267,6 +284,7 @@ namespace MyId
 
                                     edit.imageList1.Images.Add(idx, img);
 
+
                                     edit.uxImages.Items.Add(encFile.Value, idx);
 
                                     edit.TempImages.Add(encFile.Key, img);
@@ -284,25 +302,9 @@ namespace MyId
 
                     if (edit.ShowDialog(this) == DialogResult.OK)
                     {
-
+                        Cursor.Current = Cursors.WaitCursor;
                         if (aItem.Images != null)
                         {
-
-                            Cursor.Current = Cursors.WaitCursor;
-
-                            for (int i = 0; i < edit.TempImages.Count; i++)
-                            {
-                                var imgFile = edit.TempImages.ElementAt(i).Key;
-                                if (!imgFile.StartsWith("enc."))
-                                {
-                                    //new file
-                                    string encImg = EncryptFile(imgFile);
-                                    edit.TempImages.Remove(edit.TempImages.ElementAt(i).Key);
-                                    edit.TempImages.Add(encImg, null);
-
-                                    aItem.Images.Add(encImg, Path.GetFileName(imgFile));
-                                }
-                            }
                             for (int i = aItem.Images.Count - 1; i >= 0; i--)
                             //foreach (var encFile in aItem.Images.Keys)
                             {
@@ -319,8 +321,53 @@ namespace MyId
                                     aItem.Images.Remove(encFile);
                                 }
                             }
-                            Cursor.Current = Cursors.Default;
                         }
+                        //    aItem.Images = new Dictionary<string, string>();
+
+                            
+                        if (aItem.Images == null)
+                            aItem.Images = new Dictionary<string, string>();
+                        foreach ( var imgTemp in edit.TempImages)
+                        {
+                            Image img = imgTemp.Value;
+                            var ms = new MemoryStream();
+                            img.Save(ms, img.RawFormat);
+                            var imageBytes = ms.ToArray();
+                            string imgValue = Convert.ToBase64String(imageBytes);
+                            aItem.Images.Add(imgTemp.Key, imgValue);
+                        }
+                            //for (int i = 0; i < edit.TempImages.Count; i++)
+                            //{
+                            //    var imgFile = edit.TempImages.ElementAt(i).Key;
+                            //    if (imgFile.StartsWith("enc."))
+                            //    {
+                            //        //new file
+                            //        string encImg = EncryptFile(imgFile);
+                            //        edit.TempImages.Remove(edit.TempImages.ElementAt(i).Key);
+                            //        edit.TempImages.Add(encImg, null);
+
+                            //        aItem.Images.Add(encImg, Path.GetFileName(imgFile));
+                            //    }
+                            //}
+
+                            //remvoe deleted images
+                            //for (int i = aItem.Images.Count - 1; i >= 0; i--)
+                            ////foreach (var encFile in aItem.Images.Keys)
+                            //{
+                            //    var encFile = aItem.Images.ElementAt(i).Key;
+                            //    //string encFile = aItem.Images[i];
+                            //    if (!edit.TempImages.Keys.Contains(encFile))
+                            //    {
+
+                            //        string pf = Path.Combine(KnownFolders.DataDir, encFile);
+                            //        if (File.Exists(pf))
+                            //        {
+                            //            File.Delete(pf);
+                            //        }
+                            //        aItem.Images.Remove(encFile);
+                            //    }
+                            //}
+                            Cursor.Current = Cursors.Default;
 
                         if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != aItem.Memo1Line)
                         {
@@ -1569,13 +1616,6 @@ namespace MyId
             page = 0;
         }
 
-
-
-
-
-
-
-
         private void ToolSyncVisual(int syncState)
         {
             switch (syncState)
@@ -1804,6 +1844,7 @@ namespace MyId
                                             aItem.Password = item.Password;
                                             aItem.Site = item.Site;
                                             aItem.Memo = item.Memo;
+                                            aItem.Images = item.Images;
                                             aItem.Deleted = bool.Parse(row["Deleted"].ToString());
                                             string sTime = row["Modified"].ToString();
                                             DateTime dTime = DateTime.Parse(sTime);
