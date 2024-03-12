@@ -74,19 +74,7 @@ namespace MyId
 
 
 
-        private byte[] GenerateRandomBytes(int size)
-        {
-            byte[] data = new byte[size];
-
-            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-            for (int i = 0; i < 10; i++)
-            {
-                // Fille the buffer with the generated data
-                rng.GetBytes(data);
-            }
-
-            return data;
-        }
+       
 
         private MemoryStream DecryptFileStream(KeyValuePair<string,string> encFile)
         {
@@ -112,16 +100,20 @@ namespace MyId
                         if (fsCrypt.ReadByte() == 0x20 && fsCrypt.ReadByte() == 0x22)
                         {
                             //version 2022
-                            byte[] pin = GetKeyIv("Pin");
-                            var key = new Rfc2898DeriveBytes(pin, GetKeyIv("Salt"), 50000);
+                            byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
+                            var key = new Rfc2898DeriveBytes(pin, Crypto.GetKeyIv("Salt"), 50000);
                             myRijndael.Key = key.GetBytes(32);
-                            myRijndael.IV = GetKeyIv("Iv2022");
+                            myRijndael.IV = Crypto.GetKeyIv("Iv2022");
                         }
                         else
                         {
                             fsCrypt.Seek(0, SeekOrigin.Begin);
-                            myRijndael.Key = GetKeyIv("RiKey");
-                            myRijndael.IV = GetKeyIv("RiIv");
+                            if (Crypto.GetKeyIv("RiKey") == null || Crypto.GetKeyIv("RiIv") == null)
+                            {
+                                return null;
+                            }
+                            myRijndael.Key = Crypto.GetKeyIv("RiKey");
+                            myRijndael.IV = Crypto.GetKeyIv("RiIv");
 
                         }
 
@@ -166,65 +158,9 @@ namespace MyId
             return ms;
         }
 
-        private string EncryptFile(string imageFile)
-        {
-            if (!File.Exists(imageFile))
-                return null;
+        
 
-            string ext = Path.GetExtension(imageFile);
-            string encFileNameOnly = string.Format("enc.{0}{1}", Guid.NewGuid(), ext);
-            string encFile = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
-
-            using (RijndaelManaged myRijndael = new RijndaelManaged())
-            {
-                myRijndael.KeySize = 256;
-                myRijndael.BlockSize = 128;
-                myRijndael.Padding = PaddingMode.PKCS7;
-                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                myRijndael.Mode = CipherMode.CFB;
-
-                //http://stackoverflow.com/questions/2659214/why-do-i-need-to-use-the-rfc2898derivebytes-class-in-net-instead-of-directly
-                //"What it does is repeatedly hash the user password along with the salt." High iteration counts.
-                //var key = new Rfc2898DeriveBytes(GetKeyIv("Key"), GetKeyIv("IV"), 50000);
-                byte[] pin = GetKeyIv("Pin");
-                var key = new Rfc2898DeriveBytes(pin, GetKeyIv("Salt"), 50000);
-                myRijndael.Key = key.GetBytes(32);
-                myRijndael.IV = GetKeyIv("Iv2022"); // GetKeyIv("RiIv"); // GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
-
-                using (var fsPlain = new FileStream(imageFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    using (var fsCrypt = new FileStream(encFile, FileMode.Create, FileAccess.Write))
-                    {
-                        //version 2022
-                        fsCrypt.WriteByte(0x20); //file version major
-                        fsCrypt.WriteByte(0x22); //file version minor
-
-                        //generate random salt
-                        byte[] salt = GenerateRandomBytes(32);
-                        fsCrypt.Write(salt, 0, salt.Length);
-
-                        using (var cryptoStream = new CryptoStream(fsCrypt, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
-                        {
-                            //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
-                            byte[] buffer = new byte[1048576];
-                            int read;
-                            while ((read = fsPlain.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                cryptoStream.Write(buffer, 0, read);
-                                Thread.Sleep(1);
-                            }
-
-                            cryptoStream.Close();
-
-                        }
-                        fsCrypt.Close();
-                    }
-                    fsPlain.Close();
-                }
-            }
-
-            return encFileNameOnly;
-        }
+        
 
         private void UxEdit_Click(object sender, EventArgs e)
         {
@@ -245,13 +181,23 @@ namespace MyId
                         Cursor.Current = Cursors.WaitCursor;
                         foreach (var encFile in aItem.Images)
                         {
-                            Image img;
+                            Image img = null;
                             var st = DecryptFileStream(encFile);
                             if (st is null)
                             { //new format
                                 var bytes = Convert.FromBase64String(encFile.Value);
                                 st = new MemoryStream(bytes);
-                                img = Image.FromStream(st);
+                                try
+                                {
+                                    img = Image.FromStream(st);
+                                }
+                                catch
+                                {
+                                    //bytes is not image type, create encrypted file on disk with "enc." + file name
+                                    string outputFileName = Crypto.EncryptFileStream(encFile.Key, st, _pinEnc);
+                                    string f = Path.Combine(KnownFolders.DataDir, outputFileName);
+                                    img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
+                                }
                                 if (img != null)
                                 {
                                     string idx = edit.imageList1.Images.Count.ToString();
@@ -260,7 +206,7 @@ namespace MyId
 
                                     edit.uxImages.Items.Add(encFile.Key, idx);
 
-                                    edit.TempImages.Add(encFile.Key, img);
+                                    edit.TempFiles.Add(encFile.Key, encFile.Value);
                                 }
                             }
                             else
@@ -287,7 +233,13 @@ namespace MyId
 
                                     edit.uxImages.Items.Add(encFile.Value, idx);
 
-                                    edit.TempImages.Add(encFile.Key, img);
+                                    using (var m = new MemoryStream())
+                                    {
+                                        img.Save(m, img.RawFormat);
+                                        byte[] imgBytes = m.ToArray();
+
+                                        edit.TempFiles.Add(encFile.Key, Convert.ToBase64String(imgBytes));
+                                    }
                                 }
                             }
 
@@ -302,72 +254,61 @@ namespace MyId
 
                     if (edit.ShowDialog(this) == DialogResult.OK)
                     {
-                        Cursor.Current = Cursors.WaitCursor;
-                        if (aItem.Images != null)
-                        {
-                            for (int i = aItem.Images.Count - 1; i >= 0; i--)
-                            //foreach (var encFile in aItem.Images.Keys)
-                            {
-                                var encFile = aItem.Images.ElementAt(i).Key;
-                                //string encFile = aItem.Images[i];
-                                if (!edit.TempImages.Keys.Contains(encFile))
-                                {
+                        aItem.Images = edit.TempFiles;
 
-                                    string pf = Path.Combine(KnownFolders.DataDir, encFile);
-                                    if (File.Exists(pf))
-                                    {
-                                        File.Delete(pf);
-                                    }
-                                    aItem.Images.Remove(encFile);
-                                }
-                            }
-                        }
+                        //Cursor.Current = Cursors.WaitCursor;
+      
+                        //if (aItem.Images == null)
                         //    aItem.Images = new Dictionary<string, string>();
 
-                            
-                        if (aItem.Images == null)
-                            aItem.Images = new Dictionary<string, string>();
-                        foreach ( var imgTemp in edit.TempImages)
-                        {
-                            Image img = imgTemp.Value;
-                            var ms = new MemoryStream();
-                            img.Save(ms, img.RawFormat);
-                            var imageBytes = ms.ToArray();
-                            string imgValue = Convert.ToBase64String(imageBytes);
-                            aItem.Images.Add(imgTemp.Key, imgValue);
-                        }
-                            //for (int i = 0; i < edit.TempImages.Count; i++)
-                            //{
-                            //    var imgFile = edit.TempImages.ElementAt(i).Key;
-                            //    if (imgFile.StartsWith("enc."))
-                            //    {
-                            //        //new file
-                            //        string encImg = EncryptFile(imgFile);
-                            //        edit.TempImages.Remove(edit.TempImages.ElementAt(i).Key);
-                            //        edit.TempImages.Add(encImg, null);
+                        //foreach ( var imgTemp in edit.TempFiles)
+                        //{
+                        //    //Image img = imgTemp.Value;
+                        //    //var ms = new MemoryStream();
+                        //    //img.Save(ms, img.RawFormat);
+                        //    //var imageBytes = ms.ToArray();
+                        //    //string imgValue = Convert.ToBase64String(imageBytes);
 
-                            //        aItem.Images.Add(encImg, Path.GetFileName(imgFile));
-                            //    }
-                            //}
+                        //    string keyName = imgTemp.Key;
+                        //    if (keyName.StartsWith("enc."))
+                        //    {
+                        //        if (aItem.Images.ContainsKey(keyName))
+                        //            keyName = aItem.Images[keyName];
+                        //    }
+                        //    aItem.Images.Add(keyName, imgTemp.Value);
+                        //}
+                        //    //for (int i = 0; i < edit.TempImages.Count; i++)
+                        //    //{
+                        //    //    var imgFile = edit.TempImages.ElementAt(i).Key;
+                        //    //    if (imgFile.StartsWith("enc."))
+                        //    //    {
+                        //    //        //new file
+                        //    //        string encImg = EncryptFile(imgFile);
+                        //    //        edit.TempImages.Remove(edit.TempImages.ElementAt(i).Key);
+                        //    //        edit.TempImages.Add(encImg, null);
 
-                            //remvoe deleted images
-                            //for (int i = aItem.Images.Count - 1; i >= 0; i--)
-                            ////foreach (var encFile in aItem.Images.Keys)
-                            //{
-                            //    var encFile = aItem.Images.ElementAt(i).Key;
-                            //    //string encFile = aItem.Images[i];
-                            //    if (!edit.TempImages.Keys.Contains(encFile))
-                            //    {
+                        //    //        aItem.Images.Add(encImg, Path.GetFileName(imgFile));
+                        //    //    }
+                        //    //}
 
-                            //        string pf = Path.Combine(KnownFolders.DataDir, encFile);
-                            //        if (File.Exists(pf))
-                            //        {
-                            //            File.Delete(pf);
-                            //        }
-                            //        aItem.Images.Remove(encFile);
-                            //    }
-                            //}
-                            Cursor.Current = Cursors.Default;
+                        //    //remvoe deleted images
+                        //    //for (int i = aItem.Images.Count - 1; i >= 0; i--)
+                        //    ////foreach (var encFile in aItem.Images.Keys)
+                        //    //{
+                        //    //    var encFile = aItem.Images.ElementAt(i).Key;
+                        //    //    //string encFile = aItem.Images[i];
+                        //    //    if (!edit.TempImages.Keys.Contains(encFile))
+                        //    //    {
+
+                        //    //        string pf = Path.Combine(KnownFolders.DataDir, encFile);
+                        //    //        if (File.Exists(pf))
+                        //    //        {
+                        //    //            File.Delete(pf);
+                        //    //        }
+                        //    //        aItem.Images.Remove(encFile);
+                        //    //    }
+                        //    //}
+                        //    Cursor.Current = Cursors.Default;
 
                         if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != aItem.Memo1Line)
                         {
@@ -393,9 +334,9 @@ namespace MyId
                 {
 
                     Cursor.Current = Cursors.WaitCursor;
-                    foreach (var img in edit.TempImages.Keys)
+                    foreach (var img in edit.TempFiles.Keys)
                     {
-                        string encFile = EncryptFile(img);
+                        string encFile = Crypto.EncryptFile(img);
 
                         edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
 
@@ -490,7 +431,7 @@ namespace MyId
                         }
                         IdFile = si.uxDataFile.Text;
                         byte[] masterPin = Encoding.Unicode.GetBytes(si.uxMasterPin.Text);
-                        SaveKeyIv("Pin", masterPin);
+                        _pinEnc = Crypto.SaveKeyIv("Pin", masterPin);
                         CreateNewKey(masterPin);
                         SaveToDisk();
                         return true;
@@ -509,8 +450,8 @@ namespace MyId
 
         private void CreateNewKey(byte[] masterPin)
         {
-            byte[] salt = GenerateRandomBytes(32);
-            SaveKeyIv("Salt", salt);
+            byte[] salt = Crypto.GenerateRandomBytes(32);
+            Crypto.SaveKeyIv("Salt", salt);
             var key = new Rfc2898DeriveBytes(masterPin, salt, 50000);
 
             using (RijndaelManaged myRijndael = new RijndaelManaged())
@@ -525,7 +466,7 @@ namespace MyId
 
                 myRijndael.GenerateIV();
 
-                SaveKeyIv("Iv2022", myRijndael.IV); //128 blocksize / 8 = 16
+                Crypto.SaveKeyIv("Iv2022", myRijndael.IV); //128 blocksize / 8 = 16
 
                 //SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
 
@@ -535,8 +476,8 @@ namespace MyId
 
         private void SaveToDisk(bool webSync = true)
         {
-            byte[] pin = GetKeyIv("Pin");
-            var key = new Rfc2898DeriveBytes(pin, GetKeyIv("Salt"), 50000);
+            byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
+            var key = new Rfc2898DeriveBytes(pin, Crypto.GetKeyIv("Salt"), 50000);
 
             BinaryFormatter formatter = new BinaryFormatter();
             using (RijndaelManaged myRijndael = new RijndaelManaged())
@@ -549,7 +490,7 @@ namespace MyId
 
 
                 myRijndael.Key = key.GetBytes(32);
-                myRijndael.IV = GetKeyIv("Iv2022");
+                myRijndael.IV = Crypto.GetKeyIv("Iv2022");
 
 
                 using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
@@ -611,20 +552,20 @@ namespace MyId
                         }
                         if (version == 2022)
                         {
-                            byte[] pin = GetKeyIv("Pin");
-                            byte[] salt = GetKeyIv("Salt");
+                            byte[] pin = Crypto.GetKeyIv("Pin",_pinEnc);
+                            byte[] salt = Crypto.GetKeyIv("Salt");
                             var key = new Rfc2898DeriveBytes(pin, salt, 50000);
                             myRijndael.Key = key.GetBytes(32);
-                            myRijndael.IV = GetKeyIv("Iv2022");
+                            myRijndael.IV = Crypto.GetKeyIv("Iv2022");
                         }
                         else
                         {  //Old verion
                             byte[] keyBytes;
-                            keyBytes = GetKeyIv("Key");
+                            keyBytes = Crypto.GetKeyIv("Key");
 
 
 
-                            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                            if (Crypto.GetKeyIv("RiKey") == null || Crypto.GetKeyIv("RiIv") == null)
                             {
 
                                 MessageBox.Show("Missing private key");
@@ -633,8 +574,8 @@ namespace MyId
                             else
                             {
 
-                                myRijndael.Key = GetKeyIv("RiKey");
-                                myRijndael.IV = GetKeyIv("RiIv");
+                                myRijndael.Key = Crypto.GetKeyIv("RiKey");
+                                myRijndael.IV = Crypto.GetKeyIv("RiIv");
                             }
                         }
 
@@ -653,6 +594,7 @@ namespace MyId
                     }
                 }
 
+                //Upgrade or update data
                 int uniqIdUpdate = 0;
                 foreach (var item in _idList)
                 {
@@ -661,9 +603,45 @@ namespace MyId
                         item.UniqId = MyEncryption.UniqId("", true);
                         uniqIdUpdate++;
                     }
+
+                    foreach(var encFile in item.Images.ToList())
+                    {
+                        if (encFile.Key.StartsWith("enc."))
+                        {
+                            var st = DecryptFileStream(encFile);
+                            if (st is null)
+                            {
+                                continue;
+                            }
+                            byte[] imageArray = st.ToArray();
+                            
+                            
+                            string newKey = encFile.Value;
+                            for (int i = 0; i < 100; i++)
+                            {
+                                if (item.Images.ContainsKey(newKey))
+                                {
+                                    string ext = Path.GetExtension(newKey);
+                                    string nameNoExt = Path.GetFileNameWithoutExtension(newKey);
+                                    newKey = $"{nameNoExt}(1){ext}";
+                                }
+                                else
+                                    break;
+                            }
+                            if (!item.Images.ContainsKey(newKey))
+                            {
+                                item.Images.Remove(encFile.Key);
+
+                                item.Images.Add(newKey, Convert.ToBase64String(imageArray));
+                            }
+                        }
+                    }
                 }
+
                 if (uniqIdUpdate > 0)
                     SaveToDisk(false);
+
+
 
                 foreach (var idItem in _idList)
                 {
@@ -725,10 +703,10 @@ namespace MyId
         private bool ValidatePassword(string pass)
         {
             byte[] masterPin = Encoding.Unicode.GetBytes(pass);
-            SaveKeyIv("Pin", masterPin);
-            if (GetKeyIv("Salt") == null)
+            _pinEnc = Crypto.SaveKeyIv("Pin", masterPin);
+            if (Crypto.GetKeyIv("Salt") == null)
                 CreateNewKey(masterPin);
-            if (GetKeyIv("Key") != null)
+            if (Crypto.GetKeyIv("Key") != null)
             {  //old version
                 byte[] keyBytes;
                 using (SHA256 mySHA256 = SHA256.Create())
@@ -736,7 +714,7 @@ namespace MyId
                     byte[] keyB = Encoding.Unicode.GetBytes(pass);
                     keyBytes = mySHA256.ComputeHash(keyB);
                 }
-                byte[] savedKey = GetKeyIv("Key");
+                byte[] savedKey = Crypto.GetKeyIv("Key");
                 if (!keyBytes.SequenceEqual(savedKey))
                 {
                     MessageBox.Show("Invalid password!");
@@ -823,88 +801,10 @@ namespace MyId
 
         private byte[] _pinEnc;
 
-        private byte[] GetKeyIv(string type)
-        {
-            switch (type)
-            {
-                case "IV": //16
-                    {
-                        byte[] iv32 = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", null);
-                        if (iv32 == null)
-                            return null;
-                        byte[] iv16 = new byte[16];
-                        Array.Copy(iv32, iv16, 16);
-                        return iv16;
-                    }
-                case "Iv2022": //16
-                case "RiKey": //32
-                case "RiIv": //16
-                case "Salt":
-                    {
-                        byte[] data = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", type, null);
-                        return data;
-                    }
-                case "Key":
-                    {
-                        byte[] iv32 = GetKeyIv("IV");
-                        byte[] ciphertext = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", null);
-                        if (ciphertext == null)
-                            return null;
-                        byte[] plaintext = ProtectedData.Unprotect(ciphertext, iv32, DataProtectionScope.CurrentUser);
-
-                        return plaintext;
+        
 
 
-                    }
-                case "Pin":
-
-                    return ProtectedData.Unprotect(_pinEnc, null, DataProtectionScope.CurrentUser);
-
-                default:
-                    throw new Exception("error 191");
-            }
-        }
-
-
-        private void SaveKeyIv(string type, byte[] value)
-        {
-
-            switch (type)
-            {
-                //case "IV":
-                //    byte[] random = new byte[32];
-
-                //    //RNGCryptoServiceProvider is an implementation of a random number generator.
-                //    RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                //    rng.GetBytes(random);
-                //    Array.Copy(value, random, 16);
-                //    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "iv", random);
-                //    break;
-                case "Iv2022": //16
-                //case "RiKey":
-                //case "RiIv": //16
-                case "Salt": //32
-                    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", type, value);
-                    break;
-                //case "Key":
-                //    byte[] keyBytes;
-                //    using (SHA256 mySHA256 = SHA256.Create())
-                //    {
-                //        byte[] keyB = value;
-                //        keyBytes = mySHA256.ComputeHash(keyB);
-                //    }
-                //    byte[] iv32 = GetKeyIv("IV");// PIN is only accessible on this computer
-                //    byte[] ciphertext = ProtectedData.Protect(keyBytes, iv32, DataProtectionScope.CurrentUser);
-                //    Registry.SetValue("HKEY_CURRENT_USER\\Software\\MyId", "key", ciphertext);
-                //    break;
-                case "Pin":
-                    _pinEnc = ProtectedData.Protect(value, null, DataProtectionScope.CurrentUser);
-                    break;
-                default:
-                    throw new Exception("error 237");
-
-            }
-        }
+        
 
         private void ImportToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1218,8 +1118,8 @@ namespace MyId
             random.CopyTo(buffer, 2);
 
             //GetKeyIv("IV").CopyTo(buffer, 2); //length 16
-            GetKeyIv("Salt").CopyTo(buffer, 16 + 2); //length 32
-            GetKeyIv("Iv2022").CopyTo(buffer, 18 + 32); //length 16
+            Crypto.GetKeyIv("Salt").CopyTo(buffer, 16 + 2); //length 32
+            Crypto.GetKeyIv("Iv2022").CopyTo(buffer, 18 + 32); //length 16
             try
             {
                 File.WriteAllText(fileName, BitConverter.ToString(buffer).Replace("-", ","));
@@ -1263,7 +1163,7 @@ namespace MyId
 
                     if (LoadPrivateKey(fd.FileName))
                     {
-                        SaveKeyIv("Pin", Encoding.Unicode.GetBytes(si.uxPassword.Text));
+                        _pinEnc = Crypto.SaveKeyIv("Pin", Encoding.Unicode.GetBytes(si.uxPassword.Text));
                         MessageBox.Show("Private key imported");
 
                     }
@@ -1292,12 +1192,12 @@ namespace MyId
                 pos += 16;
                 byte[] salt = new byte[32];
                 Array.Copy(buffer, pos, salt, 0, 32);
-                SaveKeyIv("Salt", salt);
+                Crypto.SaveKeyIv("Salt", salt);
 
                 pos += 32;
                 byte[] riIv = new byte[16];
                 Array.Copy(buffer, pos, riIv, 0, 16);
-                SaveKeyIv("Iv2022", riIv);
+                Crypto.SaveKeyIv("Iv2022", riIv);
 
                 return true;
 
@@ -1360,7 +1260,7 @@ namespace MyId
             var np = new Welcome();
             if (np.ShowDialog() == DialogResult.OK)
             {
-                SaveKeyIv("Pin", Encoding.Unicode.GetBytes(np.uxMasterPin.Text));
+                _pinEnc = Crypto.SaveKeyIv("Pin", Encoding.Unicode.GetBytes(np.uxMasterPin.Text));
 
                 //SaveToDisk();
 
@@ -1519,7 +1419,6 @@ namespace MyId
         private void printDocument1_PrintPage(object sender, PrintPageEventArgs ev)
         {
             //float linesPerPage = 0;
-
 
             float leftMargin = ev.MarginBounds.Left;
             float topMargin = ev.MarginBounds.Top;
@@ -1901,32 +1800,7 @@ namespace MyId
             return err;
         }
 
-        static async Task FileUploadExample()
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var formData = new MultipartFormDataContent();
-
-                // Add each file to the FormData
-                var files = new string[] { "file1.txt", "file2.txt" };
-                foreach (var file in files)
-                {
-                    var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(file));
-                    formData.Add(fileContent, "files[]", file); // 'files[]' is the name of the PHP input field
-                }
-
-                var response = await httpClient.PostAsync("https://your-php-server/upload.php", formData);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine("Files uploaded successfully.");
-                }
-                else
-                {
-                    Console.WriteLine("Upload failed.");
-                }
-            }
-        }
+        
 
         private async Task<string> GetTokenAsync(HttpClient client, string uid, string pwd, bool fromMemu)
         {

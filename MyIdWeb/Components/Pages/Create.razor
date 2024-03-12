@@ -21,7 +21,7 @@ else
 <div>
     <div>
         <div>
-            <button @onclick="ClosePage"></button>
+            <button @onclick="ClosePage">X</button>
         </div>
         <EditForm Model="secretDetail" OnValidSubmit="SaveSecret">
             <DataAnnotationsValidator />
@@ -51,14 +51,16 @@ else
                     @foreach (var image in secretDetail.Images)
                     {
                         <div class="thumbnail">
-                            <img class="img-fluid img-thumbnail" src="@secretDetail.GetImageContent(image.Key)" style="width:100px;height:100px;object-fit:cover;" alt="@image.Key" />
+                            <img class="img-fluid img-thumbnail" src="@secretDetail.GetImageContent(image.Key)" style="width:100px;height:100px;object-fit:cover;" alt="@image.Key" title="@image.Key" />
+                            <div class="caption-btm">@image.Key</div>
+                            <button type="button" @onclick="() => DeleteImage(image.Key)">X</button>
                         </div>
                     }
                 </div>
             }
             <div class="input-group">
                 <label class="input-group-text" for="addFiles">Add Image</label>
-                <InputFile id="addFiles" OnChange="LoadFiles" multiple class="form-control" accept=".png,.jpg,.jpeg" />
+                <InputFile id="addFiles" OnChange="LoadFiles" multiple class="form-control" accept=".png,.jpg,.jpeg,.pdf" />
             </div>
             @if (errors.Count > 0)
             {
@@ -177,6 +179,14 @@ else
             {
 
                 logger.LogInformation($"Receiving file {file.Name}...");
+
+                if (secretDetail.Images.ContainsKey(file.Name))
+                {
+                    logger.LogError("Duplicated file name");
+                    errors.Add($"Error: Duplicated file name!");
+                    return;
+                }
+
                 var fs = file.OpenReadStream(maxFileSize);
 
                 var fileContent = new byte[file.Size];
@@ -196,6 +206,7 @@ else
                 }
 
                 secretDetail.Images.Add(file.Name, Convert.ToBase64String(fileContent));
+
                 logger.LogInformation($"Received {dataCount} bytes");
             }
             catch (Exception ex)
@@ -204,6 +215,16 @@ else
                 errors.Add($"Error: {ex.Message}");
             }
 
+        }
+
+
+    }
+
+    private void DeleteImage(string key)
+    {
+        if (secretDetail.Images is not null)
+        {
+            secretDetail.Images.Remove(key);
         }
     }
 }

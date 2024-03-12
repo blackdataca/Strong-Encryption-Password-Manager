@@ -41,8 +41,16 @@ public class SecretDetailModel
     {
         var fileData = Images[fileName];
         string type = Path.GetExtension(fileName);
-        type = type.Trim('.');
-        return $"data:image/{type};base64, " + fileData;
+        type = type.ToLower().Trim('.');
+        if (type == "pdf")
+        {
+            return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/PDF_icon.svg/210px-PDF_icon.svg.png";
+        }
+        else
+        {
+            type = $"image/{type}";
+            return $"data:{type};base64, " + fileData;
+        }
     }
 }
 

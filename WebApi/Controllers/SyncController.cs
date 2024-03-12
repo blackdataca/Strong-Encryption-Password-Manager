@@ -124,13 +124,6 @@ public class SyncController : ControllerBase
                             _logger.LogDebug($"{recId} Server secret updated");
                         else
                             _logger.LogWarning($"{recId} Server secret update failed");
-
-                        if (recItem.Images?.Count > 0)
-                        {
-                            //app is newer send back record, may need file upload
-                            secret.Payload = payload; //send back unencrypted payload
-                            returnObject.Add(secret);
-                        }
                     }
                     else if (Math.Abs((appTime - dbTime).TotalSeconds) < 1)
                     {//No update, mark synced
@@ -145,7 +138,6 @@ public class SyncController : ControllerBase
 
                         _logger.LogDebug($"{recId} Server {dbTime} is newer than app {appTime}");
                     }
-
                 }
                 else
                 {  //row does not exist on server, create server record
@@ -160,18 +152,10 @@ public class SyncController : ControllerBase
                     {
                         newCnt++;
                         _logger.LogDebug($"{secret.Id} Server secret created");
-
-                        if (recItem.Images?.Count> 0)
-                        {
-                            secret.Payload = payload; //send back unencrypted payload
-                            returnObject.Add(secret);
-                        }
                     }
                     else
                         _logger.LogWarning($"{secret.Id} Server secret create failed");
                 }
-
-
             }
         }
 

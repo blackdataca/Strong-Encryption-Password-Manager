@@ -70,8 +70,8 @@
             // 
             this.uxSaveAs.Name = "uxSaveAs";
             this.uxSaveAs.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.uxSaveAs.Size = new System.Drawing.Size(180, 22);
-            this.uxSaveAs.Text = "&Save as...";
+            this.uxSaveAs.Size = new System.Drawing.Size(233, 22);
+            this.uxSaveAs.Text = "&Export uncrypted file...";
             this.uxSaveAs.Click += new System.EventHandler(this.UxSaveAs_Click);
             // 
             // saveFileDialog1
@@ -91,6 +91,7 @@
             this.Name = "ViewImage";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "ViewImage";
+            this.Load += new System.EventHandler(this.ViewImage_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

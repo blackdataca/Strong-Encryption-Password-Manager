@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Linq;
 using System.IO;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace MyId
 {
@@ -105,7 +106,8 @@ namespace MyId
             return new string(chars.ToArray());
         }
 
-        public Dictionary<string, Image> TempImages = new Dictionary<string, Image>();
+        public Dictionary<string, string> TempFiles = new Dictionary<string, string>();
+
         private void UxImageAdd_Click(object sender, EventArgs e)
         {
             try
@@ -131,7 +133,7 @@ namespace MyId
                         {
                             string idx = imageList1.Images.Count.ToString();
                             imageList1.Images.Add(idx, img);
-                            TempImages.Add(inFile, null);
+                            TempFiles.Add(inFile, null);
 
                             uxImages.Items.Add(Path.GetFileName(inFile), idx);
                         }
@@ -155,7 +157,7 @@ namespace MyId
             for (int i = uxImages.SelectedIndices.Count -1; i>=0;i--)
             {
                 int idx = uxImages.SelectedIndices[i];
-                TempImages.Remove(TempImages.ElementAt(idx).Key);
+                TempFiles.Remove(TempFiles.ElementAt(idx).Key);
                 uxImages.Items.RemoveAt(idx);
                 imageList1.Images.RemoveAt(idx);
             }
@@ -166,23 +168,31 @@ namespace MyId
             if (uxImages.SelectedIndices.Count >0)
             {
                 var viewer = new ViewImage();
-                var image = TempImages.ElementAt(uxImages.SelectedIndices[0]).Value;
-                string f = TempImages.ElementAt(uxImages.SelectedIndices[0]).Key;
-                if (image == null)
+                var image = TempFiles.ElementAt(uxImages.SelectedIndices[0]).Value;
+                string f = TempFiles.ElementAt(uxImages.SelectedIndices[0]).Key;
+                Image img = null;
+                if (image != null)
                 {
                     try
                     {
-                        image = Image.FromFile(f);
+                        img = Image.FromStream(new MemoryStream(Convert.FromBase64String(image)));
+                        //image = Image.FromFile(f);
                     }
                     catch 
                     {
-                        image = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
+                        //image is not image type
+                         f = Path.Combine(KnownFolders.DataDir, "enc." + f);
+                        img = WindowsThumbnailProvider.GetThumbnail(  f, 64, 64, ThumbnailOptions.None);
+                        
                     }
                 }
-                viewer.pictureBox1.Image = image;
-                viewer.EncFile = f;
-                viewer.PlainFileName = uxImages.SelectedItems[0].Text;
-                viewer.ShowDialog();
+                if (img != null)
+                {
+                    viewer.pictureBox1.Image = img;
+                    viewer.EncFile = f;
+                    viewer.PlainImage64String = image; // uxImages.SelectedItems[0].Text;
+                    viewer.ShowDialog();
+                }
                 //image.Dispose();
                 
             }
@@ -193,14 +203,14 @@ namespace MyId
             uxView.PerformClick();
         }
 
-        private void Edit_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            foreach (var item in TempImages)
-            {
-                if (item.Value != null)
-                    item.Value.Dispose();
-            }
-        }
+        //private void Edit_FormClosing(object sender, FormClosingEventArgs e)
+        //{
+        //    foreach (var item in TempFiles)
+        //    {
+        //        if (item.Value != null)
+        //            item.Value.Dispose();
+        //    }
+        //}
 
         private void UxViewPass_Click(object sender, EventArgs e)
         {

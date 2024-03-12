@@ -65,3 +65,11 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.caption-btm{
+    width: 120px;
+    height: 30px;
+    padding-bottom: 3em;
+    overflow: clip;
+    font-size: small;
+}
