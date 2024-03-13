@@ -74,6 +74,8 @@ public class SqlSecretData : ISecretData
         //2. Symmetric encrypt secret payload (site, username, password, memo and files) with Secret Key
         string encPayload = MyEncryption.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
         secret.Payload = encPayload;
+        if (string.IsNullOrWhiteSpace(secret.Payload))
+            throw new Exception($"[CreateSecret] empty payload: {secret}");
 
         //3.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
         byte[] pubKey = Convert.FromBase64String(user.PublicKey);
@@ -120,6 +122,9 @@ public class SqlSecretData : ISecretData
 
         string encPayload = MyEncryption.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
         secret.Payload = encPayload;
+
+        if (string.IsNullOrWhiteSpace(secret.Payload))
+            throw new Exception($"[UpdateSecret] empty payload: {secret}");
 
         int affecgtedRows;
 

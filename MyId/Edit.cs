@@ -116,7 +116,7 @@ namespace MyId
                 {
                     foreach (var inFile in openFileDialog1.FileNames)
                     {
-                        
+                        //TODO add file
 
                         Image img;
                         try
@@ -154,6 +154,8 @@ namespace MyId
 
         private void UxDelete_Click(object sender, EventArgs e)
         {
+
+            //TODO check this
             for (int i = uxImages.SelectedIndices.Count -1; i>=0;i--)
             {
                 int idx = uxImages.SelectedIndices[i];
