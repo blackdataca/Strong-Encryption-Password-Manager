@@ -10,6 +10,9 @@ Defend your passwords with MyID
 
 Compile with Visual Studio 2022
 
+Xamarin.Essentials 1.7.7
+Xamarin Forms 5.0.0.2578
+
 
 ![](https://github.com/blackdataca/Strong-Encryption-Password-Manager/blob/MyID-on-Mac/Copy2Apps.png?raw=true)
 

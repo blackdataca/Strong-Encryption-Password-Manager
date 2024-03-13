@@ -98,7 +98,7 @@ public class SyncController : ControllerBase
                 string payload = rec.Payload;
                 IdItem? recItem = null;
                 if (!string.IsNullOrWhiteSpace(payload))
-                {
+                { //Payload upload
                     try
                     {
                         recItem = JsonConvert.DeserializeObject<IdItem>(payload);
@@ -127,15 +127,15 @@ public class SyncController : ControllerBase
                         //app is newer, update server record, mark synced
                         secret.Synced = DateTime.UtcNow;
                         if (string.IsNullOrWhiteSpace(payload))
-                        {
+                        {  //no payload, do not change modified date
                             newerClientItems.Add(rec);
                             _logger.LogDebug($"{recId} Request client upload");
                         }
                         else
-                        {
+                        {  //with payload, change modified date to appTime
                             updateCnt++;
                             secret.Modified = appTime;
-                            secret.Deleted = recItem.Deleted;
+                            secret.Deleted = recItem!.Deleted;
                             secret.Payload = payload;
                         }
                         if (await _secretData.UpdateSecret(secret, user))
@@ -144,7 +144,7 @@ public class SyncController : ControllerBase
                             _logger.LogWarning($"{recId} Server secret update failed");
                     }
                     else if (Math.Abs((appTime - dbTime).TotalSeconds) < 1)
-                    {//No update, mark synced
+                    {  //No update, mark synced
                         secret.Synced = DateTime.UtcNow;
                         if (!await _secretData.UpdateSecret(secret, user))
                             //_logger.LogDebug( "Server secert synced");
@@ -160,12 +160,12 @@ public class SyncController : ControllerBase
                 else
                 {  //row does not exist on server, create server record
                     if (string.IsNullOrWhiteSpace(payload))
-                    {
+                    {  //no payload, do not create server record
                         newerClientItems.Add(rec);
                         _logger.LogDebug($"{recId} Request client upload");
                     }
                     else
-                    {
+                    {   //with payload, create server record
                         secret = new();
                         secret.Id = Guid.NewGuid();
                         secret.RecordId = recId;
