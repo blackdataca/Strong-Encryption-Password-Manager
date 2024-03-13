@@ -50,6 +50,11 @@ public class SyncController : ControllerBase
         .ToArray();
     }
 
+
+    /// <summary>
+    /// Receive new/updated secrets from client
+    /// </summary>
+    /// <returns></returns>
     [HttpPut]
     [Authorize]
     [Produces("text/plain")]
@@ -81,6 +86,7 @@ public class SyncController : ControllerBase
         var returnObject = new List<SecretModel>();
         int newCnt = 0;
         int updateCnt = 0;
+        List<object> newerClientItems = new();
 
         if (vm is not null && vm.Count is not null)
         {
@@ -91,18 +97,21 @@ public class SyncController : ControllerBase
                 string recId = rec.RecId;
                 string payload = rec.Payload;
                 IdItem? recItem = null;
-                try
+                if (!string.IsNullOrWhiteSpace(payload))
                 {
-                    recItem = JsonConvert.DeserializeObject<IdItem>(payload);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex.ToString());
-                }
-                if (recItem is null)
-                {
-                    _logger.LogWarning($"{recId} Invalid payload: {payload}");
-                    continue;
+                    try
+                    {
+                        recItem = JsonConvert.DeserializeObject<IdItem>(payload);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex.ToString());
+                    }
+                    if (recItem is null)
+                    {
+                        _logger.LogWarning($"{recId} Invalid payload: {payload}");
+                        continue;
+                    }
                 }
                 if (string.IsNullOrWhiteSpace(recId))
                     recId = Guid.NewGuid().ToString();
@@ -113,13 +122,22 @@ public class SyncController : ControllerBase
                 if (secret is not null)
                 { //row exists on server
                     DateTime dbTime = DateTime.SpecifyKind(secret.Modified, DateTimeKind.Utc);
-                    if ((appTime - dbTime).TotalSeconds > 1 )
-                    { //app is newer, update server record, mark synced
+                    if ((appTime - dbTime).TotalSeconds > 1)
+                    {
+                        //app is newer, update server record, mark synced
                         secret.Synced = DateTime.UtcNow;
-                        secret.Modified = appTime;
-                        secret.Deleted = recItem.Deleted; 
-                        secret.Payload = payload;
-                        updateCnt++;
+                        if (string.IsNullOrWhiteSpace(payload))
+                        {
+                            newerClientItems.Add(rec);
+                            _logger.LogDebug($"{recId} Request client upload");
+                        }
+                        else
+                        {
+                            updateCnt++;
+                            secret.Modified = appTime;
+                            secret.Deleted = recItem.Deleted;
+                            secret.Payload = payload;
+                        }
                         if (await _secretData.UpdateSecret(secret, user))
                             _logger.LogDebug($"{recId} Server secret updated");
                         else
@@ -141,25 +159,33 @@ public class SyncController : ControllerBase
                 }
                 else
                 {  //row does not exist on server, create server record
-                    secret = new();
-                    secret.Id = Guid.NewGuid();
-                    secret.RecordId = recId;
-                    secret.Payload = payload;
-                    secret.Modified = appTime;
-                    secret.Synced = DateTime.UtcNow;
-                    secret.UserIds.Add(user.Id);
-                    if (await _secretData.CreateSecret(secret, user))
+                    if (string.IsNullOrWhiteSpace(payload))
                     {
-                        newCnt++;
-                        _logger.LogDebug($"{secret.Id} Server secret created");
+                        newerClientItems.Add(rec);
+                        _logger.LogDebug($"{recId} Request client upload");
                     }
                     else
-                        _logger.LogWarning($"{secret.Id} Server secret create failed");
+                    {
+                        secret = new();
+                        secret.Id = Guid.NewGuid();
+                        secret.RecordId = recId;
+                        secret.Payload = payload;
+                        secret.Modified = appTime;
+                        secret.Synced = DateTime.UtcNow;
+                        secret.UserIds.Add(user.Id);
+                        if (await _secretData.CreateSecret(secret, user))
+                        {
+                            newCnt++;
+                            _logger.LogDebug($"{secret.Id} Server secret created");
+                        }
+                        else
+                            _logger.LogWarning($"{secret.Id} Server secret create failed");
+                    }
                 }
             }
         }
 
-        _logger.LogInformation($"New: {newCnt} Updated: {updateCnt}");
+        _logger.LogInformation($"New: {newCnt} Updated: {updateCnt} Request Client Upload: {newerClientItems.Count}");
 
         //4. Get all synced is null records (server is newer)
 
@@ -169,7 +195,8 @@ public class SyncController : ControllerBase
         var res = new
         {
             Error = "0",
-            Return = returnObject
+            Return = returnObject,
+            Request = newerClientItems
         };
 
         string resJson = JsonConvert.SerializeObject(res);
