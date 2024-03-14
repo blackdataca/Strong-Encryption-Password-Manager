@@ -1,17 +1,9 @@
-using Azure;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyIdLibrary.DataAccess;
 using MyIdLibrary.Models;
-using MyIdWeb.Data;
 using Newtonsoft.Json;
-using System.Linq.Expressions;
-using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Json.Serialization;
 
 
 namespace WebApi.Controllers;
@@ -63,7 +55,7 @@ public class SyncController : ControllerBase
         Response.Headers.Remove("Content-Encoding");
         Response.Headers.TryAdd("Content-Encoding", "gzip");
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         //1. Get authenticated user
         var user = await _userData.GetUserAsync(userId);
@@ -83,7 +75,7 @@ public class SyncController : ControllerBase
         using var sr = new StreamReader(Request.Body);
         string s = await sr.ReadToEndAsync();
         dynamic? vm = JsonConvert.DeserializeObject(s);
-        
+
         int newCnt = 0;
         int updateCnt = 0;
         List<object> newerClientItems = new();
@@ -95,8 +87,8 @@ public class SyncController : ControllerBase
         }
 
         bool hasPayLoad = false;
-        
-        _logger.LogInformation( $"[PutAsync] incoming {vm.Count} records");
+
+        _logger.LogInformation($"[PutAsync] incoming {vm.Count} records");
         for (int i = 0; i < (int)vm.Count; i++)
         {
             var rec = vm.Payloads[i];
@@ -134,7 +126,7 @@ public class SyncController : ControllerBase
                     //app is newer, update server record, mark synced
                     secret.Synced = DateTime.UtcNow;
                     if (string.IsNullOrWhiteSpace(payload))
-                    {  //no payload, do not change modified date
+                    {  //no payload, do not change modified date, request payload upload
                         newerClientItems.Add(rec);
                         _logger.LogDebug($"{recId} Request client upload");
                     }
@@ -160,14 +152,13 @@ public class SyncController : ControllerBase
                 }
                 else
                 { //server is newer, do not mark synced, will send to app
-
                     _logger.LogDebug($"{recId} Server {dbTime} is newer than app {appTime}");
                 }
             }
             else
             {  //row does not exist on server, create server record
                 if (string.IsNullOrWhiteSpace(payload))
-                {  //no payload, do not create server record
+                {  //no payload, do not create server record, request payload upload
                     newerClientItems.Add(rec);
                     _logger.LogDebug($"{recId} Request client upload");
                 }
@@ -190,14 +181,13 @@ public class SyncController : ControllerBase
                 }
             }
         }
-        
 
- 
         //4. Get all synced is null records (server is newer)
         var returnObject = new List<SecretModel>();
 
         if (!hasPayLoad)
-        {  //payload not in requet, request unsynced items
+        {  //payload not in requet, send unsynced payloads to client (server is new or newer),
+           //otherwise, 2nd step, no payload is needed in response
             var secrets = await _secretData.GetUserSecretsAsync(user, true);
             returnObject.AddRange(secrets);
         }
@@ -212,24 +202,6 @@ public class SyncController : ControllerBase
         };
 
         string resJson = JsonConvert.SerializeObject(res);
-        return resJson;
-    }
-
-    [HttpPost]
-    [Authorize]
-    public async Task<IActionResult> PostAsync()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // will give the user's userId
-
-        //1. Get authenticated user
-        var user =  await _userData.GetUserAsync(userId);
-        if (user is null)
-        {
-            _logger.LogWarning($"[PostAsync] user not found: {userId}");
-            return Unauthorized();
-        }
-
-        _logger.LogInformation($"[PostAsync] user found: {user.Email}");
-        return Ok();
+        return resJson; //return json string
     }
 }
