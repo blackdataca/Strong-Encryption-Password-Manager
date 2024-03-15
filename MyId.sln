@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		mainscreen.PNG = mainscreen.PNG
 		README.md = README.md
+		TODOs.md = TODOs.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdOnMac", "MyIdOnMac\MyIdOnMac.csproj", "{5F18BD50-1E21-4BA0-99C9-614C08930FA1}"
@@ -32,7 +33,7 @@ Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "MyIdDb", "MyIdDatabase\MyId
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdLibrary", "MyIdLibrary\MyIdLibrary.csproj", "{432D9FE0-44AE-4C5D-AE62-E46DC57BF336}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "WebApi\WebApi.csproj", "{F92C07C9-922D-4206-9F74-653DCFE789A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "WebApi\WebApi.csproj", "{F92C07C9-922D-4206-9F74-653DCFE789A2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -251,7 +252,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {3142D2AD-47B6-4B37-8B5F-138310A77CAC}
 		VisualSVNWorkingCopyRoot = .
+		SolutionGuid = {3142D2AD-47B6-4B37-8B5F-138310A77CAC}
 	EndGlobalSection
 EndGlobal
