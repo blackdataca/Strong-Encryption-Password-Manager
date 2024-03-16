@@ -75,86 +75,7 @@ namespace MyId
 #endif
         }
 
-        private MemoryStream DecryptFileStream(KeyValuePair<string, string> encFile)
-        {
-            MemoryStream ms = null;
-            string fileName = encFile.Key;
-            string encFileNameOnly = Path.GetFileName(fileName);
-            fileName = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
-
-            if (File.Exists(fileName))
-            {
-                ms = new MemoryStream();
-                using (RijndaelManaged myRijndael = new RijndaelManaged())
-                {
-                    myRijndael.KeySize = 256;
-                    myRijndael.BlockSize = 128;
-                    myRijndael.Padding = PaddingMode.PKCS7;
-                    //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                    myRijndael.Mode = CipherMode.CFB;
-
-
-                    using (var fsCrypt = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        if (fsCrypt.ReadByte() == 0x20 && fsCrypt.ReadByte() == 0x22)
-                        {
-                            //version 2022
-                            byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
-                            var key = new Rfc2898DeriveBytes(pin, Crypto.GetKeyIv("Salt"), 50000);
-                            myRijndael.Key = key.GetBytes(32);
-                            myRijndael.IV = Crypto.GetKeyIv("Iv2022");
-                        }
-                        else
-                        {
-                            fsCrypt.Seek(0, SeekOrigin.Begin);
-                            if (Crypto.GetKeyIv("RiKey") == null || Crypto.GetKeyIv("RiIv") == null)
-                            {
-                                return null;
-                            }
-                            myRijndael.Key = Crypto.GetKeyIv("RiKey");
-                            myRijndael.IV = Crypto.GetKeyIv("RiIv");
-
-                        }
-
-
-                        byte[] salt = new byte[32];
-                        fsCrypt.Read(salt, 0, salt.Length);
-
-                        using (var cryptoStream = new CryptoStream(fsCrypt, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
-                        {
-                            //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
-                            byte[] buffer = new byte[1048576];
-                            int read;
-                            while ((read =
-                                cryptoStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                ms.Write(buffer, 0, read);
-                                Thread.Sleep(1);
-                            }
-
-                            cryptoStream.Close();
-
-                        }
-                        fsCrypt.Close();
-                    }
-                }
-
-                ms.Seek(0, SeekOrigin.Begin);
-
-#if DEBUG
-                /*
-                //for debug
-                string debugFile = Path.Combine(p, string.Format("MyId{0}dec.{1}", Path.DirectorySeparatorChar, encFileNameOnly));
-
-                using (var fs = new FileStream(debugFile, FileMode.Create, FileAccess.Write))
-                {                   
-                    ms.WriteTo(fs);
-                }
-                */
-#endif
-            }
-            return ms;
-        }
+        
 
         private void UxEdit_Click(object sender, EventArgs e)
         {
@@ -176,7 +97,7 @@ namespace MyId
                         foreach (var encFile in aItem.Images)
                         {
                             Image img = null;
-                            var st = DecryptFileStream(encFile);
+                            var st = Crypto.DecryptFileStream(encFile, _pinEnc);
                             if (st is null)
                             { //new format
                                 var bytes = Convert.FromBase64String(encFile.Value);
@@ -269,15 +190,15 @@ namespace MyId
                 if (edit.ShowDialog(this) == DialogResult.OK)
                 {
 
-                    Cursor.Current = Cursors.WaitCursor;
+                    //Cursor.Current = Cursors.WaitCursor;
                     foreach (var img in edit.TempFiles.Keys)
                     {
-                        string encFile = Crypto.EncryptFile(img);
+                        //string encFile = Crypto.EncryptFile(img);
 
-                        edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
-
+                        //edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
+                        edit.AIdItem.Images.Add(img, edit.TempFiles[img]);
                     }
-                    Cursor.Current = Cursors.Default;
+                    //Cursor.Current = Cursors.Default;
 
                     AddListItem(edit.AIdItem);
                     _idList.Add(edit.AIdItem);
@@ -379,63 +300,50 @@ namespace MyId
         {
             byte[] salt = Crypto.GenerateRandomBytes(32);
             Crypto.SaveKeyIv("Salt", salt);
-            var key = new Rfc2898DeriveBytes(masterPin, salt, 50000);
+            //var key = new Rfc2898DeriveBytes(masterPin, salt, 50000);
 
-            using (RijndaelManaged myRijndael = new RijndaelManaged())
-            {
-                myRijndael.KeySize = 256;
-                myRijndael.BlockSize = 128;
-                myRijndael.Padding = PaddingMode.PKCS7;
-                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                myRijndael.Mode = CipherMode.CFB;
+            //using (RijndaelManaged myRijndael = new RijndaelManaged())
+            //{
+            //    myRijndael.KeySize = 256;
+            //    myRijndael.BlockSize = 128;
+            //    myRijndael.Padding = PaddingMode.PKCS7;
+            //    //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+            //    myRijndael.Mode = CipherMode.CFB;
 
-                myRijndael.Key = key.GetBytes(32);//256 bits = 32 bytes
+            //    myRijndael.Key = key.GetBytes(32);//256 bits = 32 bytes
 
-                myRijndael.GenerateIV();
+            //    myRijndael.GenerateIV();
 
-                Crypto.SaveKeyIv("Iv2022", myRijndael.IV); //128 blocksize / 8 = 16
+            //    Crypto.SaveKeyIv("Iv2022", myRijndael.IV); //128 blocksize / 8 = 16
 
-                //SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
+            //    //SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
+            //}
 
+            using var aes = Aes.Create();
+            aes.Key = SHA256.Create().ComputeHash(masterPin);
+            aes.GenerateIV();
+            Crypto.SaveKeyIv("Iv2022", aes.IV);
 
-            }
         }
 
         private void SaveToDisk(bool webSync = true)
         {
-            byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
-            var key = new Rfc2898DeriveBytes(pin, Crypto.GetKeyIv("Salt"), 50000);
-
             var plain = JsonConvert.SerializeObject(_idList);
-            using (RijndaelManaged myRijndael = new RijndaelManaged())
-            {
-                myRijndael.KeySize = 256;
-                myRijndael.BlockSize = 128;
-                myRijndael.Padding = PaddingMode.PKCS7;
-                //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                myRijndael.Mode = CipherMode.CFB;
+            using var aes = Aes.Create();
 
+            byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
+            aes.Key = SHA256.Create().ComputeHash(pin); // key.GetBytes(32);
+            aes.IV = Crypto.GetKeyIv("Iv2022");
 
-                myRijndael.Key = key.GetBytes(32);
-                myRijndael.IV = Crypto.GetKeyIv("Iv2022");
-
-
-                using (var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write))
-                {
-                    //version 2024
-                    fs.WriteByte(0x20); //file version major
-                    fs.WriteByte(0x24); //file version minor
-                    using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateEncryptor(), CryptoStreamMode.Write))
-                    {
-                        //formatter.Serialize(cryptoStream, _idList);
-                        using (var sWriter = new StreamWriter(cryptoStream))
-                        {
-                            sWriter.Write(plain);
-                        }
-                    }
-                    fs.Close();
-                }
-            }
+            using var fs = new FileStream(IdFile, FileMode.Create, FileAccess.Write);
+            //version 2024
+            fs.WriteByte(0x20); //file version major
+            fs.WriteByte(0x24); //file version minor
+            using var cryptoStream = new CryptoStream(fs, aes.CreateEncryptor(), CryptoStreamMode.Write);
+            //formatter.Serialize(cryptoStream, _idList);
+            using var sWriter = new StreamWriter(cryptoStream);
+            sWriter.Write(plain);
+            fs.Close();
             if (webSync)
                 _ = WebSync(false);
         }
@@ -447,131 +355,116 @@ namespace MyId
         /// <returns></returns>
         private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
         {
-
             uxList.Items.Clear();
 
             bool success = false;
 
             try
             {
-                using (var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read))
+                using var fs = new FileStream(pDataFile, FileMode.Open, FileAccess.Read);
+                int version = 0;
+                if (fs.ReadByte() == 0x20)
                 {
-                    int version = 0;
-                    if (fs.ReadByte() == 0x20)
-                    { 
-                        if (fs.ReadByte() == 0x24)
-                            version = 2024;
-                        else
-                            version = 2022;
-                    }
+                    if (fs.ReadByte() == 0x24)
+                        version = 2024;
                     else
-                        // Set the stream position to the beginning of the file.
-                        fs.Seek(0, SeekOrigin.Begin);
+                        version = 2022;
+                }
+                else
+                    // Set the stream position to the beginning of the file.
+                    fs.Seek(0, SeekOrigin.Begin);
 
-                    if (version == 2024)
+                if (version == 2024)
+                {
+                    using var aes = Aes.Create();
+
+                    if (pPrivateKeyFile != null)
                     {
-                        using (RijndaelManaged myRijndael = new RijndaelManaged())
+                        if (!LoadPrivateKey(pPrivateKeyFile))
                         {
-                            myRijndael.KeySize = 256;
-                            myRijndael.BlockSize = 128;
-                            myRijndael.Padding = PaddingMode.PKCS7;
-                            //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                            myRijndael.Mode = CipherMode.CFB;
+                            MessageBox.Show("Unable load private key!");
+                            return false;
+                        }
+                    }
+                    byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
+                    aes.Key = SHA256.Create().ComputeHash(pin);  //key.GetBytes(32);
+                    aes.IV = Crypto.GetKeyIv("Iv2022");
+                    using var cryptoStream = new CryptoStream(fs, aes.CreateDecryptor(), CryptoStreamMode.Read);
+
+                    using var sReader = new StreamReader(cryptoStream);
+
+                    try
+                    {
+                        string plain = sReader.ReadToEnd();
+                        _idList = JsonConvert.DeserializeObject<List<IdItem>>(plain);
+
+                    }
+                    catch (System.Security.Cryptography.CryptographicException)
+                    {
+                        return false;
+                    }
+
+                }
+                else
+                {
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    {
+                        myRijndael.KeySize = 256;
+                        myRijndael.BlockSize = 128;
+                        myRijndael.Padding = PaddingMode.PKCS7;
+                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                        myRijndael.Mode = CipherMode.CFB;
 
 
-                            if (pPrivateKeyFile != null)
+                        if (pPrivateKeyFile != null)
+                        {
+                            if (!LoadPrivateKey(pPrivateKeyFile))
                             {
-                                if (!LoadPrivateKey(pPrivateKeyFile))
-                                {
-                                    MessageBox.Show("Unable load private key!");
-                                    return false;
-                                }
+                                MessageBox.Show("Unable load private key!");
+                                return false;
                             }
+                        }
+                        if (version == 2022)
+                        {
                             byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
                             byte[] salt = Crypto.GetKeyIv("Salt");
                             var key = new Rfc2898DeriveBytes(pin, salt, 50000);
                             myRijndael.Key = key.GetBytes(32);
                             myRijndael.IV = Crypto.GetKeyIv("Iv2022");
-                            using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
-                            {
-                                using (var sReader = new StreamReader(cryptoStream))
-                                {
-                                    try
-                                    {
-                                        string plain = sReader.ReadToEnd();
-                                        _idList =  JsonConvert.DeserializeObject<List<IdItem>>(plain);
-
-                                    }
-                                    catch (System.Security.Cryptography.CryptographicException)
-                                    {
-                                        return false;
-                                    }
-                                }
-                            }
                         }
-                    }
-                    else
-                    {
-                        BinaryFormatter formatter = new BinaryFormatter();
-                        using (RijndaelManaged myRijndael = new RijndaelManaged())
-                        {
-                            myRijndael.KeySize = 256;
-                            myRijndael.BlockSize = 128;
-                            myRijndael.Padding = PaddingMode.PKCS7;
-                            //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                            myRijndael.Mode = CipherMode.CFB;
+                        else
+                        {  //Old verion
+                            byte[] keyBytes;
+                            keyBytes = Crypto.GetKeyIv("Key");
 
-
-                            if (pPrivateKeyFile != null)
+                            if (Crypto.GetKeyIv("RiKey") == null || Crypto.GetKeyIv("RiIv") == null)
                             {
-                                if (!LoadPrivateKey(pPrivateKeyFile))
-                                {
-                                    MessageBox.Show("Unable load private key!");
-                                    return false;
-                                }
-                            }
-                            if (version == 2022)
-                            {
-                                byte[] pin = Crypto.GetKeyIv("Pin", _pinEnc);
-                                byte[] salt = Crypto.GetKeyIv("Salt");
-                                var key = new Rfc2898DeriveBytes(pin, salt, 50000);
-                                myRijndael.Key = key.GetBytes(32);
-                                myRijndael.IV = Crypto.GetKeyIv("Iv2022");
+                                MessageBox.Show("Missing private key");
                             }
                             else
-                            {  //Old verion
-                                byte[] keyBytes;
-                                keyBytes = Crypto.GetKeyIv("Key");
-
-                                if (Crypto.GetKeyIv("RiKey") == null || Crypto.GetKeyIv("RiIv") == null)
-                                {
-
-                                    MessageBox.Show("Missing private key");
-
-                                }
-                                else
-                                {
-
-                                    myRijndael.Key = Crypto.GetKeyIv("RiKey");
-                                    myRijndael.IV = Crypto.GetKeyIv("RiIv");
-                                }
-                            }
-
-                            using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
                             {
-                                try
-                                {
-                                    _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
 
-                                }
-                                catch (System.Security.Cryptography.CryptographicException)
-                                {
-                                    return false;
-                                }
+                                myRijndael.Key = Crypto.GetKeyIv("RiKey");
+                                myRijndael.IV = Crypto.GetKeyIv("RiIv");
+                            }
+                        }
+
+                        using (var cryptoStream = new CryptoStream(fs, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                        {
+                            try
+                            {
+                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+
+                            }
+                            catch (System.Security.Cryptography.CryptographicException)
+                            {
+                                return false;
                             }
                         }
                     }
                 }
+
 
                 //Upgrade or update data
                 int uniqIdUpdate = 0;
@@ -587,7 +480,7 @@ namespace MyId
                     {
                         if (encFile.Key.StartsWith("enc."))
                         {
-                            var st = DecryptFileStream(encFile);
+                            var st = Crypto.DecryptFileStream(encFile, _pinEnc);
                             if (st is null)
                             {
                                 continue;
@@ -1612,9 +1505,6 @@ namespace MyId
                 // Read the response content as a string
                 response = await res.Content.ReadAsStringAsync();
 
-#if DEBUG
-                File.WriteAllText("response_dump.html", response);
-#endif
                 uxItemCountStatus.Text = $"Received {response.Length:N0} bytes {start.ElapsedMilliseconds:N0} seconds: {response}";
 
             }
