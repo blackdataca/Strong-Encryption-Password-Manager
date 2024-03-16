@@ -7,3 +7,5 @@ TODOs
 3. Add, View, Delete image and pdf files on Create page
 
 4. Change "sync" to "cloud"
+ 
+5. Fix about box

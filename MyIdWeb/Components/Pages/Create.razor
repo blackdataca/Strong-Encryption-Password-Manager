@@ -38,7 +38,7 @@ else
                 <label class="input-group-text" for="password">Password</label>
                 <InputText class="form-control rounded-control" type="@PasswordType" id="password" @bind-Value="secretDetail.Password" autoComplete="new-password" />
                 <span class="input-group-text @EyeColor" @onclick="ShowPassword"></span>
-                <button type="button" class="btn" @onclick="Generate">Generate strong password</button>
+                <button type="button" class="btn btn-success" @onclick="Generate">Generate new password</button>
             </div>
             <div class="input-group">
                 <label class="input-group-text" for="memo">Memo</label>
@@ -229,6 +229,6 @@ else
 
     private void Generate()
     {
-        
+        secretDetail.Password = Crypto.GenerateRandomPassword();
     }
 }
