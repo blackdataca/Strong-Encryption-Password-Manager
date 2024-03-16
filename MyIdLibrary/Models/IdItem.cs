@@ -6,7 +6,7 @@ namespace MyIdLibrary.Models;
 public class IdItem
 {
     public Guid Uid = Guid.NewGuid();
-    public string UniqId = MyEncryption.UniqId("", true);
+    public string UniqId = Crypto.UniqId("", true);
     public string Site = "";
     public string User ="";
     public string Password="";

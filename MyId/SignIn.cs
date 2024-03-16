@@ -1,50 +1,45 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 
-namespace MyId
+namespace MyId;
+
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+public partial class SignIn : Form
 {
-    public partial class SignIn : Form
+    public SignIn()
     {
-        public SignIn()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
 
-        private void UxPassword_TextChanged(object sender, EventArgs e)
-        {
+    private void UxPassword_TextChanged(object sender, EventArgs e)
+    {
 
-        }
+    }
 
-        private void uxCancel_Click(object sender, EventArgs e)
-        {
+    private void uxCancel_Click(object sender, EventArgs e)
+    {
 
-        }
+    }
 
-        private void uxNew_Click(object sender, EventArgs e)
-        {
+    private void uxNew_Click(object sender, EventArgs e)
+    {
 
-        }
+    }
 
-        private void newDataFileToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            DialogResult = DialogResult.Yes;
-            Close();
-        }
+    private void newDataFileToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        DialogResult = DialogResult.Yes;
+        Close();
+    }
 
-        private void openDataFileToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            DialogResult = DialogResult.No;
-            Close();
-        }
+    private void openDataFileToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        DialogResult = DialogResult.No;
+        Close();
+    }
 
-        private void SignIn_Load(object sender, EventArgs e)
-        {
+    private void SignIn_Load(object sender, EventArgs e)
+    {
 
-        }
     }
 }

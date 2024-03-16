@@ -44,10 +44,10 @@ public class SqlSecretData : ISecretData
             {
                 //2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
                 byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
-                byte[] secretKey = MyEncryption.AsymetricDecrypt(secretKeyCrypt, priKey);
+                byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
 
                 //3. Symmetric decrypt secret payload with Secret Key 
-                string decPayload = MyEncryption.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
+                string decPayload = Crypto.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
                 secret.Payload = decPayload;
 
                 output.Add(secret);
@@ -72,14 +72,14 @@ public class SqlSecretData : ISecretData
         byte[] secretKey = RandomNumberGenerator.GetBytes(32);
 
         //2. Symmetric encrypt secret payload (site, username, password, memo and files) with Secret Key
-        string encPayload = MyEncryption.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
+        string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
         secret.Payload = encPayload;
         if (string.IsNullOrWhiteSpace(secret.Payload))
             throw new Exception($"[CreateSecret] empty payload: {secret}");
 
         //3.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
         byte[] pubKey = Convert.FromBase64String(user.PublicKey);
-        byte[] encSecretKeyBytes = MyEncryption.AsymetricEncrypt(secretKey, pubKey);
+        byte[] encSecretKeyBytes = Crypto.AsymetricEncrypt(secretKey, pubKey);
         string encSecretKey = Convert.ToBase64String(encSecretKeyBytes);
 
         int affecgtedRows;
@@ -118,9 +118,9 @@ public class SqlSecretData : ISecretData
     {
         byte[] priKey = user.GetPrivateKey();
         byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
-        byte[] secretKey = MyEncryption.AsymetricDecrypt(secretKeyCrypt, priKey);
+        byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
 
-        string encPayload = MyEncryption.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
+        string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
         secret.Payload = encPayload;
 
         if (string.IsNullOrWhiteSpace(secret.Payload))
@@ -201,10 +201,10 @@ public class SqlSecretData : ISecretData
 
                 //2. Asymmetric decrypt Secret Key from secrets_users.secret_key(encrypted) with Private Key
                 byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
-                byte[] secretKey = MyEncryption.AsymetricDecrypt(secretKeyCrypt, priKey);
+                byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
 
                 //3. Symmetric decrypt secret payload with Secret Key 
-                string decPayload = MyEncryption.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
+                string decPayload = Crypto.SymmetricDecrypt(secret.Payload, secretKey, new byte[16]);
                 secret.Payload = decPayload;
             }
             return secret;
