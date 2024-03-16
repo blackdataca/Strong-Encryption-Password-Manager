@@ -6,12 +6,11 @@ Defend your passwords with MyID
 
 ![](https://github.com/blackdataca/myid/blob/master/mainscreen.PNG)
 
-## Installation
+## Development environment
 
-Compile with Visual Studio 2022
-
-Xamarin.Essentials 1.7.7
-Xamarin Forms 5.0.0.2578
+* Visual Studio 2022
+* Xamarin.Essentials **1.7.7**
+* Xamarin Forms **5.0.0.2578**
 
 
 ![](https://github.com/blackdataca/Strong-Encryption-Password-Manager/blob/MyID-on-Mac/Copy2Apps.png?raw=true)
@@ -35,7 +34,7 @@ As an extra layer of protection, use an easy to remember access password to unlo
 
 ## Fully open-source for enterprise and private use
 
-MIT license welcome anyone to use the software, verify and make improvements to make internet-world safer.
+MIT license welcome anyone to use the software, verify and make improvements to make internet safer.
 
 
 
