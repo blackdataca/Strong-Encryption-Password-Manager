@@ -1,6 +1,8 @@
 ﻿// MIT License - Copyright (c) 2019 Black Data
 using Microsoft.AspNetCore.StaticFiles;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing;
+
 namespace MyIdLibrary.Models;
 
 [Serializable]
@@ -29,7 +31,7 @@ public class IdItem
             string memo = "";
             if (!string.IsNullOrWhiteSpace(Memo))
             {
-                return Memo.Replace("\n", " ");
+                memo = Memo.Replace("\n", " ");
             }
             if (Images != null && Images.Count > 0)
                 memo = $"({Images.Count} file{(Images.Count == 1 ? "" : "s")}) {memo}";
@@ -4981,9 +4983,8 @@ public class IdItem
         }
     }
 
-    public string GetThumbnail(string fileName)
+    public string GetThumbnail(string fileName, int width, int height)
     {
-        var fileData = Images[fileName];
 
         string type = GetMimeType(fileName);
 
@@ -4993,8 +4994,16 @@ public class IdItem
         }
         else
         {
-            //type = $"image/{type}";
-            return $"data:{type};base64, " + fileData;
+            var fileData = Images[fileName];
+            byte[] bytes = Convert.FromBase64String(fileData);
+            using var ms = new MemoryStream(bytes);
+            var image = Image.FromStream(ms);
+            var thumb = image.GetThumbnailImage(width, height, () => false, IntPtr.Zero);
+            var thumbms = new MemoryStream();
+            thumb.Save(thumbms, image.RawFormat);
+            var thumbBytes = thumbms.ToArray();
+            var thumbString = Convert.ToBase64String(thumbBytes);
+            return $"data:{type};base64, " + thumbString;
         }
     }
 

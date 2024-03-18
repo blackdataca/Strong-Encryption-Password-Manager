@@ -53,7 +53,7 @@ else
                     {
                         <div class="thumbnail">
                             <button type="button" @onclick="() => ViewImage(image.Key)">
-                                <img class="img-fluid img-thumbnail" src="@secretDetail.GetThumbnail(image.Key)" style="width:100px;height:100px;object-fit:cover;" alt="@image.Key" title="@image.Key" />
+                                <img class="img-fluid img-thumbnail" src="@secretDetail.GetThumbnail(image.Key, 100, 100)" style="width:100px;height:100px;object-fit:cover;" alt="@image.Key" title="@image.Key" />
                             </button>
                             
                             <div class="caption-btm">@image.Key</div>
