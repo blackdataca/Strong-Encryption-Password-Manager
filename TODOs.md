@@ -10,4 +10,4 @@
  
 5. Fix about box ✓
 
-6. Add Search button 
+6. Add Search button ✓

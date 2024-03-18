@@ -35,9 +35,10 @@
     }
     Secrets</div>
     <div class="col-md-10 search-box">
-        <input type="text" placeholder="Search"
-            aria-label="Search box" class="form-control rounded-control"
-               @oninput="((txt) => OnSearchInput((string?)txt.Value))" value="@searchText" />
+        <input class="form-control rounded-control"  placeholder="Search..."
+            aria-label="Search box" 
+            @bind="searchText" />
+        <button class="btn btn-primary" @onclick="OnSearchInput">Search</button>
     </div>
 </div>
 
@@ -193,9 +194,9 @@
         }
     }
 
-    private async Task OnSearchInput(string? searchInput)
+    private async Task OnSearchInput()
     {
-        await FilterSecrets(searchInput);
+        await FilterSecrets(searchText);
     }
 
     private void OpenDetails(string secretId)
