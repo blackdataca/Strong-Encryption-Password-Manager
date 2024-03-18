@@ -42,4 +42,10 @@ public partial class SignIn : Form
     {
 
     }
+
+    private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        using var ab = new AboutBox1();
+        ab.ShowDialog();
+    }
 }

@@ -1164,7 +1164,7 @@ public partial class MainForm : Form, IMessageFilter
 
     private void UxAbout_Click(object sender, EventArgs e)
     {
-        var ab = new AboutBox1();
+        using var ab = new AboutBox1();
         ab.ShowDialog();
     }
 

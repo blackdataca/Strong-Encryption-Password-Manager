@@ -5,7 +5,13 @@
     <RootNamespace>MyId</RootNamespace>
     <AssemblyName>MyId</AssemblyName>
     <Deterministic>false</Deterministic>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+	  <Product>MyID App</Product>
+	  <AssemblyVersion>2024.3.*</AssemblyVersion>
+	  <Copyright>(C)2024 All rights reserved</Copyright>
+	  <Authors>BlackData.ca</Authors>
+	  <Company>BlackData.ca</Company>
+	  <Description>*</Description>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
 	  <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>

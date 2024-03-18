@@ -29,117 +29,134 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SignIn));
-            this.uxCancel = new System.Windows.Forms.Button();
-            this.uxUnlock = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.uxPassword = new System.Windows.Forms.TextBox();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.newDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.openDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuStrip1.SuspendLayout();
-            this.SuspendLayout();
+            uxCancel = new System.Windows.Forms.Button();
+            uxUnlock = new System.Windows.Forms.Button();
+            label1 = new System.Windows.Forms.Label();
+            uxPassword = new System.Windows.Forms.TextBox();
+            menuStrip1 = new System.Windows.Forms.MenuStrip();
+            fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            newDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            openDataFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            menuStrip1.SuspendLayout();
+            SuspendLayout();
             // 
             // uxCancel
             // 
-            this.uxCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.uxCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.uxCancel.Location = new System.Drawing.Point(292, 124);
-            this.uxCancel.Name = "uxCancel";
-            this.uxCancel.Size = new System.Drawing.Size(75, 23);
-            this.uxCancel.TabIndex = 3;
-            this.uxCancel.Text = "&Cancel";
-            this.uxCancel.UseVisualStyleBackColor = true;
-            this.uxCancel.Click += new System.EventHandler(this.uxCancel_Click);
+            uxCancel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            uxCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            uxCancel.Location = new System.Drawing.Point(341, 143);
+            uxCancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxCancel.Name = "uxCancel";
+            uxCancel.Size = new System.Drawing.Size(88, 27);
+            uxCancel.TabIndex = 3;
+            uxCancel.Text = "&Cancel";
+            uxCancel.UseVisualStyleBackColor = true;
+            uxCancel.Click += uxCancel_Click;
             // 
             // uxUnlock
             // 
-            this.uxUnlock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.uxUnlock.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.uxUnlock.Location = new System.Drawing.Point(183, 124);
-            this.uxUnlock.Name = "uxUnlock";
-            this.uxUnlock.Size = new System.Drawing.Size(75, 23);
-            this.uxUnlock.TabIndex = 2;
-            this.uxUnlock.Text = "&Unlock";
-            this.uxUnlock.UseVisualStyleBackColor = true;
+            uxUnlock.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            uxUnlock.DialogResult = System.Windows.Forms.DialogResult.OK;
+            uxUnlock.Location = new System.Drawing.Point(214, 143);
+            uxUnlock.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxUnlock.Name = "uxUnlock";
+            uxUnlock.Size = new System.Drawing.Size(88, 27);
+            uxUnlock.TabIndex = 2;
+            uxUnlock.Text = "&Unlock";
+            uxUnlock.UseVisualStyleBackColor = true;
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(27, 41);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(60, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "&Master PIN";
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(31, 47);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(65, 15);
+            label1.TabIndex = 0;
+            label1.Text = "&Master PIN";
             // 
             // uxPassword
             // 
-            this.uxPassword.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.uxPassword.Location = new System.Drawing.Point(30, 71);
-            this.uxPassword.Name = "uxPassword";
-            this.uxPassword.PasswordChar = '*';
-            this.uxPassword.Size = new System.Drawing.Size(337, 20);
-            this.uxPassword.TabIndex = 1;
-            this.uxPassword.UseSystemPasswordChar = true;
-            this.uxPassword.TextChanged += new System.EventHandler(this.UxPassword_TextChanged);
+            uxPassword.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            uxPassword.Location = new System.Drawing.Point(35, 82);
+            uxPassword.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxPassword.Name = "uxPassword";
+            uxPassword.PasswordChar = '*';
+            uxPassword.Size = new System.Drawing.Size(392, 23);
+            uxPassword.TabIndex = 1;
+            uxPassword.UseSystemPasswordChar = true;
+            uxPassword.TextChanged += UxPassword_TextChanged;
             // 
             // menuStrip1
             // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(417, 24);
-            this.menuStrip1.TabIndex = 5;
-            this.menuStrip1.Text = "menuStrip1";
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
+            menuStrip1.Location = new System.Drawing.Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Padding = new System.Windows.Forms.Padding(7, 2, 0, 2);
+            menuStrip1.Size = new System.Drawing.Size(486, 24);
+            menuStrip1.TabIndex = 5;
+            menuStrip1.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
             // 
-            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.newDataFileToolStripMenuItem,
-            this.openDataFileToolStripMenuItem});
-            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-            this.fileToolStripMenuItem.Text = "&File";
+            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { newDataFileToolStripMenuItem, openDataFileToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            fileToolStripMenuItem.Text = "&File";
             // 
             // newDataFileToolStripMenuItem
             // 
-            this.newDataFileToolStripMenuItem.Name = "newDataFileToolStripMenuItem";
-            this.newDataFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.newDataFileToolStripMenuItem.Text = "&New Data File";
-            this.newDataFileToolStripMenuItem.Click += new System.EventHandler(this.newDataFileToolStripMenuItem_Click);
+            newDataFileToolStripMenuItem.Name = "newDataFileToolStripMenuItem";
+            newDataFileToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            newDataFileToolStripMenuItem.Text = "&New Data File";
+            newDataFileToolStripMenuItem.Click += newDataFileToolStripMenuItem_Click;
             // 
             // openDataFileToolStripMenuItem
             // 
-            this.openDataFileToolStripMenuItem.Name = "openDataFileToolStripMenuItem";
-            this.openDataFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openDataFileToolStripMenuItem.Text = "&Open Data File";
-            this.openDataFileToolStripMenuItem.Click += new System.EventHandler(this.openDataFileToolStripMenuItem_Click);
+            openDataFileToolStripMenuItem.Name = "openDataFileToolStripMenuItem";
+            openDataFileToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            openDataFileToolStripMenuItem.Text = "&Open Data File";
+            openDataFileToolStripMenuItem.Click += openDataFileToolStripMenuItem_Click;
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            helpToolStripMenuItem.Text = "&Help";
+            // 
+            // aboutToolStripMenuItem
+            // 
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            aboutToolStripMenuItem.Text = "&About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // SignIn
             // 
-            this.AcceptButton = this.uxUnlock;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.uxCancel;
-            this.ClientSize = new System.Drawing.Size(417, 170);
-            this.Controls.Add(this.uxPassword);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.uxUnlock);
-            this.Controls.Add(this.uxCancel);
-            this.Controls.Add(this.menuStrip1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MainMenuStrip = this.menuStrip1;
-            this.Name = "SignIn";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "SignIn";
-            this.Load += new System.EventHandler(this.SignIn_Load);
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AcceptButton = uxUnlock;
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            CancelButton = uxCancel;
+            ClientSize = new System.Drawing.Size(486, 196);
+            Controls.Add(uxPassword);
+            Controls.Add(label1);
+            Controls.Add(uxUnlock);
+            Controls.Add(uxCancel);
+            Controls.Add(menuStrip1);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            MainMenuStrip = menuStrip1;
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "SignIn";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "SignIn";
+            Load += SignIn_Load;
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -152,5 +169,7 @@
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem newDataFileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openDataFileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
     }
 }

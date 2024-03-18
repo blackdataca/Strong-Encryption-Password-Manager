@@ -6,8 +6,8 @@
 
 3. Add, View, Delete image and pdf files on Create page ✓
 
-4. Change "sync" to "cloud"
+4. Change "sync" to "cloud" ✓
  
-5. Fix about box
+5. Fix about box ✓
 
 6. Add Search button 
