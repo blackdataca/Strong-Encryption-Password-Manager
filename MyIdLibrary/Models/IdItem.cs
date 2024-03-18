@@ -1,5 +1,6 @@
 ﻿// MIT License - Copyright (c) 2019 Black Data
-
+using Microsoft.AspNetCore.StaticFiles;
+using System.ComponentModel.DataAnnotations;
 namespace MyIdLibrary.Models;
 
 [Serializable]
@@ -7,10 +8,18 @@ public class IdItem
 {
     public Guid Uid = Guid.NewGuid();
     public string UniqId = Crypto.UniqId("", true);
-    public string Site = "";
-    public string User ="";
-    public string Password="";
-    public string Memo="";
+    [Required]
+    [MaxLength(50)]
+    public string Site { get; set; }
+
+    [MaxLength(50)]
+    public string User { get; set; }
+
+    [MaxLength(50)]
+    public string Password { get; set; }
+
+    [MaxLength(500)]
+    public string Memo { get; set; }
 
     public string Memo1Line
     {
@@ -4970,6 +4979,34 @@ public class IdItem
             return pass;
 
         }
+    }
+
+    public string GetThumbnail(string fileName)
+    {
+        var fileData = Images[fileName];
+
+        string type = GetMimeType(fileName);
+
+        if (type == "application/pdf")
+        {
+            return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/PDF_icon.svg/210px-PDF_icon.svg.png";
+        }
+        else
+        {
+            //type = $"image/{type}";
+            return $"data:{type};base64, " + fileData;
+        }
+    }
+
+    public string GetMimeType(string fileName)
+    {
+        var provider = new FileExtensionContentTypeProvider();
+        string defaultContentType = "application/octet-stream";
+        if (!provider.TryGetContentType(fileName, out string contentType))
+        {
+            contentType = defaultContentType;
+        }
+        return contentType;
     }
 
 }

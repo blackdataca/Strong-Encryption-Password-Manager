@@ -1,6 +1,5 @@
 ﻿@page "/Main"
 @using System.Text.Json
-@using MyIdWeb.Models
 @using Newtonsoft.Json
 @attribute [Authorize]
 @inject AuthenticationStateProvider authProvider
@@ -38,7 +37,7 @@
     <div class="col-md-10 search-box">
         <input type="text" placeholder="Search"
             aria-label="Search box" class="form-control rounded-control"
-               @oninput="((txt) => OnSearchInput((string)txt.Value))" value="@searchText" />
+               @oninput="((txt) => OnSearchInput((string?)txt.Value))" value="@searchText" />
     </div>
 </div>
 
@@ -58,7 +57,7 @@
                     @* <Virtualize Items="@secrets" Context="s" OverscanCount="10"> *@
                         @foreach (var s in secrets)
                         {
-                            <tr class="@ShowDeleted(s)" @onclick="(() => OpenDetails(s.Id))">
+                            <tr class="@ShowDeleted(s)" @onclick="(() => OpenDetails(s.Uid.ToString()))">
                                 <td>@s.Site</td>
                                 <td>@s.User</td>
                             <td>@s.Memo1Line</td>
@@ -75,7 +74,7 @@
 @code {
     private int IsTaskRunning;
     private UserModel loggedInUser;
-    private List<SecretDetailModel> secrets;
+    private List<IdItem> secrets;
     private string searchText = "";
     private int secretCount;
 
@@ -155,7 +154,7 @@
         await sessionStorage.SetAsync(nameof(searchText), searchInput);
     }
 
-    private async Task FilterSecrets(string searchInput)
+    private async Task FilterSecrets(string? searchInput)
     {
         try
         {
@@ -168,7 +167,7 @@
                 secretPayloads = secretPayloads.Where(
                     s => searchTerms.All(val => s.Payload.Contains(val, StringComparison.InvariantCultureIgnoreCase))
                 ).Take(11).ToList();
-                secrets = new List<SecretDetailModel> { };
+                secrets = new List<IdItem> { };
                 secretCount = secretPayloads.Count;
                 //foreach (var payload in secretPayloads)
                 for (int i = 0; i < secretCount; i++)
@@ -178,8 +177,8 @@
                         break;
                     }
                     var payload = secretPayloads[i];
-                    SecretDetailModel secretDetail = JsonConvert.DeserializeObject<SecretDetailModel>(payload.Payload);
-                    secretDetail.Id = payload.Id.ToString();
+                    var secretDetail = JsonConvert.DeserializeObject<IdItem>(payload.Payload);
+                    secretDetail.Uid = payload.Id;
                     secretDetail.Deleted = payload.Deleted;
                     secrets.Add(secretDetail);
                 }
@@ -194,7 +193,7 @@
         }
     }
 
-    private async Task OnSearchInput(string searchInput)
+    private async Task OnSearchInput(string? searchInput)
     {
         await FilterSecrets(searchInput);
     }
@@ -204,7 +203,7 @@
         navManager.NavigateTo($"/Create/{secretId}");
     }
 
-    private string ShowDeleted(SecretDetailModel s)
+    private string ShowDeleted(IdItem s)
     {
         if (s.Deleted)
             return "table-danger text-decoration-line-through";
