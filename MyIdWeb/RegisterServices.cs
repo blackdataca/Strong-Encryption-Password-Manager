@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using MyIdWeb.Components.Account;
-using MyIdWeb.Data;
+using MyIdCloud.Components.Account;
+using MyIdCloud.Data;
 
-namespace MyIdWeb;
+namespace MyIdCloud;
 
 public static class RegisterServices
 {

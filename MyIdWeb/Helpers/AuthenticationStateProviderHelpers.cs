@@ -1,5 +1,5 @@
 ﻿
-namespace MyIdWeb.Helpers;
+namespace MyIdCloud.Helpers;
 
 public static class AuthenticationStateProviderHelpers
 {

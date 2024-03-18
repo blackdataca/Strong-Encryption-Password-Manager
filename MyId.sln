@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdForWin", "MyId\MyIdForWin.csproj", "{39E3ECA2-698A-4318-862A-94BD42C95D9C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdApp", "MyId\MyIdApp.csproj", "{39E3ECA2-698A-4318-862A-94BD42C95D9C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2D649FBB-1125-4996-BB09-A30036D28F53}"
 	ProjectSection(SolutionItems) = preProject
@@ -26,7 +26,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyIdMobile.iOS", "MyIdMobil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdMobile", "MyIdMobile\MyIdMobile\MyIdMobile.csproj", "{94290C5E-92AC-478C-A956-C5E04B307FDC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdWeb", "MyIdWeb\MyIdWeb.csproj", "{BD8D00E6-C2F8-4852-87E2-1590168FCF8A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyIdCloud", "MyIdWeb\MyIdCloud.csproj", "{BD8D00E6-C2F8-4852-87E2-1590168FCF8A}"
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "MyIdDb", "MyIdDatabase\MyIdDb.sqlproj", "{526E316D-FDF0-447D-B281-6191164336D2}"
 EndProject

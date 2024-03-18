@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using MyIdWeb;
-using MyIdWeb.Components;
-using MyIdWeb.Components.Account;
-using MyIdWeb.Data;
+using MyIdCloud;
+using MyIdCloud.Components;
+using MyIdCloud.Components.Account;
+using MyIdCloud.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,5 +35,5 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
-app.Logger.LogInformation("Starting MyIdWeb ...");
+app.Logger.LogInformation("Starting MyIdCloud ...");
 app.Run();

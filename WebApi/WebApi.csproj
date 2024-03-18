@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MyIdLibrary\MyIdLibrary.csproj" />
-    <ProjectReference Include="..\MyIdWeb\MyIdWeb.csproj" />
+    <ProjectReference Include="..\MyIdWeb\MyIdCloud.csproj" />
   </ItemGroup>
 
 </Project>

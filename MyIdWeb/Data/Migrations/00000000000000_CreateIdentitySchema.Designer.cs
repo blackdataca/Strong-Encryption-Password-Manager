@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using MyIdWeb.Data;
+using MyIdCloud.Data;
 using System;
 
 #nullable disable
 
-namespace MyIdWeb.Migrations
+namespace MyIdCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("00000000000000_CreateIdentitySchema")]
@@ -25,7 +25,7 @@ namespace MyIdWeb.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("MyIdWeb.Data.ApplicationUser", b =>
+            modelBuilder.Entity("MyIdCloud.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -234,7 +234,7 @@ namespace MyIdWeb.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("MyIdWeb.Data.ApplicationUser", null)
+                    b.HasOne("MyIdCloud.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -243,7 +243,7 @@ namespace MyIdWeb.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("MyIdWeb.Data.ApplicationUser", null)
+                    b.HasOne("MyIdCloud.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -258,7 +258,7 @@ namespace MyIdWeb.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyIdWeb.Data.ApplicationUser", null)
+                    b.HasOne("MyIdCloud.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -267,7 +267,7 @@ namespace MyIdWeb.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("MyIdWeb.Data.ApplicationUser", null)
+                    b.HasOne("MyIdCloud.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

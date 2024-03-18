@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using MyIdWeb.Data;
+using MyIdCloud.Data;
 using System.Security.Claims;
 
-namespace MyIdWeb.Components.Account
+namespace MyIdCloud.Components.Account
 {
     // This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
     // every 30 minutes an interactive circuit is connected.

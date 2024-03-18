@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MyIdWeb.Components.Account
+namespace MyIdCloud.Components.Account
 {
     internal sealed class IdentityRedirectManager(NavigationManager navigationManager)
     {

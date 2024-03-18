@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using MyIdWeb.Data;
+using MyIdCloud.Data;
 
-namespace MyIdWeb.Components.Account
+namespace MyIdCloud.Components.Account
 {
     internal sealed class IdentityUserAccessor(UserManager<ApplicationUser> userManager, IdentityRedirectManager redirectManager)
     {

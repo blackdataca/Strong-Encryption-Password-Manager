@@ -3,7 +3,7 @@ using System;
 
 #nullable disable
 
-namespace MyIdWeb.Migrations
+namespace MyIdCloud.Migrations
 {
     /// <inheritdoc />
     public partial class CreateIdentitySchema : Migration
