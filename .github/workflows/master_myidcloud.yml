@@ -25,13 +25,13 @@ jobs:
         run: dotnet build ./MyIdWeb/MyIdCloud.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/MyIdCloud
+        run: dotnet publish -c Release -o ./MyIdCloud-Ppublish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/MyIdCloud
+          path: ./MyIdCloud-Ppublish
 
   deploy:
     runs-on: windows-latest
