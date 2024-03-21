@@ -1,13 +1,12 @@
 ﻿TODOs
 
-1. Upgrade MyIdForWin to .net core? ✓
+1. Setup Github workflow 
 
-2. Move Crypto, IdItem to MyIdLibrary ✓
+2. Setup Azure website
 
-3. Add, View, Delete image and pdf files on Create page ✓
+3. Automatic testing
 
-4. Change "sync" to "cloud" ✓
+4. Share secerts
  
-5. Fix about box ✓
+5. Style webpages
 
-6. Add Search button ✓
