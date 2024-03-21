@@ -28,86 +28,93 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.label1 = new System.Windows.Forms.Label();
-            this.uxEmail = new System.Windows.Forms.TextBox();
-            this.uxPassword = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.uxCancel = new System.Windows.Forms.Button();
-            this.uxOk = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            label1 = new System.Windows.Forms.Label();
+            uxEmail = new System.Windows.Forms.TextBox();
+            uxPassword = new System.Windows.Forms.TextBox();
+            label2 = new System.Windows.Forms.Label();
+            uxCancel = new System.Windows.Forms.Button();
+            uxOk = new System.Windows.Forms.Button();
+            SuspendLayout();
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 98);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(35, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Email:";
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(14, 113);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(39, 15);
+            label1.TabIndex = 0;
+            label1.Text = "Email:";
             // 
             // uxEmail
             // 
-            this.uxEmail.Location = new System.Drawing.Point(74, 95);
-            this.uxEmail.Name = "uxEmail";
-            this.uxEmail.Size = new System.Drawing.Size(262, 20);
-            this.uxEmail.TabIndex = 1;
+            uxEmail.Location = new System.Drawing.Point(86, 110);
+            uxEmail.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxEmail.Name = "uxEmail";
+            uxEmail.Size = new System.Drawing.Size(305, 23);
+            uxEmail.TabIndex = 1;
             // 
             // uxPassword
             // 
-            this.uxPassword.Location = new System.Drawing.Point(74, 135);
-            this.uxPassword.Name = "uxPassword";
-            this.uxPassword.PasswordChar = '●';
-            this.uxPassword.Size = new System.Drawing.Size(262, 20);
-            this.uxPassword.TabIndex = 3;
+            uxPassword.Location = new System.Drawing.Point(86, 156);
+            uxPassword.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxPassword.Name = "uxPassword";
+            uxPassword.PasswordChar = '●';
+            uxPassword.Size = new System.Drawing.Size(305, 23);
+            uxPassword.TabIndex = 3;
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 142);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(56, 13);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "Password:";
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(14, 164);
+            label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(60, 15);
+            label2.TabIndex = 2;
+            label2.Text = "Password:";
             // 
             // uxCancel
             // 
-            this.uxCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.uxCancel.Location = new System.Drawing.Point(15, 279);
-            this.uxCancel.Name = "uxCancel";
-            this.uxCancel.Size = new System.Drawing.Size(75, 23);
-            this.uxCancel.TabIndex = 4;
-            this.uxCancel.Text = "Cancel";
-            this.uxCancel.UseVisualStyleBackColor = true;
+            uxCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            uxCancel.Location = new System.Drawing.Point(18, 322);
+            uxCancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxCancel.Name = "uxCancel";
+            uxCancel.Size = new System.Drawing.Size(88, 27);
+            uxCancel.TabIndex = 4;
+            uxCancel.Text = "Cancel";
+            uxCancel.UseVisualStyleBackColor = true;
             // 
             // uxOk
             // 
-            this.uxOk.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.uxOk.Location = new System.Drawing.Point(260, 279);
-            this.uxOk.Name = "uxOk";
-            this.uxOk.Size = new System.Drawing.Size(75, 23);
-            this.uxOk.TabIndex = 5;
-            this.uxOk.Text = "Sync";
-            this.uxOk.UseVisualStyleBackColor = true;
-            this.uxOk.Click += new System.EventHandler(this.uxOk_Click);
+            uxOk.DialogResult = System.Windows.Forms.DialogResult.OK;
+            uxOk.Location = new System.Drawing.Point(303, 322);
+            uxOk.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            uxOk.Name = "uxOk";
+            uxOk.Size = new System.Drawing.Size(88, 27);
+            uxOk.TabIndex = 5;
+            uxOk.Text = "Sync";
+            uxOk.UseVisualStyleBackColor = true;
+            uxOk.Click += uxOk_Click;
             // 
             // WebSync
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.uxCancel;
-            this.ClientSize = new System.Drawing.Size(359, 321);
-            this.Controls.Add(this.uxOk);
-            this.Controls.Add(this.uxCancel);
-            this.Controls.Add(this.uxPassword);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.uxEmail);
-            this.Controls.Add(this.label1);
-            this.Name = "WebSync";
-            this.Text = "WebSync";
-            this.Load += new System.EventHandler(this.WebSync_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AcceptButton = uxOk;
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            CancelButton = uxCancel;
+            ClientSize = new System.Drawing.Size(419, 370);
+            Controls.Add(uxOk);
+            Controls.Add(uxCancel);
+            Controls.Add(uxPassword);
+            Controls.Add(label2);
+            Controls.Add(uxEmail);
+            Controls.Add(label1);
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "WebSync";
+            Text = "MyID Cloud";
+            Load += WebSync_Load;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

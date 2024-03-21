@@ -394,3 +394,6 @@ healthchecksdb
 
 # OS File
 .DS_Store
+
+# User files
+/MyIdWeb/wwwroot/storage

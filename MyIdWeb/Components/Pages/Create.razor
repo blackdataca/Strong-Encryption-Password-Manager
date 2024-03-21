@@ -1,0 +1,254 @@
+﻿@page "/Create"
+@page "/Create/{secretId}"
+@using Microsoft.AspNetCore.StaticFiles
+@attribute [Authorize]
+@inject AuthenticationStateProvider authProvider
+@inject ISecretData secretData
+@inject IUserData userData
+@inject NavigationManager navManager
+@inject IConfiguration config
+@inject ILogger<Create> logger
+@inject IJSRuntime jSRuntime
+@rendermode InteractiveServer
+
+@if (string.IsNullOrWhiteSpace(secretId))
+{
+    <h1>Add A Secret</h1>
+}
+else
+{
+    <h1>Secret Details</h1>
+}
+<div>
+    <div>
+        <div>
+            <button @onclick="ClosePage">X</button>
+        </div>
+        <EditForm Model="secretDetail" OnValidSubmit="SaveSecret">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="input-group">
+                <label class="input-group-text" for="site">Site</label>
+                <InputText  class="form-control rounded-control" id="site" @bind-Value="secretDetail.Site" />
+            </div>
+            <div class="input-group">
+                <label class="input-group-text" for="user">User</label>
+                <InputText  class="form-control rounded-control" id="user" @bind-Value="secretDetail.User" />
+            </div>
+            <div class="input-group">
+                <label class="input-group-text" for="password">Password</label>
+                <InputText class="form-control rounded-control" type="@PasswordType" id="password" @bind-Value="secretDetail.Password" autoComplete="new-password" />
+                <span class="input-group-text @EyeColor" @onclick="ShowPassword"></span>
+                <button type="button" class="btn btn-success" @onclick="Generate">Generate new password</button>
+            </div>
+            <div class="input-group">
+                <label class="input-group-text" for="memo">Memo</label>
+                <InputTextArea class="form-control rounded-control" id="memo" @bind-Value="secretDetail.Memo" />
+            </div>
+            @if (secretDetail.Images?.Count > 0)
+            {
+                <div class="input-group">
+                    <label class="input-group-text" for="images">Images</label>
+                    @foreach (var image in secretDetail.Images)
+                    {
+                        <div class="thumbnail">
+                            <button type="button" @onclick="() => ViewImage(image.Key)">
+                                <img class="img-fluid img-thumbnail" src="@secretDetail.GetThumbnail(image.Key, 100, 100)" style="width:100px;height:100px;object-fit:cover;" alt="@image.Key" title="@image.Key" />
+                            </button>
+                            
+                            <div class="caption-btm">@image.Key</div>
+                            <button type="button" @onclick="() => DeleteImage(image.Key)">X</button>
+                        </div>
+                    }
+                </div>
+            }
+            <div class="input-group">
+                <label class="input-group-text" for="addFiles">Add Image</label>
+                <InputFile id="addFiles" OnChange="LoadFiles" multiple class="form-control" accept=".png,.jpg,.jpeg,.pdf" />
+            </div>
+            @if (errors.Count > 0)
+            {
+                <ul class="text-danger">
+                    @foreach (var error in errors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            }
+            <div class="input-group">
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+            <div class="input-group">
+                @if (secret.Deleted)
+                {
+                    <button class="btn btn-secondary" @onclick="() => Delete(false)">Undelete</button>
+                }
+                else
+                {
+                    <button class="btn btn-danger" @onclick="() => Delete(true)">Delete</button>
+                }
+            </div>
+        </EditForm>
+
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string secretId { get; set; }
+    private IdItem? secretDetail = new();
+    private SecretModel secret = new();
+    private UserModel loggedInUser = new();
+    private string PasswordType = "password";
+    private string EyeColor = "bi bi-eye-fill";
+
+    private long maxFileSize = 1024 * 1024 * 3; //3MB
+    private int maxAllowedFiles = 3;
+    private List<string> errors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
+        if (!string.IsNullOrWhiteSpace(secretId))
+        {
+            secret = await secretData.ReadSecretAsync(secretId, loggedInUser);
+            if (secret is not null)
+            {
+                secretDetail = JsonConvert.DeserializeObject<IdItem>(secret.Payload);
+                if (secretDetail is null)
+                {
+                    navManager.NavigateTo("/main");                    
+                }
+            }
+            else
+            {
+                navManager.NavigateTo("/main");
+            }
+        }
+        else
+            navManager.NavigateTo("/main");
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo("/main");
+    }
+
+    private async Task SaveSecret()
+    {
+        if (secret is null)
+            return;
+        if (string.IsNullOrWhiteSpace(secretId))
+        {
+            SecretModel s = new();
+            s.Payload = JsonConvert.SerializeObject(secretDetail);
+            s.UserIds.Add(loggedInUser.Id);
+            await secretData.CreateSecret(s, loggedInUser);
+        }
+        else
+        {
+            secret.Payload = JsonConvert.SerializeObject(secretDetail);
+            secret.Modified = DateTime.UtcNow;
+            await secretData.UpdateSecret(secret, loggedInUser);
+        }
+        ClosePage();
+    }
+
+    private async Task Delete(bool isDelete)
+    {
+        secret.Deleted = isDelete;
+        secret.Modified = DateTime.UtcNow;
+        await secretData.UpdateSecret(secret, loggedInUser);
+        ClosePage();
+    }
+
+    private void ShowPassword()
+    {
+        if (PasswordType == "password")
+        {
+            PasswordType = "text";
+            EyeColor = "bi bi-eye-slash-fill";
+        }
+        else
+        {
+            PasswordType = "password";
+            EyeColor = "bi bi-eye-fill";
+        }
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+
+        if (e.FileCount > maxAllowedFiles)
+        {
+            errors.Add($"Error: Attempting to upload {e.FileCount} files, but only {maxAllowedFiles} files are allowed");
+            return;
+        }
+
+        foreach(var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            try
+            {
+
+                logger.LogInformation($"Receiving file {file.Name}...");
+
+                if (secretDetail.Images.ContainsKey(file.Name))
+                {
+                    logger.LogError("Duplicated file name");
+                    errors.Add($"Error: Duplicated file name!");
+                    return;
+                }
+
+                var fs = file.OpenReadStream(maxFileSize);
+
+                var fileContent = new byte[file.Size];
+
+                int dataCount = 0;
+                while (dataCount < file.Size)
+                {
+                    var buffer = new byte[10000];
+                    int count = await fs.ReadAsync(buffer);
+                    Array.Copy( buffer, 0, fileContent, dataCount, count);
+                    dataCount += count;
+                }
+
+                if (secretDetail.Images is null)
+                {
+                    secretDetail.Images = new();
+                }
+
+                secretDetail.Images.Add(file.Name, Convert.ToBase64String(fileContent));
+
+                logger.LogInformation($"Received {dataCount} bytes");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.ToString());
+                errors.Add($"Error: {ex.Message}");
+            }
+
+        }
+    }
+
+    private void DeleteImage(string key)
+    {
+        if (secretDetail?.Images is not null)
+        {
+            secretDetail.Images.Remove(key);
+        }
+    }
+
+    private async Task ViewImage(string imageKey)
+    {
+        var fs = secretDetail.Images[imageKey];
+        var fb = Convert.FromBase64String(fs);
+        var mime = secretDetail.GetMimeType(imageKey);
+        await jSRuntime.InvokeVoidAsync("openInNewTab", fb, mime);
+    }
+
+    private void Generate()
+    {
+        secretDetail.Password = Crypto.GenerateRandomPassword();
+    }
+}

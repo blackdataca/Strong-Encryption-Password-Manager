@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>MyId</RootNamespace>
+    <AssemblyName>MyId</AssemblyName>
+    <Deterministic>false</Deterministic>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+	  <Product>MyID App</Product>
+	  <AssemblyVersion>2024.3.*</AssemblyVersion>
+	  <Copyright>(C)2024 All rights reserved</Copyright>
+	  <Authors>BlackData.ca</Authors>
+	  <Company>BlackData.ca</Company>
+	  <Description>*</Description>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+	  <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="logo.ico" />
+    <None Include="Resources\MyId Infograph.drawio %281%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MyIdLibrary\MyIdLibrary.csproj" />
+  </ItemGroup>
+</Project>
