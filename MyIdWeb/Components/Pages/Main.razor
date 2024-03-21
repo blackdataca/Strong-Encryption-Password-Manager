@@ -20,7 +20,7 @@
     <div class="col-md-2">
     @if (IsTaskRunning > 0)
     {
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span>Searching...</span>
     }
     else
     {
@@ -38,7 +38,16 @@
         <input class="form-control rounded-control"  placeholder="Search..."
             aria-label="Search box" 
             @bind="searchText" />
-        <button class="btn btn-primary" @onclick="OnSearchInput">Search</button>
+        <button class="btn btn-primary" @onclick="OnSearchInput">
+            @if (IsTaskRunning > 0)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="min-width:5rem;"></span>
+            }
+            else
+            {
+                <span>Search</span> 
+            }
+        </button>
     </div>
 </div>
 
