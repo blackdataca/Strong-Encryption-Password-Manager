@@ -57,7 +57,7 @@ jobs:
   
   WebApi_deploy:
     runs-on: windows-latest
-    needs: build
+    needs: WebApi_buildImage
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapi.outputs.webapp-url }}
@@ -78,7 +78,7 @@ jobs:
           package: ./api
   WebFrontEnd_deploy:
     runs-on: windows-latest
-    needs: build
+    needs: WebFrontEnd_buildImage
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
