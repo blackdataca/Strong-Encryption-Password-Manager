@@ -73,7 +73,7 @@ jobs:
         id: deploy-to-webapi
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'myidcloud'
+          app-name: 'myidcloudapi'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B7BD54D3A53C4AFEBD0A2F46BF601E77 }}
           package: ./WebApi
