@@ -75,7 +75,7 @@ jobs:
         with:
           app-name: 'myidcloud'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B7BD54D3A53C4AFEBD0A2F46BF601E76 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B7BD54D3A53C4AFEBD0A2F46BF601E77 }}
           package: ./WebApi
   WebFrontEnd_deploy:
     runs-on: windows-latest
