@@ -34,7 +34,7 @@ jobs:
           path: ${{env.DOTNET_ROOT}}\WebApi
   WebFrontEnd_buildImage:
     runs-on: windows-latest
-    needs: WebApi_buildImage
+    needs: WebApi_deploy
     steps:
       - uses: actions/checkout@v4
 
