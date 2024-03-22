@@ -120,12 +120,21 @@
                 loggedInUser.SetSecurityStamp(securityStamp);
             }
 
-            if (isDirty)
+            try
             {
-                if (isNew)
-                    await userData.CreateUser(loggedInUser);
-                else
-                    await userData.UpdateUser(loggedInUser);
+
+                if (isDirty)
+                {
+                    if (isNew)
+                        await userData.CreateUser(loggedInUser);
+                    else
+                        await userData.UpdateUser(loggedInUser);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.ToString());
+                navManager.NavigateTo("Account/Logout");
             }
             //secrets = await secretData.GetUserSecrets(loggedInUser.Id);
         }
