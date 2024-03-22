@@ -10,9 +10,31 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  WebApi_buildImage:
     runs-on: windows-latest
 
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build with dotnet
+        run: dotnet build ./WebApi/WebApi.csproj --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish ./WebApi/WebApi.csproj -c Release -o "${{env.DOTNET_ROOT}}\WebApi"
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: .net-api
+          path: ${{env.DOTNET_ROOT}}\WebApi
+  WebFrontEnd_buildImage:
+    runs-on: windows-latest
+    needs: WebApi_buildImage
     steps:
       - uses: actions/checkout@v4
 
@@ -32,8 +54,29 @@ jobs:
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}\MyIdCloud
+  
+  WebApi_deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapi.outputs.webapp-url }}
 
-  deploy:
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: .net-api
+
+      - name: Deploy to Azure Web Api
+        id: deploy-to-webapi
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'myidcloud'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B7BD54D3A53C4AFEBD0A2F46BF601E76 }}
+          package: ./api
+  WebFrontEnd_deploy:
     runs-on: windows-latest
     needs: build
     environment:
