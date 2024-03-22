@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyIdLibrary.DataAccess;
-using MyIdCloud.Data;
 using Swashbuckle.AspNetCore.Filters;
-using System.IO.Compression;
 using WebApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
