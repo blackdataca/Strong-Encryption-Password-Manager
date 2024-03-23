@@ -1,5 +1,5 @@
 ﻿// MIT License - Copyright (c) 2019 Black Data
-using Microsoft.AspNetCore.StaticFiles;
+using HeyRed.Mime;
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 
@@ -27,7 +27,6 @@ public class IdItem
     {
         get
         {
-
             string memo = "";
             if (!string.IsNullOrWhiteSpace(Memo))
             {
@@ -58,15 +57,14 @@ public class IdItem
             if (Password != null && Password.Length > 0)
             {
 
-                if (Password.Length < 8)
-                    return "Too short, 8 characters minimum.";
-
                 foreach (var line in AttemptedPasswords)
                 {
                     if (Password == line)
                         return "Common password.";
                 }
-                
+
+                if (Password.Length < 8)
+                    return "Too short, 8 characters minimum.";
             }
             return "";
         }
@@ -4990,7 +4988,7 @@ public class IdItem
 
         if (type == "application/pdf")
         {
-            return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/PDF_icon.svg/210px-PDF_icon.svg.png";
+            return $"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/PDF_icon.svg/{width}px-PDF_icon.svg.png";
         }
         else
         {
@@ -5009,13 +5007,7 @@ public class IdItem
 
     public string GetMimeType(string fileName)
     {
-        var provider = new FileExtensionContentTypeProvider();
-        string defaultContentType = "application/octet-stream";
-        if (!provider.TryGetContentType(fileName, out string contentType))
-        {
-            contentType = defaultContentType;
-        }
-        return contentType;
+        return MimeTypesMap.GetMimeType(fileName);
     }
 
 }

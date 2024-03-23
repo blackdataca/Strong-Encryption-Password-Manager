@@ -1,8 +1,8 @@
 ﻿TODOs
 
-1. Setup Github workflow 
+1. Setup Github workflow  ✓
 
-2. Setup Azure website
+2. Setup Azure website ✓
 
 3. Automatic testing
 

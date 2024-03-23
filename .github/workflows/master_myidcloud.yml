@@ -24,6 +24,9 @@ jobs:
       - name: Build with dotnet
         run: dotnet build ./WebApi/WebApi.csproj --configuration Release
 
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
+
       - name: dotnet publish
         run: dotnet publish ./WebApi/WebApi.csproj -c Release -o "${{env.DOTNET_ROOT}}\WebApi"
 
