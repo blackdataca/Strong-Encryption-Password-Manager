@@ -4,7 +4,7 @@
 
 2. Setup Azure website ✓
 
-3. Automatic testing
+3. Automatic testing ✓
 
 4. Share secerts
  

@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Linq;
 using System.IO;
 using MyIdLibrary.Models;
+using System.Diagnostics;
 
 namespace MyId;
 
@@ -151,8 +152,6 @@ public partial class Edit : Form
                 viewer.PlainImage64String = image; // uxImages.SelectedItems[0].Text;
                 viewer.ShowDialog();
             }
-            //image.Dispose();
-            
         }
     }
 
@@ -160,15 +159,6 @@ public partial class Edit : Form
     {
         uxView.PerformClick();
     }
-
-    //private void Edit_FormClosing(object sender, FormClosingEventArgs e)
-    //{
-    //    foreach (var item in TempFiles)
-    //    {
-    //        if (item.Value != null)
-    //            item.Value.Dispose();
-    //    }
-    //}
 
     private void UxViewPass_Click(object sender, EventArgs e)
     {
@@ -199,9 +189,20 @@ public partial class Edit : Form
 
     private void UxGo_Click(object sender, EventArgs e)
     {
-        string url = uxSite.Text;
-        if (!url.StartsWith("http"))
-            url = string.Format("http://{0}", url);
-        System.Diagnostics.Process.Start(url);
+        string url = uxSite.Text.Trim();
+        if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+        {
+            if (url.IndexOf(".") > 1)
+                url = $"https://{url}";
+            else
+                url = $"https://www.google.com/search?q={url}";
+        }
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        };
+
+        Process.Start(startInfo);
     }
 }
