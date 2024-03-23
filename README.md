@@ -1,6 +1,7 @@
-#  This is Not a fully functional branch
+#  Work in progress. Do NOT use. 
 
-Work in progress. Things will change. 
+[![Build, test and deploy Web App](https://github.com/blackdataca/Strong-Encryption-Password-Manager/actions/workflows/master_myidcloud.yml/badge.svg)](https://github.com/blackdataca/Strong-Encryption-Password-Manager/actions/workflows/master_myidcloud.yml)
+
 
 Defend your passwords with MyID
 
