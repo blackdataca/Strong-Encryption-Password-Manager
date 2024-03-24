@@ -491,7 +491,7 @@ public partial class MainForm : Form, IMessageFilter
             {
                 if (item.UniqId == null)
                 {
-                    item.UniqId = Crypto.UniqId("", true);
+                    item.UniqId = Crypto.UniqId("");
                     uniqIdUpdate++;
                 }
 

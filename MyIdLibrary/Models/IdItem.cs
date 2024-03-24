@@ -9,7 +9,7 @@ namespace MyIdLibrary.Models;
 public class IdItem
 {
     public Guid Uid = Guid.NewGuid();
-    public string UniqId = Crypto.UniqId("", true);
+    public string UniqId = Crypto.UniqId("");
     [Required]
     [MaxLength(50)]
     public string Site { get; set; }
