@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace MyIdLibrary.Models;
 
@@ -142,7 +142,7 @@ public class Crypto
         return new string(chars.ToArray());
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+    [SupportedOSPlatform("windows")]
     public static byte[] SaveKeyIv(string type, byte[] value)
     {
         switch (type)
@@ -163,7 +163,7 @@ public class Crypto
         return null;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+    [SupportedOSPlatform("windows")]
     public static byte[] GetKeyIv(string type, byte[] pin = null)
     {
         switch (type)
@@ -241,12 +241,62 @@ public class Crypto
                     byte[] salt = new byte[32];
                     fsCrypt.Read(salt, 0, salt.Length);
 
-                    using (var aes = Aes.Create())
-                    {
-                        aes.Key = SHA256.Create().ComputeHash(pin);
-                        aes.IV = GetKeyIv("Iv2022");
+                    using var aes = Aes.Create();
+                    aes.Key = SHA256.Create().ComputeHash(pin);
+                    aes.IV = GetKeyIv("Iv2022");
 
-                        using var cryptoStream = new CryptoStream(fsCrypt, aes.CreateDecryptor(), CryptoStreamMode.Read);
+                    using var cryptoStream = new CryptoStream(fsCrypt, aes.CreateDecryptor(), CryptoStreamMode.Read);
+                    //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
+                    byte[] buffer = new byte[1048576];
+                    int read;
+                    while ((read =
+                        cryptoStream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        ms.Write(buffer, 0, read);
+                        Thread.Sleep(1);
+                    }
+
+                    cryptoStream.Close();
+
+                    fsCrypt.Close();
+                }
+                else
+                {
+#pragma warning disable SYSLIB0022 // Type or member is obsolete
+                    using RijndaelManaged myRijndael = new();
+#pragma warning restore SYSLIB0022 // Type or member is obsolete
+                    myRijndael.KeySize = 256;
+                    myRijndael.BlockSize = 128;
+                    myRijndael.Padding = PaddingMode.PKCS7;
+                    //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
+                    myRijndael.Mode = CipherMode.CFB;
+
+                    if (version == 2022)
+                    { //version 2022
+
+#pragma warning disable SYSLIB0041 // Type or member is obsolete
+                        var key = new Rfc2898DeriveBytes(pin, GetKeyIv("Salt"), 50000);
+#pragma warning restore SYSLIB0041 // Type or member is obsolete
+                        myRijndael.Key = key.GetBytes(32);
+                        myRijndael.IV = GetKeyIv("Iv2022");
+                    }
+                    else
+                    {
+                        fsCrypt.Seek(0, SeekOrigin.Begin);
+                        if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
+                        {
+                            return null;
+                        }
+                        myRijndael.Key = GetKeyIv("RiKey");
+                        myRijndael.IV = GetKeyIv("RiIv");
+
+                    }
+
+                    byte[] salt = new byte[32];
+                    fsCrypt.Read(salt, 0, salt.Length);
+
+                    using (var cryptoStream = new CryptoStream(fsCrypt, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
+                    {
                         //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
                         byte[] buffer = new byte[1048576];
                         int read;
@@ -259,58 +309,8 @@ public class Crypto
 
                         cryptoStream.Close();
 
-                        fsCrypt.Close();
                     }
-                }
-                else
-                {
-                    using (RijndaelManaged myRijndael = new RijndaelManaged())
-                    {
-                        myRijndael.KeySize = 256;
-                        myRijndael.BlockSize = 128;
-                        myRijndael.Padding = PaddingMode.PKCS7;
-                        //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-                        myRijndael.Mode = CipherMode.CFB;
-
-                        if (version == 2022)
-                        { //version 2022
-
-                            var key = new Rfc2898DeriveBytes(pin, GetKeyIv("Salt"), 50000);
-                            myRijndael.Key = key.GetBytes(32);
-                            myRijndael.IV = GetKeyIv("Iv2022");
-                        }
-                        else
-                        {
-                            fsCrypt.Seek(0, SeekOrigin.Begin);
-                            if (GetKeyIv("RiKey") == null || GetKeyIv("RiIv") == null)
-                            {
-                                return null;
-                            }
-                            myRijndael.Key = GetKeyIv("RiKey");
-                            myRijndael.IV = GetKeyIv("RiIv");
-
-                        }
-
-                        byte[] salt = new byte[32];
-                        fsCrypt.Read(salt, 0, salt.Length);
-
-                        using (var cryptoStream = new CryptoStream(fsCrypt, myRijndael.CreateDecryptor(), CryptoStreamMode.Read))
-                        {
-                            //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
-                            byte[] buffer = new byte[1048576];
-                            int read;
-                            while ((read =
-                                cryptoStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                ms.Write(buffer, 0, read);
-                                Thread.Sleep(1);
-                            }
-
-                            cryptoStream.Close();
-
-                        }
-                        fsCrypt.Close();
-                    }
+                    fsCrypt.Close();
                 }
             }
 

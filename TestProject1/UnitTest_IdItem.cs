@@ -1,4 +1,5 @@
 using MyIdLibrary.Models;
+using System.Runtime.Versioning;
 
 namespace TestProject1;
 
@@ -71,6 +72,7 @@ public class UnitTest_IdItem
     }
 
     [TestMethod]
+    [SupportedOSPlatform("windows")]
     public void Test_GetThumbnail()
     {
         IdItem idItem = new IdItem();

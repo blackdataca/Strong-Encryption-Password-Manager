@@ -1,4 +1,5 @@
 ﻿using MyIdLibrary.Models;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
 namespace TestProject1;
@@ -89,6 +90,7 @@ public class UnitTest_Crypto
     }
 
     [TestMethod]
+    [SupportedOSPlatform("windows")]
     public void Test_KeyIv()
     {
         //Save + Get Iv
@@ -151,6 +153,7 @@ public class UnitTest_Crypto
     }
 
     [TestMethod]
+    [SupportedOSPlatform("windows")]
     public void Test_FileStream()
     {
         byte[] pinPlain = RandomNumberGenerator.GetBytes(64);

@@ -6,7 +6,7 @@
 
 3. Automatic testing ✓
 
-4. Share secerts
+4. Share secerts 
  
 5. Style webpages
 

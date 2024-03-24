@@ -2,6 +2,7 @@
 using HeyRed.Mime;
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
+using System.Runtime.Versioning;
 
 namespace MyIdLibrary.Models;
 
@@ -4981,6 +4982,7 @@ public class IdItem
         }
     }
 
+    [SupportedOSPlatform("windows")]
     public string GetThumbnail(string fileName, int width, int height)
     {
 

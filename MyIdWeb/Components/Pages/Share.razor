@@ -1,0 +1,69 @@
+﻿@page "/Share/{secretId}"
+@attribute [Authorize]
+@inject AuthenticationStateProvider authProvider
+@inject ISecretData secretData
+@inject IUserData userData
+@inject NavigationManager navManager
+@inject IConfiguration config
+@inject ILogger<Create> logger
+@rendermode InteractiveServer
+
+<h3>Share </h3>
+
+<div>
+    <button @onclick="ClosePage">X</button>
+</div>
+<input class="form-control rounded-control" placeholder="Add people by email"
+       aria-label="Add people"
+       @bind="emailText" />
+<ul class="list-group">
+    <li class="list-group-item">An item</li>
+    <li class="list-group-item">A second item</li>
+    <li class="list-group-item">A third item</li>
+    <li class="list-group-item">A fourth item</li>
+    <li class="list-group-item">And a fifth one</li>
+</ul>
+<div class="input-group">
+    <button class="btn btn-primary" @onclick="ShareBtnClicked">Share</button>
+</div>
+
+@code {
+    [Parameter]
+    public string? secretId { get; set; }
+
+    private string emailText;
+    private UserModel loggedInUser = new();
+    private IdItem secretDetail = new();
+    private SecretModel secret = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        loggedInUser = await authProvider.GetUserFromAuth(userData);
+        if (!string.IsNullOrWhiteSpace(secretId))
+        {
+            secret = await secretData.ReadSecretAsync(secretId, loggedInUser);
+            if (secret is not null && !string.IsNullOrWhiteSpace(secret.Payload))
+            {
+                secretDetail = JsonConvert.DeserializeObject<IdItem>(secret.Payload);
+                if (secretDetail is null)
+                {
+                    navManager.NavigateTo("/main");
+                }
+            }
+            else
+            {
+                navManager.NavigateTo("/main");
+            }
+        }
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo($"/Create/{secretId}");
+    }
+
+    private void ShareBtnClicked()
+    {
+        navManager.NavigateTo($"/Create/{secretId}");
+    }
+}

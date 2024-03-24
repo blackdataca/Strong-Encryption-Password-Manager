@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace MyIdLibrary.Models;
 
@@ -16,6 +17,7 @@ public static class KnownFolders
     /// <summary>
     /// The directory stores data file without the file name
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public static string DataDir
     {
         get
@@ -31,6 +33,7 @@ public static class KnownFolders
     /// <summary>
     /// The directory stores data file with the file name
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public static string DataFile
     {
         get

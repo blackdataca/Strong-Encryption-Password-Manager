@@ -75,17 +75,31 @@ else
                     }
                 </ul>
             }
+            @if (!string.IsNullOrWhiteSpace(secretId))
+            {
+                <ul class="list-group">
+                    <li class="list-group-item">An item</li>
+                    <li class="list-group-item">A second item</li>
+                    <li class="list-group-item">A third item</li>
+                    <li class="list-group-item">A fourth item</li>
+                    <li class="list-group-item">And a fifth one</li>
+                </ul>
+                <div class="input-group">
+                    <button class="btn btn-info" type="button" @onclick="Share">Share</button>
+                </div>
+            }
             <div class="input-group">
                 <button class="btn btn-primary" type="submit">Save</button>
             </div>
+            
             <div class="input-group">
                 @if (secret.Deleted)
                 {
-                    <button class="btn btn-secondary" @onclick="() => Delete(false)">Undelete</button>
+                    <button class="btn btn-secondary" type="button" @onclick="() => Delete(false)">Undelete</button>
                 }
                 else
                 {
-                    <button class="btn btn-danger" @onclick="() => Delete(true)">Delete</button>
+                    <button class="btn btn-danger" type="button" @onclick="() => Delete(true)">Delete</button>
                 }
             </div>
         </EditForm>
@@ -95,8 +109,8 @@ else
 
 @code {
     [Parameter]
-    public string secretId { get; set; }
-    private IdItem? secretDetail = new();
+    public string? secretId { get; set; }
+    private IdItem secretDetail = new();
     private SecretModel secret = new();
     private UserModel loggedInUser = new();
     private string PasswordType = "password";
@@ -112,7 +126,7 @@ else
         if (!string.IsNullOrWhiteSpace(secretId))
         {
             secret = await secretData.ReadSecretAsync(secretId, loggedInUser);
-            if (secret is not null)
+            if (secret is not null && !string.IsNullOrWhiteSpace(secret.Payload))
             {
                 secretDetail = JsonConvert.DeserializeObject<IdItem>(secret.Payload);
                 if (secretDetail is null)
@@ -125,7 +139,6 @@ else
                 navManager.NavigateTo("/main");
             }
         }
-       
     }
 
     private void ClosePage()
@@ -249,5 +262,10 @@ else
     private void Generate()
     {
         secretDetail.Password = Crypto.GenerateRandomPassword();
+    }
+
+    private void Share()
+    {
+        navManager.NavigateTo($"/Share/{secretId}");
     }
 }
