@@ -76,14 +76,15 @@ Use strongest standard encryption to store everyone's secrets in a safe place
 
 ### Share secret with Bob
 1. Get Secret Key by the first two steps in above [Read secret](#read-secret)
-2. Generate a temporary user with asymmetric Public Key -> users.public_key, and Private Key 
-3. Symmetric encrypt Private Key with temporary password -> users.private_key(encrypted)
-4. Send secret id, temporary user id and temporary password to Bob
-5. Bob creates account or login
-6. Get Secret Key by the first two steps in above [Read secret](#read-secret) using temporary user
-7. Asymmetric encrypt Secret Key with Bob's users.public_key -> secrets_users.secret_key(encrypted)
-8. Remove temporary user
-9. Bob follows above [read secret](#read-secret)
+2. Generate a temporary user with asymmetric Public Key -> tempuser.public_key, and Private Key 
+3. Symmetric encrypt Private Key with temporary access code -> tempuser.private_key(encrypted)
+4. Create temporary secrets_users record with secret_key asymmetric encrypted with temporary user's public key 
+5. Send secret id, temporary user id and temporary access code to Bob
+6. Bob creates account or login
+7. Get Secret Key by the first two steps in above [Read secret](#read-secret) using temporary user
+8. Asymmetric encrypt Secret Key with Bob's users.public_key -> secrets_users.secret_key(encrypted)
+9. Remove temporary user and temporary secrets_users record after above step successful or expiry
+10. Bob follows above [read secret](#read-secret)
 
 
 ### Revoke shared secret

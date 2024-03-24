@@ -31,7 +31,7 @@ public class SqlUserData : IUserData
     {
         await _connection.OpenAsync();
         //Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-        string sql = "INSERT INTO users (id, name, public_key, private_key, security_stamp) VALUES (@id, @name, @publicKey, @privateKey, @SecurityStamp)";
+        string sql = "INSERT INTO users (id, name, public_key, private_key, security_stamp,expiry) VALUES (@id, @name, @publicKey, @privateKey, @SecurityStamp,@expiry)";
         var result = await _connection.ExecuteAsync(sql, user);
         await _connection.CloseAsync();
     }

@@ -66,6 +66,44 @@ public class SqlSecretData : ISecretData
         }
     }
 
+    public async Task<bool> CreateSharedSecretAsync(SecretModel secret, UserModel user)
+    {
+        //1. Generate a new Secret Key
+        byte[] secretKey = RandomNumberGenerator.GetBytes(32);
+
+        //2.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
+        byte[] pubKey = Convert.FromBase64String(user.PublicKey);
+        byte[] encryptedSecretKeyBytes = Crypto.AsymetricEncrypt(secretKey, pubKey);
+        string encryptedSecretKey = Convert.ToBase64String(encryptedSecretKeyBytes);
+
+        int affecgtedRows;
+
+        if (_connection.State != System.Data.ConnectionState.Open)
+        {
+            await _connection.OpenAsync();
+        }
+        var tx = await _connection.BeginTransactionAsync();
+        try
+        {
+            string sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @encryptedSecretKey, 0)";
+
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { user.Id, secretId = secret.Id, encryptedSecretKey }, tx);
+
+            await tx.CommitAsync();
+        }
+        catch (Exception)
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
+
+        return (affecgtedRows == 1);
+    }
+
     public async Task<bool> CreateSecret(SecretModel secret, UserModel user)
     {
         //1. Generate a new Secret Key
