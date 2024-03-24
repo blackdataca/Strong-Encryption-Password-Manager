@@ -100,9 +100,12 @@ public class UnitTest_Crypto
         byte[] valueOut = Crypto.GetKeyIv("Iv2022");
         CollectionAssert.AreEqual(valueIn, valueOut);
 
-        Crypto.SaveKeyIv("Iv2022", valueBefore);
-        valueOut = Crypto.GetKeyIv("Iv2022");
-        CollectionAssert.AreEqual(valueBefore, valueOut);
+        if (valueBefore is not null)
+        {
+            Crypto.SaveKeyIv("Iv2022", valueBefore);
+            valueOut = Crypto.GetKeyIv("Iv2022");
+            CollectionAssert.AreEqual(valueBefore, valueOut);
+        }
 
         //Save + Get Salt
         byte[] saltBefore = Crypto.GetKeyIv("Salt");
@@ -113,9 +116,12 @@ public class UnitTest_Crypto
         byte[] saltOut = Crypto.GetKeyIv("Salt");
         CollectionAssert.AreEqual(saltIn, saltOut);
 
-        Crypto.SaveKeyIv("Salt", saltBefore);
-        saltOut = Crypto.GetKeyIv("Salt");
-        CollectionAssert.AreEqual(saltBefore, saltOut);
+        if (saltBefore is not null)
+        {
+            Crypto.SaveKeyIv("Salt", saltBefore);
+            saltOut = Crypto.GetKeyIv("Salt");
+            CollectionAssert.AreEqual(saltBefore, saltOut);
+        }
 
         //Save + Get Pin
         byte[] pinIn = RandomNumberGenerator.GetBytes(32);
