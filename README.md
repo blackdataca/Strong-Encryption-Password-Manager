@@ -1,7 +1,6 @@
 #  Work in progress. Do NOT use. 
 
 [![Build, test and deploy Web App](https://github.com/blackdataca/Strong-Encryption-Password-Manager/actions/workflows/master_myidcloud.yml/badge.svg)](https://github.com/blackdataca/Strong-Encryption-Password-Manager/actions/workflows/master_myidcloud.yml)
-
 [![CodeQL](https://github.com/blackdataca/Strong-Encryption-Password-Manager/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/blackdataca/Strong-Encryption-Password-Manager/actions/workflows/github-code-scanning/codeql)
 
 Defend your passwords with MyID
