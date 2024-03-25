@@ -69,7 +69,7 @@ public class SqlSecretData : ISecretData
     public async Task<bool> CreateSharedSecretAsync(SecretModel secret, UserModel user)
     {
         //1. Generate a new Secret Key
-        byte[] secretKey = RandomNumberGenerator.GetBytes(32);
+        byte[] secretKey = Convert.FromBase64String(secret.SecretKey);
 
         //2.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
         byte[] pubKey = Convert.FromBase64String(user.PublicKey);
