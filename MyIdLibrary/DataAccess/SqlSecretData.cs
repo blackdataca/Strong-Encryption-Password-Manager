@@ -92,7 +92,15 @@ public class SqlSecretData : ISecretData
         var tx = await _connection.BeginTransactionAsync();
         try
         {
-            string sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @encryptedSecretKey, 0)";
+            string sql = "SELECT COUNT(*) FROM secrets_users WHERE user_id=@Id AND secret_id=@secretId";
+            affecgtedRows = await _connection.ExecuteScalarAsync<int>(sql, new { newUser.Id, secretId = secret.Id}, tx);
+            if (affecgtedRows > 0)
+            {
+                //record already exist
+                sql = "UPDATE secrets_users SET secret_key=@encryptedSecretKey WHERE user_id=@Id AND secret_id=@secretId";
+            }
+            else
+                sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @encryptedSecretKey, 0)";
 
             affecgtedRows = await _connection.ExecuteAsync(sql, new { newUser.Id, secretId = secret.Id, encryptedSecretKey }, tx);
 

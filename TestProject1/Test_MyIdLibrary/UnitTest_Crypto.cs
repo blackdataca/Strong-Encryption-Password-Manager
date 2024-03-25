@@ -2,7 +2,7 @@
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 
-namespace TestProject1;
+namespace TestProject1.Test_MyIdLibrary;
 
 [TestClass]
 public class UnitTest_Crypto
@@ -13,7 +13,7 @@ public class UnitTest_Crypto
         // Given a message to encrypt
         var message = "Hello, world!";
 
-       
+
         // Generate our encryption key
         var key = RandomNumberGenerator.GetBytes(16);
 
@@ -42,7 +42,7 @@ public class UnitTest_Crypto
             var publicKey = rsa.ExportRSAPublicKey();
 
             // Encrypt the data using the public key
-            var encryptedData = Crypto.AsymetricEncrypt(System.Text.Encoding.UTF8.GetBytes( message), publicKey);
+            var encryptedData = Crypto.AsymetricEncrypt(System.Text.Encoding.UTF8.GetBytes(message), publicKey);
             Console.WriteLine(Convert.ToBase64String(encryptedData));
 
             var privateKey = rsa.ExportRSAPrivateKey();
@@ -51,7 +51,7 @@ public class UnitTest_Crypto
             var decryptedData = Crypto.AsymetricDecrypt(encryptedData, privateKey);
 
             // Assert that the decrypted data matches the original message
-            Assert.AreEqual(message, System.Text.Encoding.UTF8.GetString( decryptedData));
+            Assert.AreEqual(message, System.Text.Encoding.UTF8.GetString(decryptedData));
         }
     }
 

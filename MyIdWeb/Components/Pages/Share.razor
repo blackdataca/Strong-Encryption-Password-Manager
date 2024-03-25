@@ -2,6 +2,7 @@
 @using MyIdCloud.Data
 @using SendGrid
 @using SendGrid.Helpers.Mail
+@using System.Security.Cryptography
 @attribute [Authorize]
 @inject AuthenticationStateProvider authProvider
 @inject ISecretData secretData
@@ -80,7 +81,10 @@
         // 2. Generate a temporary user with asymmetric Public Key -> users.public_key, and Private Key 
         // 2. Save Public Key in -> users.public_key
         // 3. Symmetric encrypt Private Key with temporary access code -> users.private_key(encrypted)
-        var tempUser = UserModel.CreateTempUser();
+        var tempUser = new UserModel();
+        string newStamp = BitConverter.ToString(RandomNumberGenerator.GetBytes(32)).Replace("-", "");
+        tempUser.SetSecurityStamp(newStamp);
+
         tempUser.Name = $"TempUser({shareWith.Email})";
         tempUser.Expiry = DateTime.UtcNow.AddHours(1);
         await userData.CreateUser(tempUser);

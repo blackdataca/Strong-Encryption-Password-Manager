@@ -13,10 +13,20 @@ public class UserModel
     /// Base64 encoded RSA public key
     /// </summary>
     public string PublicKey { get; set; }
+
+    /// <summary>
+    ///  Base64 encoded + Encrypted private key
+    /// </summary>
     public string PrivateKey { get; set; }
 
+    /// <summary>
+    /// Decrypt private key
+    /// </summary>
+    /// <returns>Plain private key</returns>
     public byte[] GetPrivateKey()
     {
+        if (SecurityStamp is null)
+            return null;
         var key = SHA256.HashData(Encoding.ASCII.GetBytes(SecurityStamp));
         string subId = Id.Replace("-", "").Substring(0, 16);
         byte[] iv = Encoding.ASCII.GetBytes(subId);
@@ -75,14 +85,7 @@ public class UserModel
     public DateTime? Expiry { get; set; } 
 
 
-    public static UserModel CreateTempUser()
-    {
-        UserModel user = new UserModel();
-        string newStamp = BitConverter.ToString(RandomNumberGenerator.GetBytes(32)).Replace("-", "");
-        user.SetSecurityStamp(newStamp);
-
-        return user;
-    }
+    
 
     
 }
