@@ -25,7 +25,7 @@ jobs:
         run: dotnet build ./WebApi/WebApi.csproj --configuration Release
 
       - name: Test
-        run: dotnet test ./TestProject1/TestProject1.csproj
+        run: dotnet test ./TestProject1/TestProject1.csproj -e ConnectionString="No Github DB Yet"
 
       - name: dotnet publish
         run: dotnet publish ./WebApi/WebApi.csproj -c Release -o "${{env.DOTNET_ROOT}}\WebApi"

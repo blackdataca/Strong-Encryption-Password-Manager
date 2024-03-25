@@ -9,7 +9,7 @@ namespace TestProject1.Test_MyIdLibrary;
 [TestClass]
 public class UnitTest_SqlSecretData
 {
-    private string configString;
+    private string? configString;
 
     public UnitTest_SqlSecretData()
     {
@@ -19,11 +19,16 @@ public class UnitTest_SqlSecretData
         fileMap.ExeConfigFilename = file;
         System.Configuration.Configuration config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
 
-        configString = config.ConnectionStrings.ConnectionStrings["Default"].ConnectionString;
+        configString = Environment.GetEnvironmentVariable("ConnectingString");
+        if (string.IsNullOrWhiteSpace(configString))
+            configString = config.ConnectionStrings.ConnectionStrings["Default"].ConnectionString;
     }
     [TestMethod]
     public async Task Test_CreateDeleteSecret()
     {
+        if (configString == "No Github DB Yet")
+            return;
+
         SecretModel secret = new();
         UserModel user = new();
         user.Name="UnitTest";
