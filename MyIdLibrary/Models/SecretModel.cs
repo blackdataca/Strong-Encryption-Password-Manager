@@ -4,7 +4,7 @@ namespace MyIdLibrary.Models;
 
 public class SecretModel
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
     public string RecordId { get; set; }
 
     public string Payload { get; set; }  //Payload is serialized IdItem
@@ -16,6 +16,6 @@ public class SecretModel
 
     public HashSet<string> UserIds { get; set; } = new();
 
-    public string SecretKey { get; set; }
+    public string SecretKey { get; set; } //Encrypted secret key
 
 }

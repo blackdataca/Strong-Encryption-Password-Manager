@@ -66,13 +66,19 @@ public class SqlSecretData : ISecretData
         }
     }
 
-    public async Task<bool> CreateSharedSecretAsync(SecretModel secret, UserModel user)
+    /// <summary>
+    /// 4. Create temporary secrets_users record with secret_key asymmetric encrypted with temporary user's public key 
+    /// </summary>
+    /// <param name="secret"></param>
+    /// <param name="tempUser"></param>
+    /// <returns></returns>
+    public async Task<bool> CreateSharedSecretAsync(SecretModel secret, UserModel tempUser, UserModel me)
     {
-        //1. Generate a new Secret Key
-        byte[] secretKey = Convert.FromBase64String(secret.SecretKey);
+        byte[] priKey = me.GetPrivateKey();
+        byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
+        byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
 
-        //2.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
-        byte[] pubKey = Convert.FromBase64String(user.PublicKey);
+        byte[] pubKey = Convert.FromBase64String(tempUser.PublicKey);
         byte[] encryptedSecretKeyBytes = Crypto.AsymetricEncrypt(secretKey, pubKey);
         string encryptedSecretKey = Convert.ToBase64String(encryptedSecretKeyBytes);
 
@@ -87,7 +93,7 @@ public class SqlSecretData : ISecretData
         {
             string sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @encryptedSecretKey, 0)";
 
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { user.Id, secretId = secret.Id, encryptedSecretKey }, tx);
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { tempUser.Id, secretId = secret.Id, encryptedSecretKey }, tx);
 
             await tx.CommitAsync();
         }

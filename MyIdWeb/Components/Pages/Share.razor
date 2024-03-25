@@ -1,4 +1,5 @@
 ﻿@page "/Share/{secretId}"
+@using MyIdCloud.Data
 @using SendGrid
 @using SendGrid.Helpers.Mail
 @attribute [Authorize]
@@ -15,28 +16,31 @@
 <div>
     <button @onclick="ClosePage">X</button>
 </div>
-<input class="form-control rounded-control" placeholder="Add people by email"
-       aria-label="Add people"
-       @bind="emailText" />
-<ul class="list-group">
-    <li class="list-group-item">An item</li>
-    <li class="list-group-item">A second item</li>
-    <li class="list-group-item">A third item</li>
-    <li class="list-group-item">A fourth item</li>
-    <li class="list-group-item">And a fifth one</li>
-</ul>
-<div class="input-group">
-    <button class="btn btn-primary" @onclick="ShareBtnClicked">Share</button>
-</div>
+<EditForm Model="@shareWith" OnValidSubmit="ShareSecret">
+    <DataAnnotationsValidator />
+        <InputText class="form-control rounded-control" placeholder="Add people by email"
+           aria-label="Add people"
+           @bind-Value="shareWith.Email" />
+    <ul class="list-group">
+        <li class="list-group-item">An item</li>
+        <li class="list-group-item">A second item</li>
+        <li class="list-group-item">A third item</li>
+        <li class="list-group-item">A fourth item</li>
+        <li class="list-group-item">And a fifth one</li>
+    </ul>
+    <div class="input-group">
+        <button class="btn btn-primary" type="submit">Share</button>
+    </div>
+</EditForm>
 
 @code {
     [Parameter]
     public string? secretId { get; set; }
 
-    private string emailText;
     private UserModel loggedInUser = new();
     private IdItem secretDetail = new();
     private SecretModel secret = new();
+    private ShareWith shareWith = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,7 +68,7 @@
         navManager.NavigateTo($"/Create/{secretId}");
     }
 
-    private async Task ShareBtnClicked()
+    private async Task ShareSecret()
     {
         //Share secret with Bob
         // 1. Get Secret Key by the first two steps in above [Read secret](#read-secret)
@@ -77,13 +81,13 @@
         // 2. Save Public Key in -> users.public_key
         // 3. Symmetric encrypt Private Key with temporary access code -> users.private_key(encrypted)
         var tempUser = UserModel.CreateTempUser();
-        tempUser.Name = $"TempUser({emailText})";
+        tempUser.Name = $"TempUser({shareWith.Email})";
         tempUser.Expiry = DateTime.UtcNow.AddHours(1);
         await userData.CreateUser(tempUser);
 
         // 4. Create temporary secrets_users record with secret_key asymmetric encrypted with temporary user's public key
 
-        bool tempSecretCreated = await secretData.CreateSharedSecretAsync(secret, tempUser);
+        bool tempSecretCreated = await secretData.CreateSharedSecretAsync(secret, tempUser, loggedInUser);
 
         // 5. Send secret id, temporary user id and temporary access code to Bob
         var apiKey = config["SendGridApiKey"];
@@ -91,18 +95,15 @@
         var client = new SendGridClient(apiKey);
         var fromEamil = config["SenderEmail"];
         var from = new EmailAddress(fromEamil);
-        var to = new EmailAddress(emailText);
+        var to = new EmailAddress(shareWith.Email);
         var subject = "Shared secret";
-        var plainTextContent = "This is a shared secret";
-        var htmlContent = "This is a shared <strong>secret</strong>";
+        var url = $"{navManager.BaseUri}SharedSecret/{secret.Id}/{tempUser.Id}/{tempUser.SecurityStamp}";
+        var plainTextContent = $"This is a shared secret {url}";
+        var htmlContent = $"This is a shared <strong>secret</strong>:<p>{url}</p>";
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
         var response = await client.SendEmailAsync(msg);
 
-        // 6. Bob creates account or login
-        // 7. Get Secret Key by the first two steps in above [Read secret](#read-secret) using temporary user
-        // 8. Asymmetric encrypt Secret Key with Bob's users.public_key -> secrets_users.secret_key(encrypted)
-        // 9. Remove temporary user and temporary secrets_users record after above step successful or expiry
-        // 10. Bob follows above [read secret](#read-secret)
+
 
         navManager.NavigateTo($"/Create/{secretId}");
     }
