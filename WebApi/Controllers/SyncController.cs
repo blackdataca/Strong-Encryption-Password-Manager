@@ -170,7 +170,7 @@ public class SyncController : ControllerBase
                     secret.Modified = appTime;
                     secret.Synced = DateTime.UtcNow;
                     secret.UserIds.Add(user.Id);
-                    if (await _secretData.CreateSecret(secret, user))
+                    if (await _secretData.CreateSecretAsync(secret, user))
                     {
                         newCnt++;
                         _logger.LogDebug($"{secret.Id} Server secret created");

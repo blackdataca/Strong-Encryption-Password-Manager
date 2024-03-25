@@ -87,7 +87,7 @@
 
         tempUser.Name = $"TempUser({shareWith.Email})";
         tempUser.Expiry = DateTime.UtcNow.AddHours(1);
-        await userData.CreateUser(tempUser);
+        await userData.CreateUserAsync(tempUser);
 
         // 4. Create temporary secrets_users record with secret_key asymmetric encrypted with temporary user's public key
 

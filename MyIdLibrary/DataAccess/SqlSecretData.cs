@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using System.Net.Sockets;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 
 namespace MyIdLibrary.DataAccess;
@@ -119,7 +119,7 @@ public class SqlSecretData : ISecretData
         return (affecgtedRows == 1);
     }
 
-    public async Task<bool> CreateSecret(SecretModel secret, UserModel user)
+    public async Task<bool> CreateSecretAsync(SecretModel secret, UserModel user)
     {
         //1. Generate a new Secret Key
         byte[] secretKey = RandomNumberGenerator.GetBytes(32);
@@ -128,9 +128,12 @@ public class SqlSecretData : ISecretData
         string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
         secret.Payload = encPayload;
         if (string.IsNullOrWhiteSpace(secret.Payload))
-            throw new Exception($"[CreateSecret] empty payload: {secret}");
+            throw new Exception($"[CreateSecretAsync] empty payload: {secret}");
 
         //3.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
+        if (string.IsNullOrWhiteSpace(user.PublicKey))
+            throw new Exception("[CreateSecretAsync]must specify user public key");
+
         byte[] pubKey = Convert.FromBase64String(user.PublicKey);
         byte[] encSecretKeyBytes = Crypto.AsymetricEncrypt(secretKey, pubKey);
         string encSecretKey = Convert.ToBase64String(encSecretKeyBytes);
@@ -270,7 +273,7 @@ public class SqlSecretData : ISecretData
     }
 
 
-    public async Task<bool> DeleteSecret(string secretId)
+    public async Task<bool> DeleteSecret(SecretModel secret, UserModel user)
     {
         int affecgtedRows;
 
@@ -281,12 +284,18 @@ public class SqlSecretData : ISecretData
         var tx = await _connection.BeginTransactionAsync();
         try
         {
-            string sql = "DELETE FROM secrets_users WHERE secret_id=@id";
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { secretId });
+            string sql = "SELECT is_owner FROM secrets_users WHERE secret_id=@secretId AND user_id=@userId";
+            var isOwner = await _connection.ExecuteScalarAsync<bool>(sql, new { secretId = secret.Id, userId = user.Id }, tx);
+            if (!isOwner) {
+                throw new Exception("Only owner can delete the secret");
+            };
+
+            sql = "DELETE FROM secrets_users WHERE secret_id=@id";
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { secret.Id }, tx);
 
 
             sql = "DELETE FROM secrets WHERE id=@id";
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { secretId });
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { secret.Id }, tx);
 
 
             await tx.CommitAsync();

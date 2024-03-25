@@ -5,14 +5,15 @@ namespace MyIdLibrary.DataAccess;
 
 public class DbConnection : IDbConnection
 {
-    private readonly IConfiguration _config;
+    //private readonly IConfiguration _config;
 
     public SqlConnection Connection { get; private set; } = new SqlConnection();
 
-    public DbConnection(IConfiguration config)
+    public DbConnection(string configString)
     {
-        _config = config;
-        Connection.ConnectionString = _config.GetConnectionString("Default");
+        //_config = config;
+        //Connection.ConnectionString = _config.GetConnectionString("Default");
+        Connection.ConnectionString = configString;
     }
 
 

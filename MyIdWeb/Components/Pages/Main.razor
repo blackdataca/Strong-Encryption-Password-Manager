@@ -123,7 +123,7 @@
                 if (isDirty)
                 {
                     if (isNew)
-                        await userData.CreateUser(loggedInUser);
+                        await userData.CreateUserAsync(loggedInUser);
                     else
                         await userData.UpdateUser(loggedInUser);
                 }

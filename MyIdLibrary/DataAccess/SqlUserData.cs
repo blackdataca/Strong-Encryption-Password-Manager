@@ -35,7 +35,7 @@ public class SqlUserData : IUserData
         return await GetUserAsync(objectId);
     }
 
-    public async Task CreateUser(UserModel user)
+    public async Task CreateUserAsync(UserModel user)
     {
         var existingUser = await GetUserByNameAsync(user.Name);
 

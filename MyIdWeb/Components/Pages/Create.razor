@@ -155,7 +155,7 @@ else
             SecretModel s = new();
             s.Payload = JsonConvert.SerializeObject(secretDetail);
             s.UserIds.Add(loggedInUser.Id);
-            await secretData.CreateSecret(s, loggedInUser);
+            await secretData.CreateSecretAsync(s, loggedInUser);
         }
         else
         {

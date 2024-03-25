@@ -46,8 +46,8 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<GzipCompressionProvider>();
 });
 
-
-builder.Services.AddScoped<IDbConnection, DbConnection>();
+builder.Services.AddScoped<IDbConnection>((db) => new DbConnection(connectionString));
+//builder.Services.AddScoped<IDbConnection, DbConnection>();
 builder.Services.AddScoped<ISecretData, SqlSecretData>();
 builder.Services.AddScoped<IUserData, SqlUserData>();
 
