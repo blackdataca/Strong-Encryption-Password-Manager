@@ -87,11 +87,10 @@
 
         // 4. Create temporary secrets_users record with secret_key asymmetric encrypted with temporary user's public key
 
-        bool tempSecretCreated = await secretData.CreateSharedSecretAsync(secret, tempUser, loggedInUser);
+        bool tempSecretCreated = await secretData.CreateSharedSecretAsync(secret, loggedInUser, tempUser);
 
         // 5. Send secret id, temporary user id and temporary access code to Bob
         var apiKey = config["SendGridApiKey"];
-
         var client = new SendGridClient(apiKey);
         var fromEamil = config["SenderEmail"];
         var from = new EmailAddress(fromEamil);
@@ -102,8 +101,6 @@
         var htmlContent = $"This is a shared <strong>secret</strong>:<p>{url}</p>";
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
         var response = await client.SendEmailAsync(msg);
-
-
 
         navManager.NavigateTo($"/Create/{secretId}");
     }

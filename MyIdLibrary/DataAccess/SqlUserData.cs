@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Data.Common;
 
 namespace MyIdLibrary.DataAccess;
 
@@ -42,16 +43,11 @@ public class SqlUserData : IUserData
         var tx = await _connection.BeginTransactionAsync();
         try
         {
-           
             if (existingUser is not null)
             {
                 //Sharing to the same email again, remove old linking records first
 
-                string deleteSql = "DELETE FROM secrets_users WHERE user_id=@id";
-                await _connection.ExecuteAsync(deleteSql, existingUser, tx);
-                
-                deleteSql = "DELETE FROM users WHERE name=@name";
-                await _connection.ExecuteAsync(deleteSql, existingUser, tx);
+                await DeleteSecretsUsers(existingUser, tx);
             }
             string sql = @"INSERT INTO users (id, name, public_key, private_key, security_stamp,expiry) VALUES (@id, @name, @publicKey, @privateKey, @SecurityStamp,@expiry)";
             await _connection.ExecuteAsync(sql, user, tx);
@@ -69,7 +65,36 @@ public class SqlUserData : IUserData
         }
     }
 
+    public async Task DeleteTempUser(UserModel tempUser)
+    {
+        await _connection.OpenAsync();
+        var tx = await _connection.BeginTransactionAsync();
+        try
+        {
+ 
+            await DeleteSecretsUsers(tempUser, tx);
 
+            await tx.CommitAsync();
+        }
+        catch (Exception)
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+        finally
+        {
+            await _connection.CloseAsync();
+        }
+    }
+
+    private async Task DeleteSecretsUsers(UserModel existingUser, DbTransaction tx)
+    {
+        string deleteSql = "DELETE FROM secrets_users WHERE user_id=@id";
+        await _connection.ExecuteAsync(deleteSql, existingUser, tx);
+
+        deleteSql = "DELETE FROM users WHERE name=@name";
+        await _connection.ExecuteAsync(deleteSql, existingUser, tx);
+    }
 
     public async Task UpdateUser(UserModel user)
     {
