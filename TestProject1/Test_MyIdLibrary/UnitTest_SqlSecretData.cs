@@ -19,7 +19,7 @@ public class UnitTest_SqlSecretData
         fileMap.ExeConfigFilename = file;
         System.Configuration.Configuration config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
 
-        configString = Environment.GetEnvironmentVariable("ConnectingString");
+        configString = Environment.GetEnvironmentVariable("ConnectionString");
         if (string.IsNullOrWhiteSpace(configString))
             configString = config.ConnectionStrings.ConnectionStrings["Default"].ConnectionString;
     }
