@@ -136,7 +136,7 @@ public class SyncController : ControllerBase
                         secret.Deleted = recItem!.Deleted;
                         secret.Payload = payload;
                     }
-                    if (await _secretData.UpdateSecret(secret, user))
+                    if (await _secretData.UpdateSecretAsync(secret, user))
                         _logger.LogDebug($"{recId} Server secret updated");
                     else
                         _logger.LogWarning($"{recId} Server secret update failed");
@@ -144,7 +144,7 @@ public class SyncController : ControllerBase
                 else if (Math.Abs((appTime - dbTime).TotalSeconds) < 1)
                 {  //No update, mark synced
                     secret.Synced = DateTime.UtcNow;
-                    if (!await _secretData.UpdateSecret(secret, user))
+                    if (!await _secretData.UpdateSecretAsync(secret, user))
                         //_logger.LogDebug( "Server secert synced");
                         //else
                         _logger.LogWarning($"{recId} Server secret synced failed");

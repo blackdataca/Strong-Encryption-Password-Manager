@@ -126,8 +126,8 @@ public class SqlSecretData : ISecretData
 
         //2. Symmetric encrypt secret payload (site, username, password, memo and files) with Secret Key
         string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
-        secret.Payload = encPayload;
-        if (string.IsNullOrWhiteSpace(secret.Payload))
+        //secret.Payload = encPayload;
+        if (string.IsNullOrWhiteSpace(encPayload))
             throw new Exception($"[CreateSecretAsync] empty payload: {secret}");
 
         //3.Asymmetric encrypt Secret Key with users.public_key->secrets_users.secret_key(encrypted)
@@ -136,7 +136,7 @@ public class SqlSecretData : ISecretData
 
         byte[] pubKey = Convert.FromBase64String(user.PublicKey);
         byte[] encSecretKeyBytes = Crypto.AsymetricEncrypt(secretKey, pubKey);
-        string encSecretKey = Convert.ToBase64String(encSecretKeyBytes);
+        secret.SecretKey = Convert.ToBase64String(encSecretKeyBytes);
 
         int affecgtedRows;
 
@@ -148,13 +148,21 @@ public class SqlSecretData : ISecretData
         try
         {
             string sql = "INSERT INTO secrets (id,record_id,payload,created,modified,synced) OUTPUT INSERTED.Id VALUES (@id,@recordId,@payload,@created,@modified,@synced)";
-            var secretId = await _connection.QuerySingleOrDefaultAsync<Guid?>(sql, secret, tx);
+            var secretId = await _connection.QuerySingleOrDefaultAsync<Guid?>(sql,
+                new { 
+                    secret.Id, 
+                    secret.RecordId, 
+                    payload = encPayload, 
+                    secret.Created, 
+                    secret.Modified, 
+                    secret.Synced 
+                }, tx);
             if (secretId is null)
                 throw new Exception("Unable to add new secret");
 
-            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @encSecretKey, 1)";
+            sql = "INSERT INTO secrets_users (user_id, secret_id, secret_key, is_owner) VALUES (@Id, @secretId, @SecretKey, 1)";
 
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { user.Id, secretId, encSecretKey }, tx);
+            affecgtedRows = await _connection.ExecuteAsync(sql, new { user.Id, secretId, secret.SecretKey }, tx);
 
             await tx.CommitAsync();
         }
@@ -170,16 +178,16 @@ public class SqlSecretData : ISecretData
         return (affecgtedRows == 1);
     }
 
-    public async Task<bool> UpdateSecret(SecretModel secret, UserModel user)
+    public async Task<bool> UpdateSecretAsync(SecretModel secret, UserModel user)
     {
         byte[] priKey = user.GetPrivateKey();
         byte[] secretKeyCrypt = Convert.FromBase64String(secret.SecretKey);
         byte[] secretKey = Crypto.AsymetricDecrypt(secretKeyCrypt, priKey);
 
         string encPayload = Crypto.SymmetricEncrypt(secret.Payload, secretKey, new byte[16]);
-        secret.Payload = encPayload;
+        //secret.Payload = encPayload;
 
-        if (string.IsNullOrWhiteSpace(secret.Payload))
+        if (string.IsNullOrWhiteSpace(encPayload))
             throw new Exception($"[UpdateSecret] empty payload: {secret}");
 
         int affecgtedRows;
@@ -191,7 +199,16 @@ public class SqlSecretData : ISecretData
         try
         {
             string sql = "UPDATE secrets set payload=@payload, record_id=@recordId, created=@created, modified=@modified, synced=@synced, deleted=@deleted WHERE id=@id";
-            affecgtedRows = await _connection.ExecuteAsync(sql, secret);
+            affecgtedRows = await _connection.ExecuteAsync(sql, new
+            {
+                secret.Id,
+                secret.RecordId,
+                payload = encPayload,
+                secret.Created,
+                secret.Modified,
+                secret.Synced,
+                secret.Deleted
+            });
 
         }
         catch (Exception)

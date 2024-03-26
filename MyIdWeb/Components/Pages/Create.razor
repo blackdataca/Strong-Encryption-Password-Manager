@@ -161,7 +161,7 @@ else
         {
             secret.Payload = JsonConvert.SerializeObject(secretDetail);
             secret.Modified = DateTime.UtcNow;
-            await secretData.UpdateSecret(secret, loggedInUser);
+            await secretData.UpdateSecretAsync(secret, loggedInUser);
         }
         ClosePage();
     }
@@ -170,7 +170,7 @@ else
     {
         secret.Deleted = isDelete;
         secret.Modified = DateTime.UtcNow;
-        await secretData.UpdateSecret(secret, loggedInUser);
+        await secretData.UpdateSecretAsync(secret, loggedInUser);
         ClosePage();
     }
 

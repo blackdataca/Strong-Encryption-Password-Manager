@@ -3,36 +3,23 @@ using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
-using System.Timers;
 using System.Windows.Forms;
 using System.Linq;
 using System.Diagnostics;
 using System.Drawing.Printing;
-using System.Drawing.Imaging;
 using System.Net.Http;
 using System.Net;
-using System.Collections.Specialized;
 using Newtonsoft.Json;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
-using System.Security.Policy;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
 using System.IO.Compression;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
-using System.Xml.Serialization;
 using MyIdLibrary.Models;
 
 namespace MyId;
@@ -76,8 +63,6 @@ public partial class MainForm : Form, IMessageFilter
         ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
 #endif
     }
-
-    
 
     private void UxEdit_Click(object sender, EventArgs e)
     {
