@@ -40,7 +40,8 @@ public class UnitTest_SqlSecretData
 
         DbConnection db = new(configString);
         SqlUserData userData = new(db);
-        await userData.CreateUserAsync(user); 
+        Assert.IsTrue(await userData.CreateUserAsync(user)); 
+
         SqlSecretData secretData = new(db);
         Assert.IsTrue( await secretData.CreateSecretAsync(secret, user));
 
@@ -50,8 +51,47 @@ public class UnitTest_SqlSecretData
 
         Assert.AreEqual(secret.Payload, secretRead.Payload);
 
-        await secretData.DeleteSecret(secret, user);
+        Assert.IsTrue(await secretData.DeleteSecret(true, secret, user));
 
-        await userData.DeleteTempUser(user);
+        Assert.IsTrue(await userData.DeleteTempUser(user));
+    }
+
+    [TestMethod]
+    public async Task Test_CreateSharedSecret_CURD()
+    {
+        if (configString == "No Github DB Yet")
+            return;
+
+        UserModel tempUser = new();
+        tempUser.Name = "my user";
+        tempUser.SetSecurityStamp("Randome Password");
+
+        DbConnection db = new(configString);
+        SqlUserData userData = new(db);
+        Assert.IsTrue(await userData.CreateUserAsync(tempUser));
+
+        UserModel newUser = new();
+        newUser.Name = "new user";
+        newUser.SetSecurityStamp("Randome Password");
+
+        Assert.IsTrue(await userData.CreateUserAsync(newUser));
+
+        SecretModel secret = new();
+        IdItem idItem = new() { Site = "Test Site", User = "Test User", Password = "Test Password", Memo = "Test Memo" };
+        secret.Payload = JsonConvert.SerializeObject(idItem);
+        SqlSecretData secretData = new(db);
+        Assert.IsTrue(await secretData.CreateSecretAsync(secret, tempUser));
+
+        Assert.IsTrue( await secretData.CreateSharedSecretAsync(secret, tempUser, newUser));
+
+        Assert.IsTrue(await secretData.DeleteSecret(true, secret, newUser)); //remove secrets_users link
+
+        Assert.IsTrue(await secretData.DeleteSecret(true, secret, tempUser)); //mark for deletion
+
+        Assert.IsTrue(await userData.DeleteTempUser(tempUser));
+
+        Assert.IsFalse(await secretData.DeleteSecret(true, secret, newUser)); //secrets_users link already removed 
+
+        Assert.IsTrue(await userData.DeleteTempUser(newUser));
     }
 }

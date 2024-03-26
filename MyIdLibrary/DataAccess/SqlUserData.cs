@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data.Common;
+using System.Diagnostics;
 
 namespace MyIdLibrary.DataAccess;
 
@@ -35,8 +36,9 @@ public class SqlUserData : IUserData
         return await GetUserAsync(objectId);
     }
 
-    public async Task CreateUserAsync(UserModel user)
+    public async Task<bool> CreateUserAsync(UserModel user)
     {
+        int affectedRows;
         var existingUser = await GetUserByNameAsync(user.Name);
 
         await _connection.OpenAsync();
@@ -50,7 +52,7 @@ public class SqlUserData : IUserData
                 await DeleteSecretsUsers(existingUser, tx);
             }
             string sql = @"INSERT INTO users (id, name, public_key, private_key, security_stamp,expiry) VALUES (@id, @name, @publicKey, @privateKey, @SecurityStamp,@expiry)";
-            await _connection.ExecuteAsync(sql, user, tx);
+            affectedRows = await _connection.ExecuteAsync(sql, user, tx);
 
             await tx.CommitAsync();
         }
@@ -63,16 +65,19 @@ public class SqlUserData : IUserData
         {
             await _connection.CloseAsync();
         }
+
+        return affectedRows == 1;
     }
 
-    public async Task DeleteTempUser(UserModel tempUser)
+    public async Task<bool> DeleteTempUser(UserModel tempUser)
     {
+        bool ret = false;
         await _connection.OpenAsync();
         var tx = await _connection.BeginTransactionAsync();
         try
         {
  
-            await DeleteSecretsUsers(tempUser, tx);
+           ret = await DeleteSecretsUsers(tempUser, tx);
 
             await tx.CommitAsync();
         }
@@ -85,15 +90,25 @@ public class SqlUserData : IUserData
         {
             await _connection.CloseAsync();
         }
+
+        return ret;
     }
 
-    private async Task DeleteSecretsUsers(UserModel existingUser, DbTransaction tx)
+    private async Task<bool> DeleteSecretsUsers(UserModel user, DbTransaction tx)
     {
-        string deleteSql = "DELETE FROM secrets_users WHERE user_id=@id";
-        await _connection.ExecuteAsync(deleteSql, existingUser, tx);
+        //Delete user own secrets
+        string sql = "DELETE secrets FROM secrets INNER JOIN secrets_users ON secrets.id = secrets_users.secret_id WHERE secrets_users.user_id = @Id AND secrets_users.is_owner=1";
+        await _connection.ExecuteAsync(sql, new { user.Id }, tx);
 
-        deleteSql = "DELETE FROM users WHERE name=@name";
-        await _connection.ExecuteAsync(deleteSql, existingUser, tx);
+        //Delete all secrets_users linked to user
+        sql = "DELETE FROM secrets_users WHERE user_id=@id";
+        await _connection.ExecuteAsync(sql, new { user.Id }, tx);
+
+        //Delete user record
+        sql = "DELETE FROM users WHERE name=@name";
+        await _connection.ExecuteAsync(sql, new { user.Name }, tx);
+
+        return true;
     }
 
     public async Task UpdateUser(UserModel user)

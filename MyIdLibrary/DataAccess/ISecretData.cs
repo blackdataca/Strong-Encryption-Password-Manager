@@ -10,5 +10,6 @@ namespace MyIdLibrary.DataAccess
         Task<SecretModel> FindSecretAsync(string recordId, UserModel user);
         Task<List<SecretModel>> GetUserSecretsAsync(UserModel user, bool onlyUnSynced = false);
         Task<bool> CreateSharedSecretAsync(SecretModel secret, UserModel tempUser, UserModel me);
+        Task<bool> DeleteSecret(bool isDelete, SecretModel secret, UserModel user);
     }
 }

@@ -168,9 +168,11 @@ else
 
     private async Task Delete(bool isDelete)
     {
-        secret.Deleted = isDelete;
-        secret.Modified = DateTime.UtcNow;
-        await secretData.UpdateSecretAsync(secret, loggedInUser);
+
+        // secret.Deleted = isDelete;
+        // secret.Modified = DateTime.UtcNow;
+        // await secretData.UpdateSecretAsync(secret, loggedInUser);
+        await secretData.DeleteSecret(isDelete, secret, loggedInUser);
         ClosePage();
     }
 

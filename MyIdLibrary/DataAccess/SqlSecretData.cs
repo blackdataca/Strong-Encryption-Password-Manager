@@ -178,6 +178,13 @@ public class SqlSecretData : ISecretData
         return (affecgtedRows == 1);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="secret"></param>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<bool> UpdateSecretAsync(SecretModel secret, UserModel user)
     {
         byte[] priKey = user.GetPrivateKey();
@@ -289,44 +296,52 @@ public class SqlSecretData : ISecretData
 
     }
 
-
-    public async Task<bool> DeleteSecret(SecretModel secret, UserModel user)
+    /// <summary>
+    /// Set secret's deletion flag
+    /// </summary>
+    /// <param name="isDelete"></param>
+    /// <param name="secret"></param>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    public async Task<bool> DeleteSecret(bool isDelete, SecretModel secret, UserModel user)
     {
-        int affecgtedRows;
+        //If is deletion, owner marks deleted, shared user simply remove secrets_users link
+        int affectedRows = 0;
 
         if (_connection.State != System.Data.ConnectionState.Open)
         {
             await _connection.OpenAsync();
         }
-        var tx = await _connection.BeginTransactionAsync();
         try
         {
             string sql = "SELECT is_owner FROM secrets_users WHERE secret_id=@secretId AND user_id=@userId";
-            var isOwner = await _connection.ExecuteScalarAsync<bool>(sql, new { secretId = secret.Id, userId = user.Id }, tx);
-            if (!isOwner) {
-                throw new Exception("Only owner can delete the secret");
-            };
-
-            sql = "DELETE FROM secrets_users WHERE secret_id=@id";
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { secret.Id }, tx);
-
-
-            sql = "DELETE FROM secrets WHERE id=@id";
-            affecgtedRows = await _connection.ExecuteAsync(sql, new { secret.Id }, tx);
-
-
-            await tx.CommitAsync();
+            var isOwner = await _connection.ExecuteScalarAsync(sql, new { secretId = secret.Id, userId = user.Id });
+            if (isOwner is not null and bool)
+            {
+                if ((bool)isOwner)
+                {
+                    //owner sets delete flag
+                    secret.Deleted = isDelete;
+                    secret.Modified = DateTime.UtcNow;
+                    return await UpdateSecretAsync(secret, user);
+                }
+                else if (isDelete)
+                {
+                    //Not owner, remove secrets_users link
+                    sql = "DELETE FROM secrets_users WHERE secret_id=@secretId AND user_id=@userId";
+                    affectedRows = await _connection.ExecuteAsync(sql, new { secretId = secret.Id, userId = user.Id });
+                }
+            }
         }
         catch (Exception)
         {
-            await tx.RollbackAsync();
             throw;
         }
         finally
         {
             await _connection.CloseAsync();
         }
-        return (affecgtedRows == 1);
+        return (affectedRows == 1);
     }
 
     public async Task<bool> ClearSyncFlagsAsync(UserModel user)
