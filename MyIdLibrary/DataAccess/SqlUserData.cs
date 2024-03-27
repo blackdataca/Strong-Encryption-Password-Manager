@@ -11,12 +11,31 @@ public class SqlUserData : IUserData
     public SqlUserData(IDbConnection db)
     {
         _connection = db.Connection;
+        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
+    }
+
+    /// <summary>
+    /// For Unit Test only. Do not expose in interface.
+    /// </summary>
+    /// <param name="Email"></param>
+    /// <returns></returns>
+    public async Task<UserModel> FindAspNetUserIdAsync(string Email)
+    {
+        await _connection.OpenAsync();
+        var result = await _connection.QueryFirstOrDefaultAsync<UserModel>("SELECT * FROM AspNetUsers WHERE Email =@Email", new { Email });
+
+        if (result is not null)
+        {
+            await _connection.ExecuteAsync("UPDATE AspNetUsers SET EmailConfirmed=1 WHERE Id = @id", new { result.Id });
+        }
+        await _connection.CloseAsync();
+        return result;
     }
 
     public async Task<UserModel> GetUserAsync(string Id)
     {
         await _connection.OpenAsync();
-        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
         var result = await _connection.QueryFirstOrDefaultAsync<UserModel>("SELECT * FROM users WHERE id =@Id", new { Id });
         await _connection.CloseAsync();
         return result;
@@ -25,7 +44,6 @@ public class SqlUserData : IUserData
     public async Task<UserModel> GetUserByNameAsync(string name)
     {
         await _connection.OpenAsync();
-        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
         var result = await _connection.QueryFirstOrDefaultAsync<UserModel>("SELECT * FROM users WHERE name =@name", new { name });
         await _connection.CloseAsync();
         return result;
@@ -76,8 +94,10 @@ public class SqlUserData : IUserData
         var tx = await _connection.BeginTransactionAsync();
         try
         {
- 
-           ret = await DeleteSecretsUsers(tempUser, tx);
+            ret = await DeleteSecretsUsers(tempUser, tx);
+
+            string sql = "DELETE FROM AspNetUsers WHERE Email = @Name";
+            await _connection.ExecuteAsync(sql, new { tempUser.Name }, tx);
 
             await tx.CommitAsync();
         }
@@ -111,7 +131,7 @@ public class SqlUserData : IUserData
         return true;
     }
 
-    public async Task UpdateUser(UserModel user)
+    public async Task UpdateUserAsync(UserModel user)
     {
         string sql = "UPDATE users set name=@name,private_key=@privateKey, security_stamp=@securityStamp WHERE id=@id";
         await _connection.OpenAsync();

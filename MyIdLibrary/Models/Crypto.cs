@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
+using System.IO.Compression;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace MyIdLibrary.Models;
 
@@ -366,6 +368,26 @@ public class Crypto
     public static byte[] GenerateRandomBytes(int size)
     {
         return RandomNumberGenerator.GetBytes(size);
+    }
+
+    public static MemoryStream CompressString(string dataString)
+    {
+        MemoryStream compressedData = null;
+        using (var contentData = new MemoryStream(Encoding.Default.GetBytes(dataString)))
+        {
+            
+            // Compress the data using gzip
+            //byte[] compressedData;
+            compressedData = new MemoryStream();
+            using (GZipStream gzipStream = new GZipStream(compressedData, CompressionMode.Compress, true))
+            {
+                contentData.CopyTo(gzipStream);
+            }
+
+            compressedData.Position = 0;
+
+        }
+        return compressedData;
     }
 
 }

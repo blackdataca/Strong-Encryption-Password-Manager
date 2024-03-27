@@ -27,7 +27,9 @@ namespace MyId;
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public partial class MainForm : Form, IMessageFilter
 {
-    private List<IdItem> _idList = new List<IdItem>();
+    private List<IdItem> _idList = [];
+    public List<IdItem> IdList { get => _idList; set => _idList = value; } //For Unit Test
+
     private ListViewColumnSorter lvwColumnSorter;
     private DateTime _wentIdle = DateTime.Now;
 
@@ -575,6 +577,8 @@ public partial class MainForm : Form, IMessageFilter
             KnownFolders.DataFile = value;
         }
     }
+
+ 
 
     private bool ValidatePassword(string pass)
     {
@@ -1462,25 +1466,7 @@ public partial class MainForm : Form, IMessageFilter
         ToolSyncVisual(err == "0" ? 1 : 2);
     }
 
-    private MemoryStream CompressString(string dataString)
-    {
-        MemoryStream compressedData = null;
-        using (var contentData = new MemoryStream(Encoding.Default.GetBytes(dataString)))
-        {
-            uxItemCountStatus.Text = $"Comprssing {dataString.Length:N0} bytes";
-            // Compress the data using gzip
-            //byte[] compressedData;
-            compressedData = new MemoryStream();
-            using (GZipStream gzipStream = new GZipStream(compressedData, CompressionMode.Compress, true))
-            {
-                contentData.CopyTo(gzipStream);
-            }
-
-            compressedData.Position = 0;
-
-        }
-        return compressedData;
-    }
+ 
 
     private async Task<string> SendSyncData(HttpClient client, MemoryStream compressedData, bool fromMenu)
     {
@@ -1553,7 +1539,8 @@ public partial class MainForm : Form, IMessageFilter
                 // Step 2: Send light weight client items
                 string dataString = PrepareSyncData(null);
                 string response = null;
-                using (var compressedData = CompressString(dataString))
+                uxItemCountStatus.Text = $"Comprssing {dataString.Length:N0} bytes...";
+                using (var compressedData = Crypto.CompressString(dataString))
                 {
                     response = await SendSyncData(client, compressedData, fromMenu);
                 }
@@ -1569,7 +1556,8 @@ public partial class MainForm : Form, IMessageFilter
                 // Step 4: Send full payload for newer client items 
                 dataString = PrepareSyncData(newrClientItems);
                 response = null;
-                using (var compressedData = CompressString(dataString))
+                uxItemCountStatus.Text = $"Comprssing {dataString.Length:N0} bytes";
+                using (var compressedData = Crypto.CompressString(dataString))
                 {
                     response = await SendSyncData(client, compressedData, fromMenu);
                 }
@@ -1598,7 +1586,7 @@ public partial class MainForm : Form, IMessageFilter
         return err;
     }
 
-    private string PrepareSyncData(List<string> newerClientItems)
+    public string PrepareSyncData(List<string> newerClientItems)
     {
         var payloads = new List<object>();
         uxItemCountStatus.Text = $"Preparing sync data payload: {newerClientItems?.Count}...";

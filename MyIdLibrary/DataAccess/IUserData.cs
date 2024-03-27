@@ -7,6 +7,6 @@ namespace MyIdLibrary.DataAccess
         Task<bool> DeleteTempUser(UserModel tempUser);
         Task<UserModel> GetUserAsync(string Id);
         Task<UserModel> GetUserFromAuthentication(string objectId);
-        Task UpdateUser(UserModel user);
+        Task UpdateUserAsync(UserModel user);
     }
 }

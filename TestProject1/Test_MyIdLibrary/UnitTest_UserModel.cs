@@ -1,9 +1,11 @@
-﻿using MyIdLibrary.Models;
+﻿using MyIdLibrary.DataAccess;
+using MyIdLibrary.Models;
+using Newtonsoft.Json;
 using System.Text;
 
 namespace TestProject1.Test_MyIdLibrary;
 [TestClass]
-public class UnitTest_UserModel
+public class UnitTest_UserModel : UnitTest_Settings
 {
 
     [TestMethod]
@@ -35,6 +37,36 @@ public class UnitTest_UserModel
         var uncrypt = Encoding.UTF8.GetString(uncryptB);
         Assert.AreEqual(plain, uncrypt);
 
+    }
+
+    [TestMethod]
+    public async Task Test_User_CRUD()
+    {
+        if (configString == "No Github DB Yet")
+            return;
+
+        UserModel user = new UserModel();
+        user.Name = "UnitTest";
+        user.SetSecurityStamp("Randome Password");
+
+        DbConnection db = new(configString);
+        SqlUserData userData = new(db);
+        Assert.IsTrue(await userData.CreateUserAsync(user));
+
+        var anotherUser = await userData.GetUserAsync(user.Id);
+
+        Assert.IsNotNull(anotherUser);
+
+        Assert.AreEqual(user.Name, anotherUser.Name);
+
+        anotherUser.Name = "New Name";
+        await userData.UpdateUserAsync(anotherUser);
+
+        user = await userData.GetUserAsync(anotherUser.Id);
+
+        Assert.AreEqual(user.Name, anotherUser.Name);
+
+        Assert.IsTrue(await userData.DeleteTempUser(user));
     }
 
 }

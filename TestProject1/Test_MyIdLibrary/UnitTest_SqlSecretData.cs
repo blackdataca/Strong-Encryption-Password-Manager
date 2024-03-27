@@ -1,31 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Protocols;
-using MyIdLibrary.DataAccess;
+﻿using MyIdLibrary.DataAccess;
 using MyIdLibrary.Models;
 using Newtonsoft.Json;
 using System.Configuration;
-using System.Net.Sockets;
 
 namespace TestProject1.Test_MyIdLibrary;
 [TestClass]
-public class UnitTest_SqlSecretData
+public class UnitTest_SqlSecretData  : UnitTest_Settings
 {
-    private string? configString;
-
-    public UnitTest_SqlSecretData()
-    {
-        ExeConfigurationFileMap fileMap = new ExeConfigurationFileMap();
-        string file = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        file = $"{file}.config";
-        fileMap.ExeConfigFilename = file;
-        System.Configuration.Configuration config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
-
-        configString = Environment.GetEnvironmentVariable("ConnectionString");
-        if (string.IsNullOrWhiteSpace(configString))
-            configString = config.ConnectionStrings.ConnectionStrings["Default"].ConnectionString;
-    }
     [TestMethod]
-    public async Task Test_Secret_CURD()
+    public async Task Test_Secret_CRUD()
     {
         if (configString == "No Github DB Yet")
             return;
@@ -44,20 +27,21 @@ public class UnitTest_SqlSecretData
 
         SqlSecretData secretData = new(db);
         Assert.IsTrue( await secretData.CreateSecretAsync(secret, user));
+        
+        var secretRead = await secretData.ReadSecretAsync(secret.Id.ToString(), user);
+        Assert.AreEqual(secret.Payload, secretRead.Payload);
 
         Assert.IsTrue(await secretData.UpdateSecretAsync(secret, user));
 
-        var secretRead = await secretData.ReadSecretAsync(secret.Id.ToString(), user);
+        Assert.IsTrue(await secretData.ClearSyncFlagsAsync(user));
 
-        Assert.AreEqual(secret.Payload, secretRead.Payload);
-
-        Assert.IsTrue(await secretData.DeleteSecret(true, secret, user));
+        Assert.IsTrue(await secretData.DeleteSecretAsync(true, secret, user));
 
         Assert.IsTrue(await userData.DeleteTempUser(user));
     }
 
     [TestMethod]
-    public async Task Test_CreateSharedSecret_CURD()
+    public async Task Test_CreateSharedSecret_CRUD()
     {
         if (configString == "No Github DB Yet")
             return;
@@ -84,13 +68,13 @@ public class UnitTest_SqlSecretData
 
         Assert.IsTrue( await secretData.CreateSharedSecretAsync(secret, tempUser, newUser));
 
-        Assert.IsTrue(await secretData.DeleteSecret(true, secret, newUser)); //remove secrets_users link
+        Assert.IsTrue(await secretData.DeleteSecretAsync(true, secret, newUser)); //remove secrets_users link
 
-        Assert.IsTrue(await secretData.DeleteSecret(true, secret, tempUser)); //mark for deletion
+        Assert.IsTrue(await secretData.DeleteSecretAsync(true, secret, tempUser)); //mark for deletion
 
         Assert.IsTrue(await userData.DeleteTempUser(tempUser));
 
-        Assert.IsFalse(await secretData.DeleteSecret(true, secret, newUser)); //secrets_users link already removed 
+        Assert.IsFalse(await secretData.DeleteSecretAsync(true, secret, newUser)); //secrets_users link already removed 
 
         Assert.IsTrue(await userData.DeleteTempUser(newUser));
     }

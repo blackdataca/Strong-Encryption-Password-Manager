@@ -303,7 +303,7 @@ public class SqlSecretData : ISecretData
     /// <param name="secret"></param>
     /// <param name="user"></param>
     /// <returns></returns>
-    public async Task<bool> DeleteSecret(bool isDelete, SecretModel secret, UserModel user)
+    public async Task<bool> DeleteSecretAsync(bool isDelete, SecretModel secret, UserModel user)
     {
         //If is deletion, owner marks deleted, shared user simply remove secrets_users link
         int affectedRows = 0;

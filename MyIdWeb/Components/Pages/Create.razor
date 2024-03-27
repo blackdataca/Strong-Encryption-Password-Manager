@@ -172,7 +172,7 @@ else
         // secret.Deleted = isDelete;
         // secret.Modified = DateTime.UtcNow;
         // await secretData.UpdateSecretAsync(secret, loggedInUser);
-        await secretData.DeleteSecret(isDelete, secret, loggedInUser);
+        await secretData.DeleteSecretAsync(isDelete, secret, loggedInUser);
         ClosePage();
     }
 

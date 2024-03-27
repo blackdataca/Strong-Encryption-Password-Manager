@@ -125,7 +125,7 @@
                     if (isNew)
                         await userData.CreateUserAsync(loggedInUser);
                     else
-                        await userData.UpdateUser(loggedInUser);
+                        await userData.UpdateUserAsync(loggedInUser);
                 }
             }
             catch (Exception ex)
