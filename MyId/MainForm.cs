@@ -17,7 +17,6 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using MyIdLibrary.Models;
@@ -68,14 +67,18 @@ public partial class MainForm : Form, IMessageFilter
 
     private void UxEdit_Click(object sender, EventArgs e)
     {
-        if (uxList.SelectedItems.Count > 0)
+
+        using (Edit edit = new Edit(_pinEnc))
         {
-            using (Edit edit = new Edit())
+            IdItem aItem = null;
+            ListViewItem li = null;
+            string oldPass = null;
+            if (uxList.SelectedItems.Count > 0)
             {
-                ListViewItem li = uxList.SelectedItems[0];
-                IdItem aItem = GetAItem((string)li.Tag);
+                li = uxList.SelectedItems[0];
+                aItem = GetAItem((string)li.Tag);
                 edit.AIdItem = aItem;
-                string oldPass = aItem.Password;
+                oldPass = aItem.Password;
 
                 //var t = new Thread(() => { 
                 //    Thread.CurrentThread.IsBackground = true;
@@ -87,8 +90,8 @@ public partial class MainForm : Form, IMessageFilter
                     {
                         Image img = null;
                         var st = Crypto.DecryptFileStream(encFile, _pinEnc);
-                        if (st is null)
-                        { //new format
+                        if (st is null && encFile.Value is not null)
+                        {
                             var bytes = Convert.FromBase64String(encFile.Value);
                             st = new MemoryStream(bytes);
                             try
@@ -108,19 +111,25 @@ public partial class MainForm : Form, IMessageFilter
 
                                 edit.imageList1.Images.Add(idx, img);
 
-                                edit.uxImages.Items.Add(encFile.Key, idx);
+                                edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
 
                                 edit.TempFiles.Add(encFile.Key, encFile.Value);
                             }
                         }
                         else
-                        { //Old format
+                        {
+                            //Attached file format: encFile.Key = original full file name with path, encFile.Value = encrypted file name only without path
 
                             try
                             {
-                                img = Image.FromStream(st);
+                                if (st is not null)
+                                    img = Image.FromStream(st);
                             }
-                            catch
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                            }
+                            if (img is null && encFile.Key is not null)
                             {
                                 string f = Path.Combine(KnownFolders.DataDir, encFile.Key);
 
@@ -134,28 +143,57 @@ public partial class MainForm : Form, IMessageFilter
 
                                 edit.imageList1.Images.Add(idx, img);
 
+                                edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
 
-                                edit.uxImages.Items.Add(encFile.Value, idx);
+                                edit.TempFiles.Add(encFile.Key, encFile.Value);
+                                //using (var m = new MemoryStream())
+                                //{
+                                //    img.Save(m, ImageFormat.Bmp);
+                                //    byte[] imgBytes = m.ToArray();
 
-                                using (var m = new MemoryStream())
-                                {
-                                    img.Save(m, img.RawFormat);
-                                    byte[] imgBytes = m.ToArray();
-
-                                    edit.TempFiles.Add(encFile.Key, Convert.ToBase64String(imgBytes));
-                                }
+                                //    edit.TempFiles.Add(encFile.Key, Convert.ToBase64String(imgBytes));
+                                //}
                             }
                         }
 
                     }
                     Cursor.Current = Cursors.Default;
-
                 }
 
-                if (edit.ShowDialog(this) == DialogResult.OK)
-                {
-                    aItem.Images = edit.TempFiles;
 
+            }
+
+            if (edit.ShowDialog(this) == DialogResult.OK)
+            {
+                //aItem.Images = edit.TempFiles;
+                //aItem.Images.Clear();
+                if (li is null)
+                    aItem = new IdItem();
+                else
+                    aItem.Images.Clear();
+
+                foreach (var img in edit.TempFiles)
+                {
+                    string originalFile = img.Key;
+                    string encryptedFile = img.Value;
+                    if (encryptedFile is null)
+                    {
+                        using (var ms = new MemoryStream(File.ReadAllBytes(img.Key)))
+                        {
+                            encryptedFile = Crypto.EncryptFileStream(img.Key, ms, _pinEnc);
+                        }
+                    }
+                    aItem.Images.Add(originalFile, Path.GetFileName(encryptedFile));
+                }
+
+                if (li is null)
+                {
+                    edit.AIdItem.Images = aItem.Images;
+                    AddListItem(edit.AIdItem);
+                    _idList.Add(edit.AIdItem);
+                }
+                else
+                {
                     if (oldPass != aItem.Password || li.Text != aItem.Site || li.SubItems[1].Text != aItem.User || li.SubItems[4].Text != aItem.Memo1Line)
                     {
                         aItem.Changed = DateTime.UtcNow;
@@ -166,35 +204,42 @@ public partial class MainForm : Form, IMessageFilter
                         li.SubItems[3].Text = aItem.ChangedHuman;
                         li.SubItems[4].Text = aItem.Memo1Line;
 
-                        SaveToDisk();
                     }
                 }
-            }
-        }
-    }
-    private void UxNew_Click(object sender, EventArgs e)
-    {
-        using (Edit edit = new Edit())
-        {
-            if (edit.ShowDialog(this) == DialogResult.OK)
-            {
-
-                //Cursor.Current = Cursors.WaitCursor;
-                foreach (var img in edit.TempFiles.Keys)
-                {
-                    //string encFile = Crypto.EncryptFile(img);
-
-                    //edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
-                    edit.AIdItem.Images.Add(img, edit.TempFiles[img]);
-                }
-                //Cursor.Current = Cursors.Default;
-
-                AddListItem(edit.AIdItem);
-                _idList.Add(edit.AIdItem);
                 SaveToDisk();
                 ShowNumberOfItems();
             }
         }
+
+    }
+    private void UxNew_Click(object sender, EventArgs e)
+    {
+        uxList.SelectedItems.Clear();
+
+        uxEdit.PerformClick();
+
+
+        //using (Edit edit = new Edit(_pinEnc))
+        //{
+        //    if (edit.ShowDialog(this) == DialogResult.OK)
+        //    {
+
+        //        //Cursor.Current = Cursors.WaitCursor;
+        //        foreach (var img in edit.TempFiles.Keys)
+        //        {
+        //            //string encFile = Crypto.EncryptFile(img);
+
+        //            //edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
+        //            edit.AIdItem.Images.Add(img, edit.TempFiles[img]);
+        //        }
+        //        //Cursor.Current = Cursors.Default;
+
+        //        AddListItem(edit.AIdItem);
+        //        _idList.Add(edit.AIdItem);
+        //        SaveToDisk();
+        //        ShowNumberOfItems();
+        //    }
+        //}
     }
 
     private void AddListItem(IdItem idItem)
@@ -578,7 +623,7 @@ public partial class MainForm : Form, IMessageFilter
         }
     }
 
- 
+
 
     private bool ValidatePassword(string pass)
     {
@@ -1466,7 +1511,7 @@ public partial class MainForm : Form, IMessageFilter
         ToolSyncVisual(err == "0" ? 1 : 2);
     }
 
- 
+
 
     private async Task<string> SendSyncData(HttpClient client, MemoryStream compressedData, bool fromMenu)
     {
@@ -1636,7 +1681,7 @@ public partial class MainForm : Form, IMessageFilter
             else
                 uxItemCountStatus.Text = "WebSync: " + err ?? "Invalid json";
         }
-        Debug.WriteLine( $"Newer client items {ret.Count:N0}");
+        Debug.WriteLine($"Newer client items {ret.Count:N0}");
         return ret;
     }
     private List<string> ProcessNewerClientItems(JObject joResponse)
@@ -1741,5 +1786,15 @@ public partial class MainForm : Form, IMessageFilter
 
         }
         return null;
+    }
+
+    private void uxList_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        uxEdit.Enabled = !(uxList.SelectedItems.Count == 0);
+        mnuEdit.Enabled = uxEdit.Enabled;
+        uxToolEdit.Enabled = uxEdit.Enabled;
+        mnuDelete.Enabled = uxEdit.Enabled;
+        uxToolDelete.Enabled = uxEdit.Enabled;
+        uxDelete.Enabled = uxEdit.Enabled;
     }
 }

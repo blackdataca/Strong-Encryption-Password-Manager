@@ -12,10 +12,12 @@ namespace MyId;
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public partial class Edit : Form
 {
+    private byte[] _pinEnc;
     public IdItem AIdItem = null;
-    public Edit()
+    public Edit(byte[] pinEnc)
     {
         InitializeComponent();
+        _pinEnc = pinEnc;
     }
 
     private void Edit_Load(object sender, EventArgs e)
@@ -63,7 +65,7 @@ public partial class Edit : Form
 
     
 
-    public Dictionary<string, string> TempFiles = new Dictionary<string, string>();
+    public Dictionary<string, string> TempFiles = new Dictionary<string, string>(); //Key = Original Full File Name, Value (null) = not encrypted yet, Value (not null) = encrypted file name only without path
 
     private void UxImageAdd_Click(object sender, EventArgs e)
     {
@@ -73,7 +75,6 @@ public partial class Edit : Form
             {
                 foreach (var inFile in openFileDialog1.FileNames)
                 {
-                    //TODO add file
 
                     Image img;
                     try
@@ -126,6 +127,7 @@ public partial class Edit : Form
     {
         if (uxImages.SelectedIndices.Count >0)
         {
+            //TODO Change value to encrypted file
             var viewer = new ViewImage();
             var image = TempFiles.ElementAt(uxImages.SelectedIndices[0]).Value;
             string f = TempFiles.ElementAt(uxImages.SelectedIndices[0]).Key;
@@ -134,15 +136,36 @@ public partial class Edit : Form
             {
                 try
                 {
-                    img = Image.FromStream(new MemoryStream(Convert.FromBase64String(image)));
-                    //image = Image.FromFile(f);
+                    string fileName = Path.GetFileName(image);
+                    if (fileName.StartsWith("enc."))
+                    {
+                        //Value is encrypted file name
+                        var ms = Crypto.DecryptFileStream(TempFiles.ElementAt(uxImages.SelectedIndices[0]), _pinEnc);
+                        img = Image.FromStream(ms);
+                    }
+                    else
+                    {   //Value contains base64 encoded image data
+                        img = Image.FromStream(new MemoryStream(Convert.FromBase64String(image)));
+                    }
                 }
-                catch 
+                catch
                 {
                     //image is not image type
-                     f = Path.Combine(KnownFolders.DataDir, "enc." + f);
-                    img = WindowsThumbnailProvider.GetThumbnail(  f, 64, 64, ThumbnailOptions.None);
-                    
+
+                    img = WindowsThumbnailProvider.GetThumbnail(image, 64, 64, ThumbnailOptions.None);
+
+                }
+            }
+            else
+            {
+                //Pointing to actual file
+                try
+                {
+                    img = Image.FromFile(f);
+                }
+                catch
+                {
+                    img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
                 }
             }
             if (img != null)

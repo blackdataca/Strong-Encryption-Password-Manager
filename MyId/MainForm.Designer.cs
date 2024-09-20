@@ -101,6 +101,7 @@
             uxList.UseCompatibleStateImageBehavior = false;
             uxList.View = System.Windows.Forms.View.Details;
             uxList.ColumnClick += UxList_ColumnClick;
+            uxList.SelectedIndexChanged += uxList_SelectedIndexChanged;
             uxList.DoubleClick += UxList_DoubleClick;
             uxList.KeyDown += UxList_KeyDown;
             // 
@@ -132,32 +133,34 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { uxContextNew, uxEdit, uxDelete });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(142, 70);
+            contextMenuStrip1.Size = new System.Drawing.Size(181, 92);
             // 
             // uxContextNew
             // 
             uxContextNew.Image = Properties.Resources.tab_new_32x32;
             uxContextNew.Name = "uxContextNew";
             uxContextNew.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N;
-            uxContextNew.Size = new System.Drawing.Size(141, 22);
+            uxContextNew.Size = new System.Drawing.Size(180, 22);
             uxContextNew.Text = "New";
             uxContextNew.Click += UxContextNew_Click;
             // 
             // uxEdit
             // 
+            uxEdit.Enabled = false;
             uxEdit.Image = Properties.Resources.pencil_32x32;
             uxEdit.Name = "uxEdit";
             uxEdit.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E;
-            uxEdit.Size = new System.Drawing.Size(141, 22);
+            uxEdit.Size = new System.Drawing.Size(180, 22);
             uxEdit.Text = "Edit";
             uxEdit.Click += UxEdit_Click;
             // 
             // uxDelete
             // 
+            uxDelete.Enabled = false;
             uxDelete.Image = Properties.Resources.delete_32x32;
             uxDelete.Name = "uxDelete";
             uxDelete.ShortcutKeys = System.Windows.Forms.Keys.Delete;
-            uxDelete.Size = new System.Drawing.Size(141, 22);
+            uxDelete.Size = new System.Drawing.Size(180, 22);
             uxDelete.Text = "Delete";
             uxDelete.Click += UxDelete_Click;
             // 
@@ -270,22 +273,24 @@
             // 
             newToolStripMenuItem.Image = Properties.Resources.small_new_32x32;
             newToolStripMenuItem.Name = "newToolStripMenuItem";
-            newToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             newToolStripMenuItem.Text = "&New...";
             // 
             // mnuEdit
             // 
+            mnuEdit.Enabled = false;
             mnuEdit.Image = Properties.Resources.small_pencil_32x32;
             mnuEdit.Name = "mnuEdit";
-            mnuEdit.Size = new System.Drawing.Size(107, 22);
+            mnuEdit.Size = new System.Drawing.Size(180, 22);
             mnuEdit.Text = "&Edit";
             mnuEdit.Click += MnuEdit_Click;
             // 
             // mnuDelete
             // 
+            mnuDelete.Enabled = false;
             mnuDelete.Image = Properties.Resources.small_delete_32x32;
             mnuDelete.Name = "mnuDelete";
-            mnuDelete.Size = new System.Drawing.Size(107, 22);
+            mnuDelete.Size = new System.Drawing.Size(180, 22);
             mnuDelete.Text = "&Delete";
             mnuDelete.Click += MnuDelete_Click;
             // 
@@ -325,6 +330,7 @@
             // 
             // uxToolEdit
             // 
+            uxToolEdit.Enabled = false;
             uxToolEdit.Image = Properties.Resources.small_pencil_32x32;
             uxToolEdit.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             uxToolEdit.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -335,6 +341,7 @@
             // 
             // uxToolDelete
             // 
+            uxToolDelete.Enabled = false;
             uxToolDelete.Image = Properties.Resources.small_delete_32x32;
             uxToolDelete.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             uxToolDelete.ImageTransparentColor = System.Drawing.Color.Magenta;

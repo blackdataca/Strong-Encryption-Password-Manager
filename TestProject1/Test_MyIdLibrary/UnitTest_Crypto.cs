@@ -161,10 +161,10 @@ public class UnitTest_Crypto
 
         byte[] bytes = RandomNumberGenerator.GetBytes(1000000);
         var ms = new MemoryStream(bytes);
-        string tempFileName = Path.GetTempFileName();
-        string encFileNameOnly = Crypto.EncryptFileStream(tempFileName, ms, pinCrypt);
+        string originalFile = Path.GetTempFileName();
+        string encFileNameOnly = Crypto.EncryptFileStream(originalFile, ms, pinCrypt);
 
-        KeyValuePair<string, string> encFile = new KeyValuePair<string, string>(encFileNameOnly, tempFileName);
+        KeyValuePair<string, string> encFile = new KeyValuePair<string, string>(originalFile, encFileNameOnly);
 
         var decryptedMs = Crypto.DecryptFileStream(encFile, pinCrypt);
         var decryptedBytes = decryptedMs.ToArray();
@@ -173,6 +173,6 @@ public class UnitTest_Crypto
 
         string encFileFullName = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
         File.Delete(encFileFullName);
-        File.Delete(tempFileName);
+        File.Delete(originalFile);
     }
 }

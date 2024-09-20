@@ -212,10 +212,12 @@ public class Crypto
     /// <returns></returns>
     public static MemoryStream DecryptFileStream(KeyValuePair<string, string> encFile, byte[] pinEnc)
     {
+        if (encFile.Value is null)
+            return null;
         MemoryStream ms = null;
-        string fileName = encFile.Key;
-        string encFileNameOnly = Path.GetFileName(fileName);
-        fileName = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
+        //string fileName = encFile.Key;
+        string encFileNameOnly = Path.GetFileName(encFile.Value);
+        string fileName = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
 
         if (File.Exists(fileName))
         {
@@ -319,7 +321,7 @@ public class Crypto
     }
 
     /// <summary>
-    /// Encrypt memoystream to file
+    /// Create file contains encrypted memoystream
     /// </summary>
     /// <param name="targetFile">Full path and name of original file</param>
     /// <param name="ms">Content to be encrypted</param>
@@ -327,41 +329,43 @@ public class Crypto
     /// <returns>Encrypted file name only enc.target file name</returns>
     public static string EncryptFileStream(string targetFile, MemoryStream ms, byte[] pinEnc)
     {
+        string fileExt = Path.GetExtension(targetFile);
         string targetFileName = Path.GetFileName(targetFile);
-        string encFileNameOnly = $"enc.{targetFileName}";
+        
+        string encFileNameOnly = $"enc.{Path.GetFileNameWithoutExtension(Path.GetRandomFileName())}{fileExt}";
         string encFile = Path.Combine(KnownFolders.DataDir, encFileNameOnly);
 
-        using var aes = Aes.Create();
+            using var aes = Aes.Create();
 
-        byte[] pin = GetKeyIv("Pin", pinEnc);
-        aes.Key = SHA256.Create().ComputeHash(pin);
-        aes.IV = GetKeyIv("Iv2022"); // GetKeyIv("RiIv"); // GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
+            byte[] pin = GetKeyIv("Pin", pinEnc);
+            aes.Key = SHA256.Create().ComputeHash(pin);
+            aes.IV = GetKeyIv("Iv2022"); // GetKeyIv("RiIv"); // GetKeyIv("RiIv");// key.GetBytes(myRijndael.BlockSize / 8);
 
-        using var fsPlain = new BinaryReader(ms);
-        using var fsCrypt = new FileStream(encFile, FileMode.Create, FileAccess.Write);
-        //version 2024
-        fsCrypt.WriteByte(0x20); //file version major
-        fsCrypt.WriteByte(0x24); //file version minor
+            using var fsPlain = new BinaryReader(ms);
+            using var fsCrypt = new FileStream(encFile, FileMode.Create, FileAccess.Write);
+            //version 2024
+            fsCrypt.WriteByte(0x20); //file version major
+            fsCrypt.WriteByte(0x24); //file version minor
 
-        //generate random salt
-        byte[] salt = GenerateRandomBytes(32);
-        fsCrypt.Write(salt, 0, salt.Length);
+            //generate random salt
+            byte[] salt = GenerateRandomBytes(32);
+            fsCrypt.Write(salt, 0, salt.Length);
 
-        using var cryptoStream = new CryptoStream(fsCrypt, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
-        byte[] buffer = new byte[1048576];
-        int read;
-        while ((read = fsPlain.Read(buffer, 0, buffer.Length)) > 0)
-        {
-            cryptoStream.Write(buffer, 0, read);
-            Thread.Sleep(1);
-        }
+            using var cryptoStream = new CryptoStream(fsCrypt, aes.CreateEncryptor(), CryptoStreamMode.Write);
+            //create a buffer (1mb) so only this amount will allocate in the memory and not the whole file
+            byte[] buffer = new byte[1048576];
+            int read;
+            while ((read = fsPlain.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                cryptoStream.Write(buffer, 0, read);
+                Thread.Sleep(1);
+            }
 
-        cryptoStream.Close();
+            cryptoStream.Close();
 
-        fsCrypt.Close();
-        fsPlain.Close();
-
+            fsCrypt.Close();
+            fsPlain.Close();
+        
         return encFileNameOnly;
     }
 
