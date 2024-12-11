@@ -20,6 +20,7 @@ using Newtonsoft.Json.Converters;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using MyIdLibrary.Models;
+using System.Runtime;
 
 namespace MyId;
 
@@ -67,7 +68,12 @@ public partial class MainForm : Form, IMessageFilter
 
     private void UxEdit_Click(object sender, EventArgs e)
     {
+        NewOrEdit();
 
+    }
+
+    private void NewOrEdit()
+    {
         using (Edit edit = new Edit(_pinEnc))
         {
             IdItem aItem = null;
@@ -210,13 +216,13 @@ public partial class MainForm : Form, IMessageFilter
                 ShowNumberOfItems();
             }
         }
-
     }
+
     private void UxNew_Click(object sender, EventArgs e)
     {
         uxList.SelectedItems.Clear();
 
-        uxEdit.PerformClick();
+        NewOrEdit();
 
 
         //using (Edit edit = new Edit(_pinEnc))
@@ -840,6 +846,12 @@ public partial class MainForm : Form, IMessageFilter
                 IdItem eachItem = _idList[i - 1];
                 if (removeList.Contains(eachItem.Uid.ToString()))
                 {
+                    foreach (var img in eachItem.Images)
+                    {
+                        string fileName = Path.GetFileName(img.Value);
+                        fileName = Path.Combine(KnownFolders.DataDir, fileName);
+                        File.Delete(fileName);
+                    }
                     eachItem.Deleted = true;
                     eachItem.Changed = DateTime.UtcNow;
                     //_idList.Remove(eachItem);
@@ -1641,18 +1653,29 @@ public partial class MainForm : Form, IMessageFilter
             var recId = item.UniqId;
 
             string json = "";
-
+            var files = new Dictionary<string, string>();
             if (newerClientItems != null)
             {
                 if (newerClientItems.Contains(recId))
+                {
+                    //Server ask client to upload full item data
                     json = JsonConvert.SerializeObject(item, new IsoDateTimeConverter() { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" });
+                    foreach (var img in item.Images)
+                    {
+                        string fileName = img.Value;
+                        string fileFullName = Path.Combine(KnownFolders.DataDir, fileName);
+                        byte[] fileBytes = File.ReadAllBytes(fileFullName);
+                        string fileBase64 = Convert.ToBase64String(fileBytes);
+                        files.Add(fileName, fileBase64);
+                    }
+                }
                 else
                     continue;
             }
             DateTime uTime = item.Changed;
             string sTime = uTime.ToString("yyyy-MM-dd HH:mm:ss");
 
-            var rec = new { RecId = recId, LastUpdate = sTime, Payload = json };
+            var rec = new { RecId = recId, LastUpdate = sTime, Payload = json, Files = files };
 
             payloads.Add(rec);
         }

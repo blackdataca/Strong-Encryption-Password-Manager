@@ -34,7 +34,10 @@ public partial class Edit : Form
                 uxHint.ForeColor = Color.Red;
         }
         else
+        {
             AIdItem = new IdItem();
+            this.Text = "New";
+        }
     }
 
     private void UxOK_Click(object sender, EventArgs e)
