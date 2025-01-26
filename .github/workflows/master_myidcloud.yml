@@ -38,11 +38,11 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}/MyId/MyIdApp.csproj
 
     - name: Zip files
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: Compress-Archive -Path ./MyId/bin/Release/* -Destination ./MyId/bin/MyIdFiles.zip
+      run: Compress-Archive -Path ${{env.SOLUTION_FILE_PATH}}/MyId/bin/Release/* -Destination ${{env.SOLUTION_FILE_PATH}}/MyId/bin/MyIdFiles.zip
     
     - name: Create Release
       id: create_release
@@ -63,13 +63,13 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./MyId/bin/MyIdFiles.zip
+        asset_path: ${{env.SOLUTION_FILE_PATH}}/MyId/bin/MyIdFiles.zip
         asset_name: MyIdFiles.zip
         asset_content_type: application/zip
         
   WebApi_buildImage:
     runs-on: windows-latest
-
+    needs: build-release
     steps:
       - uses: actions/checkout@v4
 
