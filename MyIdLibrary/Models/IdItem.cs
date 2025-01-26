@@ -4994,7 +4994,7 @@ public class IdItem
         }
         else
         {
-            byte[] bytes;
+            byte[] bytes = null;
             var fileData = Images[fileName];
             if (fileData.StartsWith("enc."))
             {
@@ -5004,7 +5004,8 @@ public class IdItem
             {
                 bytes = Convert.FromBase64String(fileData);
             }
-            
+            if (bytes == null)
+                return "";
             using var ms = new MemoryStream(bytes);
             var image = Image.FromStream(ms);
             var thumb = image.GetThumbnailImage(width, height, () => false, IntPtr.Zero);

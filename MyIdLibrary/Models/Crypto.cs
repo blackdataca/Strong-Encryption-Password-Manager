@@ -162,6 +162,12 @@ public class Crypto
     }
 
     [SupportedOSPlatform("windows")]
+    public static byte[] EncryptPin(byte[] value)
+    {
+        return ProtectedData.Protect(value, null, DataProtectionScope.CurrentUser);
+    }
+
+    [SupportedOSPlatform("windows")]
     public static byte[] GetKeyIv(string type, byte[] pin = null)
     {
         switch (type)

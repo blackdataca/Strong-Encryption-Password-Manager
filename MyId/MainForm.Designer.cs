@@ -133,14 +133,14 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { uxContextNew, uxEdit, uxDelete });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(181, 92);
+            contextMenuStrip1.Size = new System.Drawing.Size(142, 70);
             // 
             // uxContextNew
             // 
             uxContextNew.Image = Properties.Resources.tab_new_32x32;
             uxContextNew.Name = "uxContextNew";
             uxContextNew.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N;
-            uxContextNew.Size = new System.Drawing.Size(180, 22);
+            uxContextNew.Size = new System.Drawing.Size(141, 22);
             uxContextNew.Text = "New";
             uxContextNew.Click += UxContextNew_Click;
             // 
@@ -150,7 +150,7 @@
             uxEdit.Image = Properties.Resources.pencil_32x32;
             uxEdit.Name = "uxEdit";
             uxEdit.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E;
-            uxEdit.Size = new System.Drawing.Size(180, 22);
+            uxEdit.Size = new System.Drawing.Size(141, 22);
             uxEdit.Text = "Edit";
             uxEdit.Click += UxEdit_Click;
             // 
@@ -160,7 +160,7 @@
             uxDelete.Image = Properties.Resources.delete_32x32;
             uxDelete.Name = "uxDelete";
             uxDelete.ShortcutKeys = System.Windows.Forms.Keys.Delete;
-            uxDelete.Size = new System.Drawing.Size(180, 22);
+            uxDelete.Size = new System.Drawing.Size(141, 22);
             uxDelete.Text = "Delete";
             uxDelete.Click += UxDelete_Click;
             // 
@@ -275,6 +275,7 @@
             newToolStripMenuItem.Name = "newToolStripMenuItem";
             newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             newToolStripMenuItem.Text = "&New...";
+            newToolStripMenuItem.Click += NewToolStripMenuItem_Click;
             // 
             // mnuEdit
             // 

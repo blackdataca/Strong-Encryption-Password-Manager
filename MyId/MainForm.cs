@@ -1,4 +1,4 @@
-﻿// MIT License - Copyright (c) 2019 Black Data
+﻿// MIT License - Copyright (c) Black Data
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
 using System;
@@ -20,7 +20,6 @@ using Newtonsoft.Json.Converters;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using MyIdLibrary.Models;
-using System.Runtime;
 
 namespace MyId;
 
@@ -86,8 +85,6 @@ public partial class MainForm : Form, IMessageFilter
                 edit.AIdItem = aItem;
                 oldPass = aItem.Password;
 
-                //var t = new Thread(() => { 
-                //    Thread.CurrentThread.IsBackground = true;
                 if (aItem.Images != null)
                 {
 
@@ -152,13 +149,7 @@ public partial class MainForm : Form, IMessageFilter
                                 edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
 
                                 edit.TempFiles.Add(encFile.Key, encFile.Value);
-                                //using (var m = new MemoryStream())
-                                //{
-                                //    img.Save(m, ImageFormat.Bmp);
-                                //    byte[] imgBytes = m.ToArray();
 
-                                //    edit.TempFiles.Add(encFile.Key, Convert.ToBase64String(imgBytes));
-                                //}
                             }
                         }
 
@@ -171,8 +162,7 @@ public partial class MainForm : Form, IMessageFilter
 
             if (edit.ShowDialog(this) == DialogResult.OK)
             {
-                //aItem.Images = edit.TempFiles;
-                //aItem.Images.Clear();
+
                 if (li is null)
                     aItem = new IdItem();
                 else
@@ -224,28 +214,6 @@ public partial class MainForm : Form, IMessageFilter
 
         NewOrEdit();
 
-
-        //using (Edit edit = new Edit(_pinEnc))
-        //{
-        //    if (edit.ShowDialog(this) == DialogResult.OK)
-        //    {
-
-        //        //Cursor.Current = Cursors.WaitCursor;
-        //        foreach (var img in edit.TempFiles.Keys)
-        //        {
-        //            //string encFile = Crypto.EncryptFile(img);
-
-        //            //edit.AIdItem.Images.Add(encFile, Path.GetFileName(img));
-        //            edit.AIdItem.Images.Add(img, edit.TempFiles[img]);
-        //        }
-        //        //Cursor.Current = Cursors.Default;
-
-        //        AddListItem(edit.AIdItem);
-        //        _idList.Add(edit.AIdItem);
-        //        SaveToDisk();
-        //        ShowNumberOfItems();
-        //    }
-        //}
     }
 
     private void AddListItem(IdItem idItem)
@@ -340,24 +308,6 @@ public partial class MainForm : Form, IMessageFilter
     {
         byte[] salt = Crypto.GenerateRandomBytes(32);
         Crypto.SaveKeyIv("Salt", salt);
-        //var key = new Rfc2898DeriveBytes(masterPin, salt, 50000);
-
-        //using (RijndaelManaged myRijndael = new RijndaelManaged())
-        //{
-        //    myRijndael.KeySize = 256;
-        //    myRijndael.BlockSize = 128;
-        //    myRijndael.Padding = PaddingMode.PKCS7;
-        //    //Cipher modes: http://security.stackexchange.com/questions/52665/which-is-the-best-cipher-mode-and-padding-mode-for-aes-encryption
-        //    myRijndael.Mode = CipherMode.CFB;
-
-        //    myRijndael.Key = key.GetBytes(32);//256 bits = 32 bytes
-
-        //    myRijndael.GenerateIV();
-
-        //    Crypto.SaveKeyIv("Iv2022", myRijndael.IV); //128 blocksize / 8 = 16
-
-        //    //SaveKeyIv("Key", Encoding.Unicode.GetBytes(masterPin));
-        //}
 
         using var aes = Aes.Create();
         aes.Key = SHA256.Create().ComputeHash(masterPin);
@@ -400,9 +350,11 @@ public partial class MainForm : Form, IMessageFilter
     /// </summary>
     /// 
     /// <returns></returns>
-    private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile)
+    private bool LoadFromDisk(string pDataFile, string pPrivateKeyFile, bool dryRun)
     {
-        uxList.Items.Clear();
+
+
+        List<IdItem> idList = [];
 
         bool success = false;
 
@@ -443,7 +395,7 @@ public partial class MainForm : Form, IMessageFilter
                             try
                             {
                                 string plain = sReader.ReadToEnd();
-                                _idList = JsonConvert.DeserializeObject<List<IdItem>>(plain);
+                                idList = JsonConvert.DeserializeObject<List<IdItem>>(plain);
 
                             }
                             catch (System.Security.Cryptography.CryptographicException)
@@ -461,7 +413,7 @@ public partial class MainForm : Form, IMessageFilter
 #pragma warning restore SYSLIB0011
 
 #pragma warning disable SYSLIB0022
-                    using (RijndaelManaged myRijndael = new RijndaelManaged())
+                    using (RijndaelManaged myRijndael = new())
 #pragma warning restore SYSLIB0022
                     {
 
@@ -511,7 +463,7 @@ public partial class MainForm : Form, IMessageFilter
                         {
                             try
                             {
-                                _idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
+                                idList = (List<IdItem>)formatter.Deserialize(cryptoStream);
 
                             }
                             catch (System.Security.Cryptography.CryptographicException)
@@ -523,70 +475,11 @@ public partial class MainForm : Form, IMessageFilter
                 }
             }
 
-            //Upgrade or update data
-            int uniqIdUpdate = 0;
-            foreach (var item in _idList)
-            {
-                if (item.UniqId == null)
-                {
-                    item.UniqId = Crypto.UniqId("");
-                    uniqIdUpdate++;
-                }
+            if (dryRun)
+                success = true;
+            else
+                success = UpdateList(idList);
 
-                foreach (var encFile in item.Images.ToList())
-                {
-                    if (encFile.Key.StartsWith("enc."))
-                    {
-                        var st = Crypto.DecryptFileStream(encFile, _pinEnc);
-                        if (st is null)
-                        {
-                            continue;
-                        }
-                        byte[] imageArray = st.ToArray();
-
-
-                        string newKey = encFile.Value;
-                        for (int i = 0; i < 100; i++)
-                        {
-                            if (item.Images.ContainsKey(newKey))
-                            {
-                                string ext = Path.GetExtension(newKey);
-                                string nameNoExt = Path.GetFileNameWithoutExtension(newKey);
-                                newKey = $"{nameNoExt}(1){ext}";
-                            }
-                            else
-                                break;
-                        }
-                        if (!item.Images.ContainsKey(newKey))
-                        {
-                            item.Images.Remove(encFile.Key);
-
-                            item.Images.Add(newKey, Convert.ToBase64String(imageArray));
-                        }
-                    }
-                }
-            }
-
-            if (uniqIdUpdate > 0)
-                SaveToDisk(false);
-
-
-
-            foreach (var idItem in _idList)
-            {
-                if (ShowDeleted(idItem.Deleted))
-                    AddListItem(idItem);
-            }
-            int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
-            if (col != -1)
-            {
-                lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
-                int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
-                lvwColumnSorter.Order = (SortOrder)or;
-                // Perform the sort with these new sort options.
-                uxList.Sort();
-            }
-            success = true;
         }
         catch (System.Security.Cryptography.CryptographicException)
         {
@@ -604,6 +497,78 @@ public partial class MainForm : Form, IMessageFilter
 
         ShowNumberOfItems();
         return success;
+    }
+
+    private bool UpdateList(List<IdItem> idList)
+    {
+        //Upgrade or update data
+        _idList = idList;
+
+        uxList.Items.Clear();
+
+        int uniqIdUpdate = 0;
+        foreach (var item in _idList)
+        {
+            if (item.UniqId == null)
+            {
+                item.UniqId = Crypto.UniqId("");
+                uniqIdUpdate++;
+            }
+
+            foreach (var encFile in item.Images.ToList())
+            {
+                if (encFile.Key.StartsWith("enc."))
+                {
+                    var st = Crypto.DecryptFileStream(encFile, _pinEnc);
+                    if (st is null)
+                    {
+                        continue;
+                    }
+                    byte[] imageArray = st.ToArray();
+
+
+                    string newKey = encFile.Value;
+                    for (int i = 0; i < 100; i++)
+                    {
+                        if (item.Images.ContainsKey(newKey))
+                        {
+                            string ext = Path.GetExtension(newKey);
+                            string nameNoExt = Path.GetFileNameWithoutExtension(newKey);
+                            newKey = $"{nameNoExt}(1){ext}";
+                        }
+                        else
+                            break;
+                    }
+                    if (!item.Images.ContainsKey(newKey))
+                    {
+                        item.Images.Remove(encFile.Key);
+
+                        item.Images.Add(newKey, Convert.ToBase64String(imageArray));
+                    }
+                }
+            }
+        }
+
+        if (uniqIdUpdate > 0)
+            SaveToDisk(false);
+
+
+
+        foreach (var idItem in _idList)
+        {
+            if (ShowDeleted(idItem.Deleted))
+                AddListItem(idItem);
+        }
+        int col = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", -1);
+        if (col != -1)
+        {
+            lvwColumnSorter.SortColumn = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortColumn", lvwColumnSorter.SortColumn);
+            int or = (int)Registry.GetValue("HKEY_CURRENT_USER\\Software\\MyId", "SortOrder", (int)lvwColumnSorter.Order);
+            lvwColumnSorter.Order = (SortOrder)or;
+            // Perform the sort with these new sort options.
+            uxList.Sort();
+        }
+        return true;
     }
 
     private void ShowNumberOfItems()
@@ -628,8 +593,6 @@ public partial class MainForm : Form, IMessageFilter
             KnownFolders.DataFile = value;
         }
     }
-
-
 
     private bool ValidatePassword(string pass)
     {
@@ -675,7 +638,7 @@ public partial class MainForm : Form, IMessageFilter
 
                     if (ValidatePassword(si.uxPassword.Text))
                     {
-                        if (LoadFromDisk(IdFile, null))
+                        if (LoadFromDisk(IdFile, null, false))
                         {
                             //password match
                             success = true;
@@ -920,7 +883,7 @@ public partial class MainForm : Form, IMessageFilter
         string searchTerm = uxSearchBox.Text.Trim();
         if (searchTerm.Length == 0)
         {
-            LoadFromDisk(IdFile, null);
+            LoadFromDisk(IdFile, null, false);
         }
         else
         {
@@ -1123,9 +1086,6 @@ public partial class MainForm : Form, IMessageFilter
         if (buffer[0] == 0x20 && buffer[1] == 0x22) //new version
         {
             int pos = 2;
-            //byte[] iv = new byte[16];
-            //Array.Copy(buffer, 2, iv, 0, 16);
-            //SaveKeyIv("IV", iv);
 
             pos += 16;
             byte[] salt = new byte[32];
@@ -1144,8 +1104,8 @@ public partial class MainForm : Form, IMessageFilter
         {
             MessageBox.Show("Invalid key file");
         }
-        return false;
-    }
+            return false;
+        }
 
     private void ImportPrivateKeyToolStripMenuItem_Click(object sender, EventArgs e)
     {
@@ -1186,10 +1146,16 @@ public partial class MainForm : Form, IMessageFilter
         {
             if (ValidatePassword(si.uxPassword.Text))
             {
-                //password match
-                if (CreateNewPass())
-                    MessageBox.Show("Master password changed", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+                if (LoadFromDisk(IdFile, null, true)) // Validate password 
+                {
+                    
+                    if (CreateNewPass())
+                        MessageBox.Show("Master password changed", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Invalid PIN.", "LoadFromDisk", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }
@@ -1198,14 +1164,82 @@ public partial class MainForm : Form, IMessageFilter
         var np = new Welcome();
         if (np.ShowDialog() == DialogResult.OK)
         {
-            _pinEnc = Crypto.SaveKeyIv("Pin", Encoding.Unicode.GetBytes(np.uxMasterPin.Text));
+            // Backup current state
+            var backupIdList = _idList.Select(item => new IdItem
+            {
+                Uid = item.Uid,
+                UniqId = item.UniqId,
+                Site = item.Site,
+                User = item.User,
+                Password = item.Password,
+                Memo = item.Memo,
+                Changed = item.Changed,
+                Images = new Dictionary<string, string>(item.Images),
+                Deleted = item.Deleted
+            }).ToList();
+            List<string> newFiles = new List<string>();
+            try
+            {
+                List<string> oldFiles = new List<string>();
+                byte[] encPin = Crypto.EncryptPin(Encoding.Unicode.GetBytes(np.uxMasterPin.Text));
 
-            //SaveToDisk();
+                // Decrypt files with the old master password
+                foreach (var item in _idList)
+                {
+                    foreach (var encFile in item.Images)
+                    {
+                        oldFiles.Add(encFile.Key);
 
-            return true;
+                        using (var decryptedStream = Crypto.DecryptFileStream(encFile, _pinEnc))
+                        {
+                            if (decryptedStream != null)
+                            {
+                                // Encrypt files with the new master password
+                                string newEncryptedFile = Crypto.EncryptFileStream(encFile.Key, decryptedStream, encPin);
+                                item.Images[encFile.Key] = newEncryptedFile;
+                                newFiles.Add(newEncryptedFile);
+                            }
+                            else
+                            {
+                                throw new Exception($"Failed to decrypt file: {encFile.Key}");
+                            }
+                        }
+                    }
+                }
+
+                // Update the master password
+                _pinEnc = Crypto.SaveKeyIv("Pin", Encoding.Unicode.GetBytes(np.uxMasterPin.Text));
+
+                // Save the updated data to disk
+                SaveToDisk();
+
+                // Delete the old files
+                foreach (var oldFile in oldFiles)
+                {
+                    File.Delete(Path.Combine(KnownFolders.DataDir, oldFile));
+                }
+                MessageBox.Show("Master password changed successfully", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Rollback to the backup state
+                _idList = backupIdList;
+                SaveToDisk(false); // Save without web sync
+
+                // Delete the new files
+                foreach (var newFile in newFiles)
+                {
+                    File.Delete(Path.Combine(KnownFolders.DataDir, newFile));
+                }
+                MessageBox.Show($"An error occurred while changing the master password: {ex.Message}", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
         }
         else
+        {
             return false;
+        }
     }
 
     private void UxAbout_Click(object sender, EventArgs e)
@@ -1224,7 +1258,6 @@ public partial class MainForm : Form, IMessageFilter
         if (diff.TotalSeconds > timo)
             Application.Exit();//close after 30s
     }
-
 
 
     private bool isUserInput(Message m)
@@ -1278,7 +1311,7 @@ public partial class MainForm : Form, IMessageFilter
                 if (ValidatePassword(si.uxPassword.Text))
                 {
 
-                    if (LoadFromDisk(openDataFileBox.uxDataFile.Text, privateKeyFile))
+                    if (LoadFromDisk(openDataFileBox.uxDataFile.Text, privateKeyFile, false))
                     {
                         KnownFolders.DataFile = openDataFileBox.uxDataFile.Text;
                         return true;
@@ -1820,4 +1853,6 @@ public partial class MainForm : Form, IMessageFilter
         uxToolDelete.Enabled = uxEdit.Enabled;
         uxDelete.Enabled = uxEdit.Enabled;
     }
+
+
 }
