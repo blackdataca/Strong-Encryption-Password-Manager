@@ -92,67 +92,89 @@ public partial class MainForm : Form, IMessageFilter
                     foreach (var encFile in aItem.Images)
                     {
                         Image img = null;
-                        var st = Crypto.DecryptFileStream(encFile, _pinEnc);
-                        if (st is null && encFile.Value is not null)
+                        try
                         {
-                            var bytes = Convert.FromBase64String(encFile.Value);
-                            st = new MemoryStream(bytes);
-                            try
+                            var st = Crypto.DecryptFileStream(encFile, _pinEnc);
+                            if (st is null && encFile.Value is not null)
                             {
-                                img = Image.FromStream(st);
-                            }
-                            catch
-                            {
-                                //bytes is not image type, create encrypted file on disk with "enc." + file name
-                                string outputFileName = Crypto.EncryptFileStream(encFile.Key, st, _pinEnc);
-                                string f = Path.Combine(KnownFolders.DataDir, outputFileName);
-                                img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
-                            }
-                            if (img != null)
-                            {
-                                string idx = edit.imageList1.Images.Count.ToString();
 
-                                edit.imageList1.Images.Add(idx, img);
-
-                                edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
-
-                                edit.TempFiles.Add(encFile.Key, encFile.Value);
-                            }
-                        }
-                        else
-                        {
-                            //Attached file format: encFile.Key = original full file name with path, encFile.Value = encrypted file name only without path
-
-                            try
-                            {
-                                if (st is not null)
+                                try
+                                {
+                                    var bytes = Convert.FromBase64String(encFile.Value);
+                                    st = new MemoryStream(bytes);
                                     img = Image.FromStream(st);
+                                }
+                                catch
+                                {
+                                    if (st is not null)
+                                    {
+                                        //bytes is not image type, create encrypted file on disk with "enc." + file name
+                                        string outputFileName = Crypto.EncryptFileStream(encFile.Key, st, _pinEnc);
+                                        string f = Path.Combine(KnownFolders.DataDir, outputFileName);
+                                        if (File.Exists(f))
+                                        {
+                                            img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
+                                        }
+                                        else
+                                        {
+                                            MessageBox.Show("File not found: " + f, encFile.Key, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        }
+                                    }
+                                }
+                                if (img != null)
+                                {
+                                    string idx = edit.imageList1.Images.Count.ToString();
+
+                                    edit.imageList1.Images.Add(idx, img);
+
+                                    edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
+
+                                    edit.TempFiles.Add(encFile.Key, encFile.Value);
+                                }
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                Debug.WriteLine(ex);
-                            }
-                            if (img is null && encFile.Key is not null)
-                            {
-                                string f = Path.Combine(KnownFolders.DataDir, encFile.Key);
+                                //Attached file format: encFile.Key = original full file name with path, encFile.Value = encrypted file name only without path
 
-                                img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
-                            }
+                                try
+                                {
+                                    if (st is not null)
+                                        img = Image.FromStream(st);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.WriteLine(ex);
+                                }
+                                if (img is null && encFile.Key is not null)
+                                {
+                                    string f = Path.Combine(KnownFolders.DataDir, encFile.Key);
+
+                                    if (File.Exists(f))
+                                    {
+                                        img = WindowsThumbnailProvider.GetThumbnail(f, 64, 64, ThumbnailOptions.None);
+                                    }
+                                    else
+                                        MessageBox.Show("File not found: " + f, encFile.Key, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                }
 
 
-                            if (img != null)
-                            {
-                                string idx = edit.imageList1.Images.Count.ToString();
+                                if (img != null)
+                                {
+                                    string idx = edit.imageList1.Images.Count.ToString();
 
-                                edit.imageList1.Images.Add(idx, img);
+                                    edit.imageList1.Images.Add(idx, img);
 
-                                edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
+                                    edit.uxImages.Items.Add(Path.GetFileName(encFile.Key), idx);
 
-                                edit.TempFiles.Add(encFile.Key, encFile.Value);
+                                    edit.TempFiles.Add(encFile.Key, encFile.Value);
 
+                                }
                             }
                         }
-
+                        catch (CryptographicException ex)
+                        {
+                            MessageBox.Show(ex.Message, encFile.Value, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                     Cursor.Current = Cursors.Default;
                 }
@@ -1188,22 +1210,20 @@ public partial class MainForm : Form, IMessageFilter
                 {
                     foreach (var encFile in item.Images)
                     {
-                        oldFiles.Add(encFile.Key);
+                        if (!encFile.Value.StartsWith("enc.")) 
+                            continue;
+                        
+                        oldFiles.Add(encFile.Value);
 
-                        using (var decryptedStream = Crypto.DecryptFileStream(encFile, _pinEnc))
-                        {
-                            if (decryptedStream != null)
-                            {
-                                // Encrypt files with the new master password
-                                string newEncryptedFile = Crypto.EncryptFileStream(encFile.Key, decryptedStream, encPin);
-                                item.Images[encFile.Key] = newEncryptedFile;
-                                newFiles.Add(newEncryptedFile);
-                            }
-                            else
-                            {
-                                throw new Exception($"Failed to decrypt file: {encFile.Key}");
-                            }
-                        }
+                        using var st = Crypto.DecryptFileStream(encFile, _pinEnc);
+
+                        if (st is null)
+                            continue;
+
+                        // Encrypt files with the new master password
+                        string newEncryptedFile = Crypto.EncryptFileStream(encFile.Key, st, encPin);
+                        item.Images[encFile.Key] = newEncryptedFile;
+                        newFiles.Add(newEncryptedFile);
                     }
                 }
 
