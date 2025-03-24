@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=MyId
+Exec=wine "{PathTo}/MyId.exe"
+Icon={PathTo}/logo.ico
+Type=Application
+# Create launcher shortcut:
+# ln -s '{PathTo}/MyId.desktop' ~/.local/share/applications/MyId.desktop
+

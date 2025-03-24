@@ -20,7 +20,13 @@
     <ApplicationIcon>logo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="MyId.desktop" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="logo.ico" />
+    <Content Include="MyId.desktop">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="Resources\MyId Infograph.drawio %281%29.png" />
   </ItemGroup>
   <ItemGroup>

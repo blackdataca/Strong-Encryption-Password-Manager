@@ -96,3 +96,9 @@ Use strongest standard encryption to store everyone's secrets in a safe place
 2. Purge deleted secret records
 3. Delete associated Secrets_users records
 
+# Create launcher shortcut on Ubuntu
+1. Edit {PathTo} in MyId.desktop 
+2. Create shortcut
+```
+ln -s '{PathTo}/net8.0-windows/MyId.desktop' ~/.local/share/applications/MyId.desktop
+```
