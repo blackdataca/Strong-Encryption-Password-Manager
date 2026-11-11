@@ -20,6 +20,7 @@ using Newtonsoft.Json.Converters;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using MyIdLibrary.Models;
+using System.ComponentModel;
 
 namespace MyId;
 
@@ -27,6 +28,7 @@ namespace MyId;
 public partial class MainForm : Form, IMessageFilter
 {
     private List<IdItem> _idList = [];
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public List<IdItem> IdList { get => _idList; set => _idList = value; } //For Unit Test
 
     private ListViewColumnSorter lvwColumnSorter;

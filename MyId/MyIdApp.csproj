@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
     <RootNamespace>MyId</RootNamespace>
     <AssemblyName>MyId</AssemblyName>
     <Deterministic>false</Deterministic>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 	  <Product>MyID App</Product>
-	  <AssemblyVersion>2024.3.*</AssemblyVersion>
-	  <Copyright>(C)2024 All rights reserved</Copyright>
+	  <AssemblyVersion>2026.11.*</AssemblyVersion>
+	  <Copyright>(C)2024-2026 All rights reserved</Copyright>
 	  <Authors>BlackData.ca</Authors>
 	  <Company>BlackData.ca</Company>
 	  <Description>*</Description>
