@@ -27,12 +27,17 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
+    - name: Set up .NET SDK
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v3
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore ${{env.SOLUTION_FILE_PATH}}/MyId/MyIdApp.csproj
+      run: dotnet restore ${{env.SOLUTION_FILE_PATH}}/MyId/MyIdApp.csproj
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
