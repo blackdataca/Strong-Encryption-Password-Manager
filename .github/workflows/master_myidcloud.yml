@@ -75,7 +75,7 @@ jobs:
         run: dotnet publish ./WebApi/WebApi.csproj -c Release -o "${{env.DOTNET_ROOT}}\WebApi"
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: .net-api
           path: ${{env.DOTNET_ROOT}}\WebApi
@@ -97,7 +97,7 @@ jobs:
         run: dotnet publish ./MyIdWeb/MyIdCloud.csproj -c Release -o "${{env.DOTNET_ROOT}}\MyIdCloud"
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}\MyIdCloud
@@ -111,7 +111,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: .net-api
           path: WebApi
@@ -133,7 +133,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: .net-app
 
